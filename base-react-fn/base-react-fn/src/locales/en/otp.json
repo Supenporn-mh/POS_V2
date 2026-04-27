@@ -1,0 +1,13 @@
+{
+    "title": "Verify OTP",
+    "subtitle": "Enter the verification code sent to your email",
+    "sentTo": "OTP code has been sent to",
+    "enterCode": "Enter OTP Code",
+    "verify": "Verify",
+    "incomplete": "Please enter all 6 digits",
+    "didNotReceive": "Didn't receive the code?",
+    "resendIn": "Resend in {{seconds}}s",
+    "resend": "Resend",
+    "resendSuccess": "New OTP code sent to your email",
+    "changeEmail": "Change Email"
+}
