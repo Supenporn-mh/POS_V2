@@ -944,40 +944,17 @@
         <div class="order-note-wrap">
           <div class="order-note-input">
             <i class="fa fa-sticky-note"></i>
-            <input v-model="orderNote" placeholder="เพิ่มหมายเหตุออเดอร์..." style="flex:1;border:none;background:transparent;font-size:12px;font-family:'Kanit',sans-serif">
+            <input v-model="orderNote" placeholder="เพิ่มหมายเหตุออเดอร์..." style="flex:1;border:none;background:transparent;font-size:12px;font-family:'Kanit',sans-serif;outline:none">
             <i class="fa fa-pen" style="font-size:11px;color:#C7C7CC"></i>
           </div>
         </div>
 
-        <!-- Promotion Panel -->
-        <div v-if="currentBill.items.length && (availableBillPromos.length || appliedBillPromos.length || nearbyBillPromos.length)" class="promo-panel">
-          <div v-if="appliedBillPromos.length" class="promo-section">
-            <div class="promo-section-title"><i class="fa fa-tag"></i> โปรโมชันที่ใช้งาน</div>
-            <div v-for="ap in appliedBillPromos" :key="ap.id" class="promo-applied-row">
-              <div class="promo-applied-info">
-                <span class="promo-applied-name">{{ ap.name }}</span>
-                <span class="promo-applied-saving">-฿{{ ap.discountAmount.toFixed(2) }}</span>
-              </div>
-              <button class="promo-remove-btn" @click="removeAppliedPromo(ap.id)"><i class="fa fa-times"></i></button>
-            </div>
-          </div>
-          <div v-if="availableBillPromos.length" class="promo-section">
-            <div class="promo-section-title"><i class="fa fa-gift"></i> โปรโมชันที่ใช้ได้ตอนนี้</div>
-            <div v-for="promo in availableBillPromos" :key="promo.id" class="promo-avail-row">
-              <div class="promo-avail-info">
-                <span class="promo-avail-badge" :class="'badge-' + promo.type.toLowerCase()">
-                  {{ promo.type === 'DISCOUNT' ? 'ส่วนลด' : promo.type === 'REDEEM' ? 'แลกซื้อ' : 'ของแถม' }}
-                </span>
-                <span class="promo-avail-name">{{ promo.name }}</span>
-              </div>
-              <button class="promo-use-btn" @click="handleBillPromo(promo)">ใช้สิทธิ์</button>
-            </div>
-          </div>
-          <div v-if="nearbyBillPromos.length" class="promo-section">
-            <div v-for="np in nearbyBillPromos" :key="np.id" class="promo-hint-row">
-              <i class="fa fa-fire-alt"></i>
-              อีก <strong>฿{{ Math.ceil(np.gap) }}</strong> รับ: {{ np.name }}
-            </div>
+
+        <!-- Nearby promo hints -->
+        <div v-if="nearbyBillPromos.length" class="promo-panel promo-panel-hint">
+          <div v-for="np in nearbyBillPromos" :key="np.id" class="promo-hint-row">
+            <i class="fa fa-fire-alt"></i>
+            อีก <strong>฿{{ Math.ceil(np.gap) }}</strong> รับ: {{ np.name }}
           </div>
         </div>
 
@@ -1007,12 +984,19 @@
               <button class="emp-change-btn" @click="clearAllPrivileges()">ลบ</button>
             </div>
           </div>
-          <div v-if="selectedEmployee" class="priv-coupon-row">
-            <button class="priv-btn" :class="{ applied: appliedPrivileges.length > 0 }" @click="openPrivModal()">
+          <div class="priv-coupon-row">
+            <button v-if="selectedEmployee" class="priv-btn" :class="{ applied: appliedPrivileges.length > 0 }" @click="openPrivModal()">
               <i class="fa fa-id-badge"></i> สิทธิ์สมาชิก
             </button>
-            <button class="priv-btn" :class="{ applied: currentBill.customDiscount }" @click="couponModalOpen = true">
+            <button class="priv-btn" :class="{ applied: appliedBillPromos.length > 0 }" @click="promoListModalOpen = true">
+              <i class="fa fa-wand-magic-sparkles"></i> โปรโมชั่น
+              <span v-if="appliedBillPromos.length" class="priv-badge">{{ appliedBillPromos.length }}</span>
+            </button>
+            <button class="priv-btn" :class="{ applied: currentBill.customDiscount && currentBill.customDiscount.reason }" @click="couponModalOpen = true">
               <i class="fa fa-ticket-alt"></i> คูปอง
+            </button>
+            <button class="priv-btn" :class="{ applied: currentBill.customDiscount && !currentBill.customDiscount.reason }" @click="discountModalOpen = true">
+              <i class="fa fa-tag"></i> ส่วนลด
             </button>
           </div>
         </div>
@@ -1137,6 +1121,92 @@
           </div>
           <button class="btn-verify" @click="applyPrivileges(); privModalOpen = false" :disabled="!selectedPrivTypes.length">
             <i class="fa fa-check" style="margin-right:8px"></i>ยืนยัน
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Promo List Modal -->
+    <div v-if="promoListModalOpen" class="modal-overlay" @click.self="promoListModalOpen = false">
+      <div class="modal-box sm">
+        <div class="modal-inner">
+          <div class="modal-close-row">
+            <div>
+              <div class="modal-title">โปรโมชั่น</div>
+              <div class="modal-sub">โปรโมชั่นสำหรับบิลนี้</div>
+            </div>
+            <button class="modal-close-btn" @click="promoListModalOpen = false"><i class="fa fa-times"></i></button>
+          </div>
+
+          <!-- Applied promos -->
+          <div v-if="appliedBillPromos.length" class="promo-section" style="margin-bottom:16px">
+            <div class="promo-section-title"><i class="fa fa-check-circle" style="color:#34C759"></i> โปรที่ใช้งานอยู่</div>
+            <div v-for="ap in appliedBillPromos" :key="ap.id" class="promo-avail-row">
+              <div class="promo-avail-info">
+                <span class="promo-avail-name">{{ ap.name }}</span>
+                <span class="promo-applied-saving" style="margin-left:6px">-฿{{ ap.discountAmount.toFixed(2) }}</span>
+              </div>
+              <button class="promo-remove-btn" @click="removeAppliedPromo(ap.id)"><i class="fa fa-times"></i></button>
+            </div>
+          </div>
+
+          <!-- Available promos -->
+          <div v-if="availableBillPromos.length" class="promo-section" style="margin-bottom:16px">
+            <div class="promo-section-title"><i class="fa fa-gift" style="color:#FF9500"></i> โปรที่ใช้ได้ตอนนี้</div>
+            <div v-for="promo in availableBillPromos" :key="promo.id" class="promo-avail-row">
+              <div class="promo-avail-info">
+                <span class="promo-avail-badge" :class="'badge-' + promo.type.toLowerCase()">
+                  {{ promo.type === 'DISCOUNT' ? 'ส่วนลด' : promo.type === 'REDEEM' ? 'แลกซื้อ' : 'ของแถม' }}
+                </span>
+                <span class="promo-avail-name">{{ promo.name }}</span>
+              </div>
+              <button class="promo-use-btn" @click="handleBillPromo(promo); promoListModalOpen = false">ใช้สิทธิ์</button>
+            </div>
+          </div>
+
+          <div v-if="!availableBillPromos.length && !appliedBillPromos.length" style="text-align:center;padding:32px 0;color:#8E8E93">
+            <i class="fa fa-tag" style="font-size:32px;margin-bottom:10px;display:block;opacity:.3"></i>
+            ไม่มีโปรโมชั่นสำหรับบิลนี้
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Discount Modal -->
+    <div v-if="discountModalOpen" class="modal-overlay" @click.self="discountModalOpen = false">
+      <div class="modal-box sm">
+        <div class="modal-inner">
+          <div class="modal-close-row">
+            <div>
+              <div class="modal-title">ส่วนลดบิล</div>
+              <div class="modal-sub">เลือกประเภทส่วนลด</div>
+            </div>
+            <button class="modal-close-btn" @click="discountModalOpen = false"><i class="fa fa-times"></i></button>
+          </div>
+
+          <div class="disc-type-row" style="margin-bottom:14px">
+            <button :class="['disc-type-btn', { active: discountType === 'amount' }]" @click="discountType = 'amount'">
+              <i class="fa fa-baht-sign"></i> จำนวนเงิน (฿)
+            </button>
+            <button :class="['disc-type-btn', { active: discountType === 'percent' }]" @click="discountType = 'percent'">
+              <i class="fa fa-percent"></i> เปอร์เซ็นต์ (%)
+            </button>
+          </div>
+
+          <div class="disc-input-row" style="margin-bottom:14px">
+            <span class="disc-unit">{{ discountType === 'amount' ? '฿' : '' }}</span>
+            <input class="disc-amount-input" type="number" min="0" :max="discountType === 'percent' ? 100 : undefined" v-model="discountInput" placeholder="0" @keyup.enter="applyManualDiscount()">
+            <span class="disc-unit suffix">{{ discountType === 'percent' ? '%' : '' }}</span>
+          </div>
+
+          <div v-if="currentBill.customDiscount && !currentBill.customDiscount.reason" class="disc-applied-info" style="margin-bottom:12px">
+            <i class="fa fa-check-circle"></i>
+            ส่วนลดปัจจุบัน: <strong>{{ currentBill.customDiscount.type === 'percent' ? currentBill.customDiscount.value + '%' : '฿' + currentBill.customDiscount.value }}</strong>
+            <button class="disc-remove-btn" @click="removeManualDiscount()"><i class="fa fa-times"></i> ยกเลิก</button>
+          </div>
+
+          <button class="disc-apply-btn" @click="applyManualDiscount()" :disabled="!discountInput || parseFloat(discountInput) <= 0">
+            <i class="fa fa-check"></i> ใช้ส่วนลด
           </button>
         </div>
       </div>
@@ -1948,6 +2018,11 @@ export default {
         { key: 'Wallet', label: 'Wallet', icon: 'fa-wallet' },
         { key: 'EDC', label: 'EDC', icon: 'fa-credit-card' },
       ],
+      discountType: 'amount',
+      discountInput: '',
+      discountModalOpen: false,
+      promoListModalOpen: false,
+      bottomTab: 'note',
       qrProviders: [
         { key: 'promptpay', name: 'PromptPay', icon: '🏦' },
         { key: 'alipay', name: 'Alipay', icon: '💙' },
@@ -2550,6 +2625,22 @@ export default {
       this.couponModalOpen = false
       this.couponCode = ''
       this.addToast('ใช้คูปองสำเร็จ ส่วนลด 10%', 'success')
+    },
+
+    // Manual discount
+    applyManualDiscount() {
+      const val = parseFloat(this.discountInput)
+      if (!val || val <= 0) return
+      if (this.discountType === 'percent' && val > 100) { this.addToast('เปอร์เซ็นต์ไม่เกิน 100%', 'warning'); return }
+      this.currentBill.customDiscount = { type: this.discountType, value: val }
+      this.addToast(`ใช้ส่วนลด${this.discountType === 'percent' ? ' ' + val + '%' : ' ฿' + val} แล้ว`, 'success')
+      this.discountInput = ''
+      this.discountModalOpen = false
+    },
+    removeManualDiscount() {
+      this.currentBill.customDiscount = null
+      this.discountInput = ''
+      this.addToast('ยกเลิกส่วนลดแล้ว', 'info')
     },
 
     // Payment
