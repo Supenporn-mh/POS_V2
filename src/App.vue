@@ -80,11 +80,11 @@
             <div class="feature-card-icon fi-blue"><i class="fa fa-shopping-cart"></i></div>
             <div><div class="feature-card-name">ขาย</div><div class="feature-card-sub">POS Sale</div></div>
           </div>
-          <div class="feature-card">
+          <div class="feature-card" @click="appScreen = 'kitchen-select'">
             <div class="feature-card-icon fi-red"><i class="fa fa-utensils"></i></div>
             <div><div class="feature-card-name">ครัว</div><div class="feature-card-sub">Kitchen Display</div></div>
           </div>
-          <div class="feature-card">
+          <div class="feature-card" @click="appScreen = 'food-serving'">
             <div class="feature-card-icon fi-green"><i class="fa fa-concierge-bell"></i></div>
             <div><div class="feature-card-name">เสิร์ฟอาหาร</div><div class="feature-card-sub">Food Serving</div></div>
           </div>
@@ -117,24 +117,35 @@
           </div>
         </div>
         <nav class="sidebar-nav">
-          <div class="nav-item" :class="{ active: appScreen === 'pos' }" @click="appScreen = 'pos'">
-            <i class="fa fa-store"></i><span>หน้าขาย</span>
-          </div>
-          <div class="nav-item" :class="{ active: appScreen === 'orders' || appScreen === 'order-detail' }" @click="appScreen = 'orders'">
-            <i class="fa fa-list-alt"></i><span>ออเดอร์</span>
-          </div>
-          <div class="nav-item" :class="{ active: appScreen === 'cancelled-orders' }" @click="appScreen = 'cancelled-orders'">
-            <i class="fa fa-times-circle"></i><span>ยกเลิกออเดอร์</span>
-          </div>
-          <div class="nav-item" :class="{ active: appScreen === 'tax-invoice-list' || appScreen === 'tax-invoice-form' }" @click="appScreen = 'tax-invoice-list'">
-            <i class="fa fa-file-invoice"></i><span>ใบกำกับภาษี</span>
-          </div>
-          <div class="nav-item">
-            <i class="fa fa-border-none"></i><span>จัดการโต๊ะ</span>
-          </div>
-          <div class="nav-item">
-            <i class="fa fa-users"></i><span>จัดการพนักงาน</span>
-          </div>
+          <template v-if="appScreen !== 'food-serving'">
+            <div class="nav-item" :class="{ active: appScreen === 'pos' }" @click="appScreen = 'pos'">
+              <i class="fa fa-store"></i><span>หน้าขาย</span>
+            </div>
+            <div class="nav-item" :class="{ active: appScreen === 'orders' || appScreen === 'order-detail' }" @click="appScreen = 'orders'">
+              <i class="fa fa-list-alt"></i><span>ออเดอร์</span>
+            </div>
+            <div class="nav-item" :class="{ active: appScreen === 'cancelled-orders' }" @click="appScreen = 'cancelled-orders'">
+              <i class="fa fa-times-circle"></i><span>ยกเลิกออเดอร์</span>
+            </div>
+            <div class="nav-item" :class="{ active: appScreen === 'tax-invoice-list' || appScreen === 'tax-invoice-form' }" @click="appScreen = 'tax-invoice-list'">
+              <i class="fa fa-file-invoice"></i><span>ใบกำกับภาษี</span>
+            </div>
+            <div class="nav-divider"></div>
+            <div class="nav-item" @click="appScreen = 'food-serving'">
+              <i class="fa fa-concierge-bell"></i><span>เสิร์ฟอาหาร</span>
+            </div>
+            <div class="nav-item">
+              <i class="fa fa-border-none"></i><span>จัดการโต๊ะ</span>
+            </div>
+            <div class="nav-item">
+              <i class="fa fa-users"></i><span>จัดการพนักงาน</span>
+            </div>
+          </template>
+          <template v-else>
+            <div class="nav-item active">
+              <i class="fa fa-concierge-bell"></i><span>เสิร์ฟอาหาร</span>
+            </div>
+          </template>
         </nav>
         <div class="sidebar-bottom">
           <div class="nav-divider"></div>
@@ -179,22 +190,22 @@
           </button>
         </div>
 
-        <!-- Category Pills -->
-        <div class="cat-pill-bar">
+        <!-- Category Chips -->
+        <div class="cat-chip-bar">
           <button
-            class="cat-pill-drop"
-            :class="{ 'active-drop': selectedCat === 'all' }"
-            @click="selectedCat = 'all'"
-          >ทั้งหมด</button>
-          <button
-            v-for="c in visibleCategories.filter(x => x.id !== 'all')"
+            v-for="c in visibleCategories"
             :key="c.id"
-            class="cat-pill-drop"
-            :class="{ 'active-drop': selectedCat === c.id }"
-            @click="selectedCat = (selectedCat === c.id ? 'all' : c.id)"
+            class="cat-chip"
+            :class="{ 'cat-chip--active': selectedCat === c.id }"
+            @click="selectedCat = (c.id !== 'all' && selectedCat === c.id ? 'all' : c.id)"
           >
-            <i class="fa" :class="c.icon" style="font-size:11px"></i>
-            {{ c.name }}
+            <div class="cat-chip-icon-wrap">
+              <i :class="['fa', 'fa-solid', c.icon]"></i>
+            </div>
+            <div class="cat-chip-info">
+              <span class="cat-chip-name">{{ c.name }}</span>
+              <span class="cat-chip-count">{{ catCount[c.id] ?? 0 }} รายการ</span>
+            </div>
           </button>
         </div>
 
@@ -247,11 +258,13 @@
               <option value="cancel">cancel</option>
             </select>
             <select class="orders-filter-select" v-model="orderFilterFood">
-              <option value="">สถานะอาหาร</option>
               <option value="">ทั้งหมด</option>
-              <option value="cooking">cooking</option>
-              <option value="waiting">waiting</option>
-              <option value="cancel">cancel</option>
+              <option value="pending">Pending</option>
+              <option value="cooking">Cooking</option>
+              <option value="sending">Sending</option>
+              <option value="served">Served</option>
+              <option value="complete">Complete</option>
+              <option value="cancelled">Cancelled</option>
             </select>
             <button class="orders-btn-search" @click="orderPage = 1"><i class="fa fa-search" style="margin-right:6px"></i>SEARCH</button>
             <button class="orders-btn-refresh" @click="orderFilterRoom = ''; orderFilterPayment = ''; orderFilterFood = ''; orderPage = 1"><i class="fa fa-sync" style="margin-right:6px"></i>REFRESH</button>
@@ -729,6 +742,375 @@
         </div>
       </div>
 
+      <!-- ===== FOOD SERVING ===== -->
+      <div v-else-if="appScreen === 'food-serving'" class="fs-main">
+        <div class="fs-topbar">
+          <div class="fs-topbar-left">
+            <h1 class="fs-page-title">เสิร์ฟอาหาร</h1>
+            <span class="fs-page-sub">Food Serving</span>
+          </div>
+          <div class="fs-topbar-right">
+            <div class="fs-stat-chip fs-stat-pending">
+              <i class="fa fa-hourglass-half"></i>
+              <span>{{ ordersData.filter(o => o.foodStatus === 'pending').length }} รอรับ</span>
+            </div>
+            <div class="fs-stat-chip fs-stat-cooking">
+              <i class="fa fa-fire"></i>
+              <span>{{ ordersData.filter(o => o.foodStatus === 'cooking').length }} กำลังทำ</span>
+            </div>
+            <div class="fs-stat-chip fs-stat-served">
+              <i class="fa fa-concierge-bell"></i>
+              <span>{{ ordersData.filter(o => o.foodStatus === 'served').length }} เสิร์ฟแล้ว</span>
+            </div>
+            <div class="fs-clock">{{ fsCurrentTime }}</div>
+          </div>
+        </div>
+
+        <div class="fs-board">
+          <!-- PENDING -->
+          <div class="fs-col">
+            <div class="fs-col-head">
+              <div class="fs-col-label fs-col-label--pending"><i class="fa fa-hourglass-half"></i> Pending</div>
+              <span class="fs-col-badge fs-col-badge--pending">{{ ordersData.filter(o => o.foodStatus === 'pending').length }}</span>
+            </div>
+            <div class="fs-col-body">
+              <div v-for="ord in ordersData.filter(o => o.foodStatus === 'pending')" :key="ord.id" class="fs-card">
+                <div class="fs-card-top">
+                  <span class="fs-card-room">{{ ord.roomNo }}</span>
+                  <span class="fs-card-time">{{ ord.time }}</span>
+                </div>
+                <div class="fs-card-customer">{{ ord.customerName }}</div>
+                <div class="fs-card-items">
+                  <div v-for="(item, i) in ord.items" :key="i" class="fs-item-row">
+                    <span class="fs-item-qty">×{{ item.qty }}</span>
+                    <span class="fs-item-name">{{ item.name }}</span>
+                  </div>
+                </div>
+                <div v-if="ord.note" class="fs-card-note"><i class="fa fa-sticky-note"></i> {{ ord.note.split(',')[0] }}</div>
+                <button class="fs-btn-items" @click="openItemModal(ord)"><i class="fa fa-list-ul"></i> ดูรายการเมนู</button>
+                <div class="fs-card-actions">
+                  <button class="fs-btn-primary" @click="updateFoodStatus(ord, 'cooking')"><i class="fa fa-fire"></i> รับออเดอร์</button>
+                  <button class="fs-btn-ghost-red" @click="updateFoodStatus(ord, 'cancelled')"><i class="fa fa-times"></i></button>
+                </div>
+              </div>
+              <div v-if="ordersData.filter(o => o.foodStatus === 'pending').length === 0" class="fs-col-empty">
+                <i class="fa fa-check-circle"></i><span>ไม่มีออเดอร์รอ</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- COOKING -->
+          <div class="fs-col">
+            <div class="fs-col-head">
+              <div class="fs-col-label fs-col-label--cooking"><i class="fa fa-fire"></i> Cooking</div>
+              <span class="fs-col-badge fs-col-badge--cooking">{{ ordersData.filter(o => o.foodStatus === 'cooking').length }}</span>
+            </div>
+            <div class="fs-col-body">
+              <div v-for="ord in ordersData.filter(o => o.foodStatus === 'cooking')" :key="ord.id" class="fs-card">
+                <div class="fs-card-top">
+                  <span class="fs-card-room">{{ ord.roomNo }}</span>
+                  <span class="fs-card-time">{{ ord.time }}</span>
+                </div>
+                <div class="fs-card-customer">{{ ord.customerName }}</div>
+                <div class="fs-card-items">
+                  <div v-for="(item, i) in ord.items" :key="i" class="fs-item-row">
+                    <span class="fs-item-qty">×{{ item.qty }}</span>
+                    <span class="fs-item-name">{{ item.name }}</span>
+                  </div>
+                </div>
+                <div v-if="ord.note" class="fs-card-note"><i class="fa fa-sticky-note"></i> {{ ord.note.split(',')[0] }}</div>
+                <button class="fs-btn-items" @click="openItemModal(ord)"><i class="fa fa-list-ul"></i> ดูรายการเมนู</button>
+                <div class="fs-card-actions">
+                  <button class="fs-btn-success" @click="updateFoodStatus(ord, 'sending')"><i class="fa fa-paper-plane"></i> ส่งอาหาร</button>
+                </div>
+              </div>
+              <div v-if="ordersData.filter(o => o.foodStatus === 'cooking').length === 0" class="fs-col-empty">
+                <i class="fa fa-utensils"></i><span>ไม่มีออเดอร์กำลังทำ</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- SENDING -->
+          <div class="fs-col">
+            <div class="fs-col-head">
+              <div class="fs-col-label fs-col-label--sending"><i class="fa fa-paper-plane"></i> Sending</div>
+              <span class="fs-col-badge fs-col-badge--sending">{{ ordersData.filter(o => o.foodStatus === 'sending').length }}</span>
+            </div>
+            <div class="fs-col-body">
+              <div v-for="ord in ordersData.filter(o => o.foodStatus === 'sending')" :key="ord.id" class="fs-card fs-card--muted">
+                <div class="fs-card-top">
+                  <span class="fs-card-room">{{ ord.roomNo }}</span>
+                  <span class="fs-card-time">{{ ord.time }}</span>
+                </div>
+                <div class="fs-card-customer">{{ ord.customerName }}</div>
+                <div class="fs-card-items">
+                  <div v-for="(item, i) in ord.items" :key="i" class="fs-item-row">
+                    <span class="fs-item-qty">×{{ item.qty }}</span>
+                    <span class="fs-item-name">{{ item.name }}</span>
+                  </div>
+                </div>
+                <button class="fs-btn-items" @click="openItemModal(ord)"><i class="fa fa-list-ul"></i> ดูรายการเมนู</button>
+                <div class="fs-card-actions">
+                  <button class="fs-btn-served" @click="updateFoodStatus(ord, 'served')"><i class="fa fa-concierge-bell"></i> เสิร์ฟแล้ว</button>
+                  <button class="fs-btn-ghost-red" @click="updateFoodStatus(ord, 'cancelled')"><i class="fa fa-times"></i></button>
+                </div>
+              </div>
+              <div v-if="ordersData.filter(o => o.foodStatus === 'sending').length === 0" class="fs-col-empty">
+                <i class="fa fa-paper-plane"></i><span>ไม่มีออเดอร์กำลังส่ง</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- SERVED -->
+          <div class="fs-col">
+            <div class="fs-col-head">
+              <div class="fs-col-label fs-col-label--served"><i class="fa fa-concierge-bell"></i> Served</div>
+              <span class="fs-col-badge fs-col-badge--served">{{ ordersData.filter(o => o.foodStatus === 'served').length }}</span>
+            </div>
+            <div class="fs-col-body">
+              <div v-for="ord in ordersData.filter(o => o.foodStatus === 'served')" :key="ord.id" class="fs-card fs-card--served">
+                <div class="fs-card-top">
+                  <span class="fs-card-room">{{ ord.roomNo }}</span>
+                  <span class="fs-card-time">{{ ord.time }}</span>
+                </div>
+                <div class="fs-card-customer">{{ ord.customerName }}</div>
+                <div class="fs-card-items">
+                  <div v-for="(item, i) in ord.items" :key="i" class="fs-item-row">
+                    <span class="fs-item-qty">×{{ item.qty }}</span>
+                    <span class="fs-item-name">{{ item.name }}</span>
+                  </div>
+                </div>
+                <button class="fs-btn-items" @click="openItemModal(ord)"><i class="fa fa-list-ul"></i> ดูรายการเมนู</button>
+                <div class="fs-card-actions">
+                  <button class="fs-btn-complete" @click="updateFoodStatus(ord, 'complete')"><i class="fa fa-check-double"></i> เสร็จสิ้น</button>
+                </div>
+              </div>
+              <div v-if="ordersData.filter(o => o.foodStatus === 'served').length === 0" class="fs-col-empty">
+                <i class="fa fa-concierge-bell"></i><span>ยังไม่มีออเดอร์เสิร์ฟ</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- COMPLETE -->
+          <div class="fs-col">
+            <div class="fs-col-head">
+              <div class="fs-col-label fs-col-label--complete"><i class="fa fa-check-circle"></i> Complete</div>
+              <span class="fs-col-badge fs-col-badge--complete">{{ ordersData.filter(o => o.foodStatus === 'complete').length }}</span>
+            </div>
+            <div class="fs-col-body">
+              <div v-for="ord in ordersData.filter(o => o.foodStatus === 'complete')" :key="ord.id" class="fs-card fs-card--complete">
+                <div class="fs-card-top">
+                  <span class="fs-card-room">{{ ord.roomNo }}</span>
+                  <span class="fs-card-time">{{ ord.time }}</span>
+                </div>
+                <div class="fs-card-customer">{{ ord.customerName }}</div>
+                <div class="fs-card-items">
+                  <div v-for="(item, i) in ord.items" :key="i" class="fs-item-row">
+                    <span class="fs-item-qty">×{{ item.qty }}</span>
+                    <span class="fs-item-name">{{ item.name }}</span>
+                  </div>
+                </div>
+                <button class="fs-btn-items" @click="openItemModal(ord)"><i class="fa fa-list-ul"></i> ดูรายการเมนู</button>
+                <div class="fs-card-status-label fs-card-status-label--complete"><i class="fa fa-check-circle"></i> เสร็จสิ้น</div>
+              </div>
+              <div v-if="ordersData.filter(o => o.foodStatus === 'complete').length === 0" class="fs-col-empty">
+                <i class="fa fa-check-circle"></i><span>ยังไม่มีออเดอร์เสร็จ</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- CANCELLED -->
+          <div class="fs-col">
+            <div class="fs-col-head">
+              <div class="fs-col-label fs-col-label--cancelled"><i class="fa fa-ban"></i> Cancelled</div>
+              <span class="fs-col-badge fs-col-badge--cancelled">{{ ordersData.filter(o => o.foodStatus === 'cancelled').length }}</span>
+            </div>
+            <div class="fs-col-body">
+              <div v-for="ord in ordersData.filter(o => o.foodStatus === 'cancelled')" :key="ord.id" class="fs-card fs-card--cancelled">
+                <div class="fs-card-top">
+                  <span class="fs-card-room">{{ ord.roomNo }}</span>
+                  <span class="fs-card-time">{{ ord.time }}</span>
+                </div>
+                <div class="fs-card-customer fs-card-customer--faded">{{ ord.customerName }}</div>
+                <div class="fs-card-items fs-card-items--struck">
+                  <div v-for="(item, i) in ord.items" :key="i" class="fs-item-row">
+                    <span class="fs-item-qty">×{{ item.qty }}</span>
+                    <span class="fs-item-name">{{ item.name }}</span>
+                  </div>
+                </div>
+                <button class="fs-btn-items" @click="openItemModal(ord)"><i class="fa fa-list-ul"></i> ดูรายการเมนู</button>
+                <div class="fs-card-status-label fs-card-status-label--cancelled"><i class="fa fa-ban"></i> ยกเลิกแล้ว</div>
+              </div>
+              <div v-if="ordersData.filter(o => o.foodStatus === 'cancelled').length === 0" class="fs-col-empty">
+                <i class="fa fa-smile"></i><span>ไม่มีออเดอร์ยกเลิก</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== KITCHEN SELECT ===== -->
+      <div v-else-if="appScreen === 'kitchen-select'" class="kd-select-main">
+        <div class="kd-select-topbar">
+          <button class="kd-back-btn" @click="appScreen = 'feature'"><i class="fa fa-chevron-left"></i> กลับ</button>
+          <div>
+            <h1 class="kd-select-title">เลือกครัว</h1>
+            <p class="kd-select-sub">Kitchen Display</p>
+          </div>
+        </div>
+        <div class="kd-select-grid">
+          <div v-for="k in kitchensData" :key="k.id" class="kd-select-card" @click="selectKitchen(k.id)">
+            <div :class="['kd-select-icon', k.color]"><i :class="['fa', k.icon]"></i></div>
+            <div class="kd-select-name">{{ k.name }}</div>
+            <div class="kd-select-meta">{{ k.menus.length }} เมนู</div>
+            <div class="kd-select-counts">
+              <span class="kd-badge-notprint"><i class="fa fa-print"></i> {{ kitchenUnprintedCount(k.id) }} รอปริ้น</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== KITCHEN DISPLAY ===== -->
+      <div v-else-if="appScreen === 'kitchen-display'" class="kd-main">
+        <div class="kd-header">
+          <div class="kd-header-left">
+            <button class="kd-header-back" @click="appScreen = 'kitchen-select'"><i class="fa fa-chevron-left"></i></button>
+            <h1 class="kd-header-title">{{ currentKitchen ? currentKitchen.name : '' }}</h1>
+          </div>
+          <div class="kd-header-center">
+            <span class="kd-toggle-label">Auto print</span>
+            <label class="kd-toggle-wrap">
+              <input type="checkbox" v-model="kitchenAutoPrint[selectedKitchenId]" class="kd-toggle-input">
+              <span class="kd-toggle-track"></span>
+            </label>
+          </div>
+          <div class="kd-header-right">
+            <button class="kd-hdr-btn" @click="kitchenShowHistory = true"><i class="fa fa-history"></i><span>ประวัติ</span></button>
+            <button class="kd-hdr-btn" @click="refreshKitchen()"><i class="fa fa-sync"></i><span>Refresh</span></button>
+            <button class="kd-hdr-btn kd-hdr-btn--exit" @click="appScreen = 'kitchen-select'"><i class="fa fa-sign-out-alt"></i></button>
+          </div>
+        </div>
+        <div class="kd-summary-bar">
+          <div class="kd-summary-chip kd-chip-all">ทั้งหมด {{ kitchenOrders.length }}</div>
+          <div class="kd-summary-chip kd-chip-notprint">รอปริ้น {{ kitchenOrders.filter(o => !kitchenPrintStatus[o.id + '_' + selectedKitchenId]).length }}</div>
+          <div class="kd-summary-chip kd-chip-printed">ปริ้นแล้ว {{ kitchenOrders.filter(o => !!kitchenPrintStatus[o.id + '_' + selectedKitchenId]).length }}</div>
+        </div>
+        <div class="kd-order-list">
+          <div v-if="kitchenOrders.length === 0" class="kd-empty">
+            <i class="fa fa-inbox"></i><p>ไม่มี Order สำหรับครัวนี้</p>
+          </div>
+          <div v-for="ord in kitchenOrders" :key="ord.id" :class="['kd-order-card', isKitchenPrinted(ord) ? 'kd-card--printed' : 'kd-card--notprinted']">
+            <div class="kd-card-left">
+              <button :class="['kd-print-btn', isKitchenPrinted(ord) ? 'kd-print-btn--done' : '']" @click.stop="kitchenPrint(ord)"><i class="fa fa-print"></i></button>
+              <div class="kd-card-meta">
+                <div class="kd-card-orderno">order no : {{ ord.receiptNo }}</div>
+                <div class="kd-card-date">order date : {{ ord.date }}</div>
+              </div>
+            </div>
+            <div class="kd-card-body">
+              <div class="kd-card-info-row">
+                <span>เลขห้อง/โต๊ะ : <b>{{ ord.roomNo }}</b></span>
+                <span class="kd-sep">|</span>
+                <span>ลูกค้า : <b>{{ ord.customerName }}</b></span>
+              </div>
+              <div class="kd-card-time">เวลา : <b>{{ ord.time }}</b></div>
+              <div class="kd-card-preview">เมนู: {{ kitchenItemsPreview(ord) }}</div>
+            </div>
+            <div class="kd-card-right">
+              <span :class="['kd-status-label', isKitchenPrinted(ord) ? 'kd-status--printed' : 'kd-status--notprinted']">
+                Status Print : <b>{{ isKitchenPrinted(ord) ? 'Printed' : 'Not Printed' }}</b>
+              </span>
+              <button class="kd-detail-btn" @click="kitchenOrderModal = ord"><i class="fa fa-chevron-right"></i></button>
+            </div>
+          </div>
+        </div>
+        <!-- History Panel -->
+        <div v-if="kitchenShowHistory" class="kd-overlay" @click.self="kitchenShowHistory = false">
+          <div class="kd-history-panel">
+            <div class="kd-history-header">
+              <button class="kd-back-btn" @click="kitchenShowHistory = false"><i class="fa fa-chevron-left"></i> กลับ</button>
+              <div>
+                <h2 class="kd-history-title">ประวัติ Order</h2>
+                <span class="kd-history-kitchen-tag">{{ currentKitchen ? currentKitchen.name : '' }}</span>
+              </div>
+            </div>
+            <div class="kd-history-date-row">
+              <label class="kd-date-label"><i class="fa fa-calendar-alt"></i> วันที่</label>
+              <input type="date" v-model="kitchenHistoryDate" class="kd-date-input">
+            </div>
+            <div class="kd-summary-bar kd-summary-bar--inner">
+              <div class="kd-summary-chip kd-chip-all">ทั้งหมด {{ kitchenHistoryOrders.length }}</div>
+              <div class="kd-summary-chip kd-chip-printed">ปริ้นแล้ว {{ kitchenHistoryOrders.filter(o => !!kitchenPrintStatus[o.id + '_' + selectedKitchenId]).length }}</div>
+              <div class="kd-summary-chip kd-chip-notprint">ยังไม่ปริ้น {{ kitchenHistoryOrders.filter(o => !kitchenPrintStatus[o.id + '_' + selectedKitchenId]).length }}</div>
+            </div>
+            <div class="kd-history-list">
+              <div v-if="kitchenHistoryOrders.length === 0" class="kd-empty">
+                <i class="fa fa-calendar-times"></i><p>ไม่มี Order ในวันที่เลือก</p>
+              </div>
+              <div v-for="ord in kitchenHistoryOrders" :key="ord.id" :class="['kd-order-card', isKitchenPrinted(ord) ? 'kd-card--printed' : 'kd-card--notprinted']">
+                <div class="kd-card-left">
+                  <button :class="['kd-print-btn', isKitchenPrinted(ord) ? 'kd-print-btn--done' : '']" @click.stop="kitchenPrint(ord)"><i class="fa fa-print"></i></button>
+                  <div class="kd-card-meta">
+                    <div class="kd-card-orderno">order no : {{ ord.receiptNo }}</div>
+                    <div class="kd-card-date">order date : {{ ord.date }}</div>
+                  </div>
+                </div>
+                <div class="kd-card-body">
+                  <div class="kd-card-info-row">
+                    <span>เลขห้อง/โต๊ะ : <b>{{ ord.roomNo }}</b></span>
+                    <span class="kd-sep">|</span>
+                    <span>ลูกค้า : <b>{{ ord.customerName }}</b></span>
+                  </div>
+                  <div class="kd-card-time">เวลา : <b>{{ ord.time }}</b></div>
+                  <div class="kd-card-preview">เมนู: {{ kitchenItemsPreview(ord) }}</div>
+                </div>
+                <div class="kd-card-right">
+                  <span :class="['kd-status-label', isKitchenPrinted(ord) ? 'kd-status--printed' : 'kd-status--notprinted']">
+                    Status Print : <b>{{ isKitchenPrinted(ord) ? 'Printed' : 'Not Printed' }}</b>
+                  </span>
+                  <button class="kd-detail-btn" @click="kitchenOrderModal = ord; kitchenShowHistory = false"><i class="fa fa-chevron-right"></i></button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Order Detail Modal -->
+        <div v-if="kitchenOrderModal" class="kd-overlay" @click.self="kitchenOrderModal = null">
+          <div class="kd-modal">
+            <div class="kd-modal-header">
+              <h3 class="kd-modal-title">รายละเอียด Order</h3>
+              <button class="kd-modal-close" @click="kitchenOrderModal = null"><i class="fa fa-times"></i></button>
+            </div>
+            <div class="kd-modal-meta">
+              <div class="kd-modal-meta-row"><span class="kd-modal-meta-label">Order no</span><span>{{ kitchenOrderModal.receiptNo }}</span></div>
+              <div class="kd-modal-meta-row"><span class="kd-modal-meta-label">วันที่</span><span>{{ kitchenOrderModal.date }} เวลา {{ kitchenOrderModal.time }}</span></div>
+              <div class="kd-modal-meta-row"><span class="kd-modal-meta-label">ห้อง/โต๊ะ</span><span>{{ kitchenOrderModal.roomNo }}</span></div>
+              <div class="kd-modal-meta-row"><span class="kd-modal-meta-label">ลูกค้า</span><span>{{ kitchenOrderModal.customerName }}</span></div>
+            </div>
+            <div class="kd-modal-items-section">
+              <div class="kd-modal-items-label">เมนูของครัวนี้ ({{ kitchenModalItems.length }} รายการ)</div>
+              <div v-for="(item, i) in kitchenModalItems" :key="i" class="kd-modal-item-row">
+                <span class="kd-modal-qty">×{{ item.qty }}</span>
+                <div class="kd-modal-item-info">
+                  <div class="kd-modal-item-name">{{ item.name }}</div>
+                  <div v-if="item.options && item.options.length" class="kd-modal-item-opts">{{ item.options.join(' · ') }}</div>
+                  <div v-if="item.note" class="kd-modal-item-note"><i class="fa fa-sticky-note"></i> {{ item.note }}</div>
+                </div>
+              </div>
+            </div>
+            <div v-if="kitchenOrderModal.note" class="kd-modal-order-note">
+              <i class="fa fa-sticky-note"></i> หมายเหตุ: {{ kitchenOrderModal.note }}
+            </div>
+            <div class="kd-modal-footer">
+              <button :class="['kd-modal-print-btn', isKitchenPrinted(kitchenOrderModal) ? 'kd-modal-print-btn--done' : '']" @click="kitchenPrint(kitchenOrderModal)">
+                <i class="fa fa-print"></i>
+                {{ isKitchenPrinted(kitchenOrderModal) ? 'ปริ้นแล้ว (ปริ้นซ้ำ)' : 'พิมพ์ใบครัว' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ===== MONEY MANAGEMENT LANDING ===== -->
       <div v-else-if="appScreen === 'money-management'" class="money-content-area">
         <div class="money-page-header">เติมเงิน / เช็คยอด / ถอนเงิน</div>
@@ -928,7 +1310,7 @@
                 <button class="order-item-btn" @click="changeQty(item, -1)" :disabled="item.isFree">
                   <i class="fa fa-minus"></i>
                 </button>
-                <span style="font-size:13px;font-weight:600;width:20px;text-align:center">{{ item.qty || 1 }}</span>
+                <span class="order-item-qty">{{ item.qty || 1 }}</span>
                 <button class="order-item-btn" @click="changeQty(item, 1)" :disabled="item.isFree">
                   <i class="fa fa-plus"></i>
                 </button>
@@ -1034,18 +1416,68 @@
 
     <!-- ===================== MODALS ===================== -->
 
+    <!-- Item Status Modal -->
+    <div v-if="fsItemModal" class="modal-overlay" @click.self="closeItemModal()">
+      <div class="modal-box" style="width:480px;max-width:95vw">
+        <div class="modal-inner">
+          <div class="fs-imodal-header">
+            <div>
+              <div class="fs-imodal-room">{{ fsSelectedOrder ? fsSelectedOrder.roomNo : '' }}</div>
+              <div class="fs-imodal-customer">{{ fsSelectedOrder ? fsSelectedOrder.customerName : '' }}</div>
+            </div>
+            <button class="modal-close-btn" @click="closeItemModal()"><i class="fa fa-times"></i></button>
+          </div>
+          <div class="fs-imodal-list" v-if="fsSelectedOrder">
+            <div v-for="(item, i) in fsSelectedOrder.items" :key="i" class="fs-imodal-row">
+              <div class="fs-imodal-item-info">
+                <span class="fs-imodal-qty">×{{ item.qty }}</span>
+                <span class="fs-imodal-name">{{ item.name }}</span>
+                <span v-if="item.note" class="fs-imodal-note">{{ item.note }}</span>
+              </div>
+              <div class="fs-imodal-status-wrap">
+                <button
+                  class="fs-imodal-chip"
+                  :class="'fs-imodal-chip--' + (item.itemStatus || 'pending')"
+                  @click="fsOpenItemIdx = (fsOpenItemIdx === i ? null : i)"
+                >
+                  {{ fsItemStatusLabel(item.itemStatus || 'pending') }}
+                  <i class="fa fa-chevron-down" style="font-size:10px;margin-left:4px"></i>
+                </button>
+                <div v-if="fsOpenItemIdx === i" class="fs-imodal-dropdown">
+                  <div
+                    v-for="s in fsAvailableStatuses(item.itemStatus || 'pending')"
+                    :key="s.value"
+                    class="fs-imodal-opt"
+                    :class="'fs-imodal-opt--' + s.value"
+                    @click="updateItemStatus(item, s.value)"
+                  >
+                    <i :class="s.icon"></i> {{ s.label }}
+                  </div>
+                  <div v-if="fsAvailableStatuses(item.itemStatus || 'pending').length === 0" class="fs-imodal-opt-done">
+                    สถานะสุดท้ายแล้ว
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Employee Identification -->
     <div v-if="empIdentModal" class="modal-overlay" @click.self="empIdentModal = false">
       <div class="modal-box sm">
         <div class="modal-inner">
           <div class="modal-close-row">
             <div>
-              <div class="modal-title">ระบุตัวตนสมาชิก</div>
-              <div class="modal-sub">กรอกรหัสสมาชิก</div>
+              <div class="modal-title">{{ empIdentStep === 'add' ? 'เพิ่มสมาชิกใหม่' : 'ระบุตัวตนสมาชิก' }}</div>
+              <div class="modal-sub">{{ empIdentStep === 'add' ? 'กรอกข้อมูลสมาชิก' : 'กรอกรหัสสมาชิก' }}</div>
             </div>
             <button class="modal-close-btn" @click="empIdentModal = false">ยกเลิก</button>
           </div>
-          <div class="emp-code-input-wrap">
+
+          <!-- State: ค้นหา -->
+          <div v-if="empIdentStep === 'choose'" class="emp-code-input-wrap">
             <input
               class="emp-code-input"
               v-model="empCodeInput"
@@ -1054,37 +1486,33 @@
               ref="empInput"
             >
             <p class="emp-hint-text">ทดสอบ: EMP001, EMP002, EMP003</p>
-            <button class="btn-verify" @click="verifyEmployee()"><i class="fa fa-search" style="margin-right:8px"></i>ยืนยันตัวตน</button>
-
+            <button class="btn-verify" @click="verifyEmployee()">
+              <i class="fa fa-search" style="margin-right:8px"></i>ยืนยันตัวตน
+            </button>
             <div v-if="empNotFound" class="emp-not-found-box">
               <div class="emp-not-found-msg">
                 <i class="fa fa-exclamation-circle"></i>
                 ไม่พบรหัส "{{ empCodeInput }}" ในระบบ
               </div>
               <div class="emp-not-found-sub">ต้องการเพิ่มสมาชิกใหม่?</div>
-              <input
-                class="emp-code-input"
-                v-model="empNewName"
-                placeholder="ชื่อสมาชิก"
-                style="margin-top:10px"
-              >
-              <input
-                class="emp-code-input"
-                v-model="empNewMemberId"
-                placeholder="รหัสสมาชิก"
-                style="margin-top:8px"
-              >
-              <input
-                class="emp-code-input"
-                v-model="empNewCard"
-                placeholder="เลขบัตร (ถ้ามี)"
-                @keydown.enter="addNewEmployee()"
-                style="margin-top:8px"
-              >
-              <button class="btn-add-emp" @click="addNewEmployee()">
-                <i class="fa fa-user-plus" style="margin-right:8px"></i>เพิ่มสมาชิกใหม่
-              </button>
             </div>
+            <div class="emp-or-row"><span>หรือ</span></div>
+            <button class="btn-add-member-new" @click="empIdentStep = 'add'">
+              <i class="fa fa-user-plus" style="margin-right:8px"></i>เพิ่มสมาชิกใหม่
+            </button>
+          </div>
+
+          <!-- State: เพิ่มสมาชิก -->
+          <div v-if="empIdentStep === 'add'" class="emp-code-input-wrap">
+            <input class="emp-code-input" v-model="empNewName" placeholder="ชื่อสมาชิก *">
+            <input class="emp-code-input" v-model="empNewMemberId" placeholder="รหัสสมาชิก *" style="margin-top:8px">
+            <input class="emp-code-input" v-model="empNewCard" placeholder="เลขบัตร (ถ้ามี)" @keydown.enter="addNewEmployee()" style="margin-top:8px">
+            <button class="btn-add-emp" @click="addNewEmployee()">
+              <i class="fa fa-user-plus" style="margin-right:8px"></i>บันทึกสมาชิก
+            </button>
+            <button class="btn-back-emp" @click="empIdentStep = 'choose'">
+              <i class="fa fa-arrow-left" style="margin-right:8px"></i>กลับ
+            </button>
           </div>
         </div>
       </div>
@@ -1745,7 +2173,7 @@
           </div>
         </div>
         <div style="padding:12px 16px;border-top:1px solid #F2F2F7">
-          <button style="width:100%;padding:12px;border-radius:10px;border:1.5px solid #E5E5EA;background:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter','Kanit',sans-serif;color:#48484A" @click="newSaleModal = false">ปิด</button>
+          <button style="width:100%;padding:12px;border-radius:10px;border:none;background:#F2F2F7;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter','Kanit',sans-serif;color:#48484A" @click="newSaleModal = false">ปิด</button>
         </div>
       </div>
     </div>
@@ -1849,15 +2277,15 @@ const products = [
 
 const ordersData = [
   { id: 1, roomNo: '100101-1', phone: '0987894561', receiptNo: '1202602250010', date: '25-02-2026', time: '18:08', total: 564.96, paymentStatus: 'success', foodStatus: 'cooking', customerName: 'สมชาย ใจดี', paymentMethod: 'แม่ณี', subtotal: 480, discount: 0, vat: 48, sc: 39.96, items: [{ name: 'กะเพราไก่ไข่ดาว', qty: 2, price: 320.00, options: ['เพิ่มข้าว', 'เพิ่มเนื้อสัตว์'], note: 'โม่ใส่นัก' }, { name: 'อเมริกาโน่เย็น', qty: 1, price: 80.00, options: ['หวานน้อย 25%', 'เพิ่มช็อตกาแฟ'], note: 'แยกน้ำแข็ง' }, { name: 'น้ำเปล่า', qty: 2, price: 80.00, options: [], note: '' }], note: 'ใส่กล่อง, Delivery Info: Pickup Now, Payment Method: แม่ณี' },
-  { id: 2, roomNo: '100101-2', phone: '0987894561', receiptNo: '1202602250009', date: '25-02-2026', time: '17:08', total: 564.96, paymentStatus: '', foodStatus: 'waiting', customerName: 'สมหญิง รักดี', paymentMethod: 'เงินสด', subtotal: 480, discount: 0, vat: 48, sc: 39.96, items: [{ name: 'กะเพราไก่ไข่ดาว', qty: 2, price: 320.00, options: ['เพิ่มข้าว', 'เพิ่มเนื้อสัตว์'], note: 'โม่ใส่นัก' }, { name: 'อเมริกาโน่เย็น', qty: 1, price: 80.00, options: ['หวานน้อย 25%', 'เพิ่มช็อตกาแฟ'], note: 'แยกน้ำแข็ง' }, { name: 'น้ำเปล่า', qty: 2, price: 80.00, options: [], note: '' }], note: 'ใส่กล่อง, Delivery Info: Pickup Now, Payment Method: แม่ณี' },
-  { id: 3, roomNo: '100101-3', phone: '0987894561', receiptNo: '1202602250008', date: '25-02-2026', time: '16:45', total: 257.00, paymentStatus: '', foodStatus: 'cancel', customerName: 'วิชัย สุขใจ', paymentMethod: 'QR Code', subtotal: 220, discount: 0, vat: 22, sc: 19.80, items: [{ name: 'Café Latte', qty: 2, price: 160.00, options: ['ไม่ใส่น้ำตาล'], note: '' }, { name: 'คุกกี้', qty: 1, price: 45.00, options: [], note: '' }], note: '' },
+  { id: 2, roomNo: '100101-2', phone: '0987894561', receiptNo: '1202602250009', date: '25-02-2026', time: '17:08', total: 564.96, paymentStatus: '', foodStatus: 'pending', customerName: 'สมหญิง รักดี', paymentMethod: 'เงินสด', subtotal: 480, discount: 0, vat: 48, sc: 39.96, items: [{ name: 'กะเพราไก่ไข่ดาว', qty: 2, price: 320.00, options: ['เพิ่มข้าว', 'เพิ่มเนื้อสัตว์'], note: 'โม่ใส่นัก' }, { name: 'อเมริกาโน่เย็น', qty: 1, price: 80.00, options: ['หวานน้อย 25%', 'เพิ่มช็อตกาแฟ'], note: 'แยกน้ำแข็ง' }, { name: 'น้ำเปล่า', qty: 2, price: 80.00, options: [], note: '' }], note: 'ใส่กล่อง, Delivery Info: Pickup Now, Payment Method: แม่ณี' },
+  { id: 3, roomNo: '100101-3', phone: '0987894561', receiptNo: '1202602250008', date: '25-02-2026', time: '16:45', total: 257.00, paymentStatus: '', foodStatus: 'cancelled', customerName: 'วิชัย สุขใจ', paymentMethod: 'QR Code', subtotal: 220, discount: 0, vat: 22, sc: 19.80, items: [{ name: 'Café Latte', qty: 2, price: 160.00, options: ['ไม่ใส่น้ำตาล'], note: '' }, { name: 'คุกกี้', qty: 1, price: 45.00, options: [], note: '' }], note: '' },
   { id: 4, roomNo: '100108', phone: '0987894561', receiptNo: '1202602250007', date: '25-02-2026', time: '16:20', total: 398.00, paymentStatus: 'success', foodStatus: 'cooking', customerName: 'สมชาย ใจดี', paymentMethod: 'EDC', subtotal: 340, discount: 0, vat: 34, sc: 30.60, items: [{ name: 'Matcha Latte', qty: 2, price: 170.00, options: ['เพิ่มน้ำตาล'], note: '' }, { name: 'Croissant', qty: 2, price: 130.00, options: [], note: '' }], note: '' },
-  { id: 5, roomNo: '100102', phone: '0987894561', receiptNo: '1202602250006', date: '25-02-2026', time: '15:55', total: 689.00, paymentStatus: 'success', foodStatus: 'cooking', customerName: 'นิดา มีสุข', paymentMethod: 'แม่ณี', subtotal: 590, discount: 0, vat: 59, sc: 53.10, items: [{ name: 'Strawberry Matcha', qty: 3, price: 360.00, options: ['หวานน้อย'], note: 'เร่งด่วน' }, { name: 'Cheesecake', qty: 2, price: 220.00, options: [], note: '' }], note: '' },
-  { id: 6, roomNo: '100111', phone: '0987894561', receiptNo: '1202602250005', date: '25-02-2026', time: '15:30', total: 879.00, paymentStatus: '', foodStatus: 'waiting', customerName: 'ปิยะ วงศ์ไทย', paymentMethod: 'เงินสด', subtotal: 750, discount: 0, vat: 75, sc: 67.50, items: [{ name: 'Caramel Macchiato', qty: 4, price: 360.00, options: ['เพิ่มช็อต'], note: '' }, { name: 'Banana Bread', qty: 2, price: 110.00, options: [], note: '' }, { name: 'Cookie', qty: 6, price: 270.00, options: [], note: '' }], note: 'แยกถุง' },
-  { id: 7, roomNo: '100112', phone: '0987894561', receiptNo: '1202602250004', date: '25-02-2026', time: '14:50', total: 548.00, paymentStatus: '', foodStatus: 'cancel', customerName: 'ศิรินภา ดีงาม', paymentMethod: 'QR Code', subtotal: 468, discount: 0, vat: 46.80, sc: 42.12, items: [{ name: 'Thai Tea', qty: 4, price: 260.00, options: ['หวานปกติ'], note: '' }, { name: 'Waffle', qty: 2, price: 170.00, options: [], note: '' }], note: '' },
-  { id: 8, roomNo: '100202', phone: '0987894561', receiptNo: '1202602250003', date: '25-02-2026', time: '14:10', total: 497.00, paymentStatus: '', foodStatus: 'waiting', customerName: 'อรุณ สว่าง', paymentMethod: 'EDC', subtotal: 424, discount: 0, vat: 42.40, sc: 38.16, items: [{ name: 'Honey Lemon', qty: 3, price: 210.00, options: [], note: '' }, { name: 'Chocolate Cake', qty: 2, price: 180.00, options: [], note: '' }], note: '' },
+  { id: 5, roomNo: '100102', phone: '0987894561', receiptNo: '1202602250006', date: '25-02-2026', time: '15:55', total: 689.00, paymentStatus: 'success', foodStatus: 'served', customerName: 'นิดา มีสุข', paymentMethod: 'แม่ณี', subtotal: 590, discount: 0, vat: 59, sc: 53.10, items: [{ name: 'Strawberry Matcha', qty: 3, price: 360.00, options: ['หวานน้อย'], note: 'เร่งด่วน' }, { name: 'Cheesecake', qty: 2, price: 220.00, options: [], note: '' }], note: '' },
+  { id: 6, roomNo: '100111', phone: '0987894561', receiptNo: '1202602250005', date: '25-02-2026', time: '15:30', total: 879.00, paymentStatus: '', foodStatus: 'pending', customerName: 'ปิยะ วงศ์ไทย', paymentMethod: 'เงินสด', subtotal: 750, discount: 0, vat: 75, sc: 67.50, items: [{ name: 'Caramel Macchiato', qty: 4, price: 360.00, options: ['เพิ่มช็อต'], note: '' }, { name: 'Banana Bread', qty: 2, price: 110.00, options: [], note: '' }, { name: 'Cookie', qty: 6, price: 270.00, options: [], note: '' }], note: 'แยกถุง' },
+  { id: 7, roomNo: '100112', phone: '0987894561', receiptNo: '1202602250004', date: '25-02-2026', time: '14:50', total: 548.00, paymentStatus: '', foodStatus: 'cancelled', customerName: 'ศิรินภา ดีงาม', paymentMethod: 'QR Code', subtotal: 468, discount: 0, vat: 46.80, sc: 42.12, items: [{ name: 'Thai Tea', qty: 4, price: 260.00, options: ['หวานปกติ'], note: '' }, { name: 'Waffle', qty: 2, price: 170.00, options: [], note: '' }], note: '' },
+  { id: 8, roomNo: '100202', phone: '0987894561', receiptNo: '1202602250003', date: '25-02-2026', time: '14:10', total: 497.00, paymentStatus: '', foodStatus: 'pending', customerName: 'อรุณ สว่าง', paymentMethod: 'EDC', subtotal: 424, discount: 0, vat: 42.40, sc: 38.16, items: [{ name: 'Honey Lemon', qty: 3, price: 210.00, options: [], note: '' }, { name: 'Chocolate Cake', qty: 2, price: 180.00, options: [], note: '' }], note: '' },
   { id: 9, roomNo: '100109', phone: '0987894561', receiptNo: '1202602250002', date: '25-02-2026', time: '13:30', total: 1879.00, paymentStatus: 'success', foodStatus: 'cooking', customerName: 'ธนพล รุ่งเรือง', paymentMethod: 'แม่ณี', subtotal: 1600, discount: 0, vat: 160, sc: 144, items: [{ name: 'Americano Pandan', qty: 5, price: 500.00, options: ['ไม่ใส่น้ำตาล', 'เพิ่มแพนดาน'], note: '' }, { name: 'กะเพราไก่ไข่ดาว', qty: 4, price: 640.00, options: ['เพิ่มข้าว'], note: 'ไม่เผ็ด' }, { name: 'น้ำเปล่า', qty: 5, price: 200.00, options: [], note: '' }], note: 'จัดส่ง ห้อง 302' },
-  { id: 10, roomNo: '100206', phone: '0987894561', receiptNo: '1202602250001', date: '25-02-2026', time: '12:00', total: 789.00, paymentStatus: '', foodStatus: 'cooking', customerName: 'มาลี ศรีดี', paymentMethod: 'เงินสด', subtotal: 674, discount: 0, vat: 67.40, sc: 60.66, items: [{ name: 'Butterfly Pea Latte', qty: 4, price: 320.00, options: ['หวานน้อย 25%'], note: '' }, { name: 'Passion Fruit Soda', qty: 3, price: 225.00, options: [], note: '' }, { name: 'Croissant', qty: 2, price: 130.00, options: [], note: '' }], note: '' },
+  { id: 10, roomNo: '100206', phone: '0987894561', receiptNo: '1202602250001', date: '25-02-2026', time: '12:00', total: 789.00, paymentStatus: '', foodStatus: 'complete', customerName: 'มาลี ศรีดี', paymentMethod: 'เงินสด', subtotal: 674, discount: 0, vat: 67.40, sc: 60.66, items: [{ name: 'Butterfly Pea Latte', qty: 4, price: 320.00, options: ['หวานน้อย 25%'], note: '' }, { name: 'Passion Fruit Soda', qty: 3, price: 225.00, options: [], note: '' }, { name: 'Croissant', qty: 2, price: 130.00, options: [], note: '' }], note: '' },
   {
     id: 11, roomNo: '100301', phone: '0912-345-678', receiptNo: '1202604240011',
     date: '24-04-2026', time: '10:30', paymentStatus: 'success', foodStatus: 'cooking',
@@ -1885,6 +2313,23 @@ const ordersData = [
       { label: 'แลกซื้อขนมราคาพิเศษ ซื้อครบ ฿200 (Croissant 3 ชิ้น ลด ฿90)', discount: 90 },
     ],
     note: 'ลูกค้า VIP — จัดส่งด่วน ห้อง 301',
+  },
+]
+
+const kitchensData = [
+  {
+    id: 'k-thai', name: 'ครัวไทย', icon: 'fa-fire', color: 'fi-red',
+    menus: ['กะเพราไก่ไข่ดาว', 'ผัดไทย', 'ต้มยำกุ้ง', 'ต้มยำ', 'ข้าวผัด', 'ผัดซีอิ๊ว'],
+  },
+  {
+    id: 'k-beverage', name: 'ครัวเครื่องดื่ม', icon: 'fa-mug-hot', color: 'fi-blue',
+    menus: ['Americano', 'Americano Pandan', 'Matcha Latte', 'Café Latte', 'Thai Tea',
+            'น้ำเปล่า', 'Honey Lemon', 'Butterfly Pea Latte', 'Passion Fruit Soda',
+            'Strawberry Matcha', 'Caramel Macchiato'],
+  },
+  {
+    id: 'k-bakery', name: 'ครัวเบเกอรี่', icon: 'fa-cookie-bite', color: 'fi-orange',
+    menus: ['Croissant', 'Cheesecake', 'Waffle', 'คุกกี้', 'Cookie', 'Banana Bread', 'Chocolate Cake'],
   },
 ]
 
@@ -2092,6 +2537,12 @@ export default {
       addonProduct: null,
       addonSelections: {},
 
+      // ─── FOOD SERVING ────────────────────────────────────────────────────
+      fsCurrentTime: '',
+      fsItemModal: false,
+      fsSelectedOrder: null,
+      fsOpenItemIdx: null,
+
       // ─── ORDERS ──────────────────────────────────────────────────────────
       ordersLoading: false,
       ordersData,
@@ -2174,6 +2625,15 @@ export default {
       promoGiftModal: false,
       pendingBillPromo: null,
       editingNoteId: null,
+
+      // ─── KITCHEN DISPLAY ─────────────────────────────────────────────────
+      kitchensData,
+      selectedKitchenId: null,
+      kitchenAutoPrint: { 'k-thai': false, 'k-beverage': false, 'k-bakery': false },
+      kitchenPrintStatus: {},
+      kitchenOrderModal: null,
+      kitchenShowHistory: false,
+      kitchenHistoryDate: new Date().toLocaleDateString('en-CA'),
     }
   },
 
@@ -2192,6 +2652,17 @@ export default {
       const screen = this.settings.posScreens.find(s => s.id === this.selectedScreen)
       if (!screen || !screen.cats.length) return categories
       return categories.filter(c => c.id === 'all' || screen.cats.includes(c.id))
+    },
+    catCount() {
+      const screen = this.settings.posScreens.find(s => s.id === this.selectedScreen)
+      const list = (screen && screen.cats.length)
+        ? products.filter(p => screen.cats.includes(p.cat))
+        : products
+      const map = {}
+      for (const c of this.visibleCategories) {
+        map[c.id] = c.id === 'all' ? list.length : list.filter(p => p.cat === c.id).length
+      }
+      return map
     },
     displayedProducts() {
       const screen = this.settings.posScreens.find(s => s.id === this.selectedScreen)
@@ -2317,6 +2788,35 @@ export default {
     },
     taxInvoiceVat() { return 0 },
     taxInvoiceGrand() { return this.taxInvoiceSubtotal + this.taxInvoiceVat },
+
+    currentKitchen() {
+      return this.kitchensData.find(k => k.id === this.selectedKitchenId) || null
+    },
+    kitchenOrders() {
+      if (!this.selectedKitchenId) return []
+      const kitchen = this.kitchensData.find(k => k.id === this.selectedKitchenId)
+      if (!kitchen) return []
+      return this.ordersData.filter(ord =>
+        ord.items.some(item => kitchen.menus.includes(item.name))
+      )
+    },
+    kitchenHistoryOrders() {
+      if (!this.selectedKitchenId || !this.kitchenHistoryDate) return []
+      const kitchen = this.kitchensData.find(k => k.id === this.selectedKitchenId)
+      if (!kitchen) return []
+      return this.ordersData.filter(ord => {
+        const [d, m, y] = ord.date.split('-')
+        const iso = `${y}-${m}-${d}`
+        return iso === this.kitchenHistoryDate &&
+          ord.items.some(item => kitchen.menus.includes(item.name))
+      })
+    },
+    kitchenModalItems() {
+      if (!this.kitchenOrderModal || !this.selectedKitchenId) return []
+      const kitchen = this.kitchensData.find(k => k.id === this.selectedKitchenId)
+      if (!kitchen) return []
+      return this.kitchenOrderModal.items.filter(item => kitchen.menus.includes(item.name))
+    },
   },
 
   methods: {
@@ -2535,9 +3035,56 @@ export default {
       this.appScreen = 'cancelled-orders'
     },
     cycleOrderStatus(ord) {
-      const cycle = { waiting: 'cooking', cooking: 'cancel', cancel: 'waiting' }
-      ord.foodStatus = cycle[ord.foodStatus] || 'waiting'
+      const cycle = { pending: 'cooking', cooking: 'sending', sending: 'served', served: 'complete', complete: 'pending', cancelled: 'pending' }
+      ord.foodStatus = cycle[ord.foodStatus] || 'pending'
       this.addToast('อัปเดตสถานะ: ' + ord.roomNo + ' → ' + ord.foodStatus, 'info')
+    },
+
+    updateFoodStatus(ord, newStatus) {
+      const allowed = { pending: ['cooking', 'cancelled'], cooking: ['sending', 'cancelled'], sending: ['served', 'cancelled'], served: ['complete'], complete: [], cancelled: [] }
+      if (allowed[ord.foodStatus]?.includes(newStatus)) {
+        ord.foodStatus = newStatus
+        const labels = { cooking: 'กำลังทำ', sending: 'กำลังส่ง', served: 'เสิร์ฟแล้ว', complete: 'เสร็จสิ้น', cancelled: 'ยกเลิก' }
+        this.addToast(ord.roomNo + ' → ' + (labels[newStatus] || newStatus), 'success')
+      }
+    },
+
+    openItemModal(ord) {
+      ord.items.forEach(item => { if (!item.itemStatus) item.itemStatus = 'pending' })
+      this.fsSelectedOrder = ord
+      this.fsOpenItemIdx = null
+      this.fsItemModal = true
+    },
+    closeItemModal() {
+      this.fsItemModal = false
+      this.fsOpenItemIdx = null
+    },
+    updateItemStatus(item, newStatus) {
+      const allowed = { pending: ['cooking', 'served', 'cancelled'], cooking: ['served', 'cancelled'], sending: ['served', 'cancelled'], served: ['complete'], complete: [], cancelled: [] }
+      if (allowed[item.itemStatus || 'pending']?.includes(newStatus)) {
+        item.itemStatus = newStatus
+        this.fsOpenItemIdx = null
+        const labels = { cooking: 'Cooking', sending: 'Sending', served: 'Served', complete: 'Complete', cancelled: 'Cancelled' }
+        this.addToast(item.name + ' → ' + (labels[newStatus] || newStatus), 'success')
+      }
+    },
+    fsItemStatusLabel(status) {
+      return { pending: 'Pending', cooking: 'Cooking', sending: 'Sending', served: 'Served', complete: 'Complete', cancelled: 'Cancelled' }[status] || status
+    },
+    fsAvailableStatuses(currentStatus) {
+      const map = {
+        pending:   [{ value: 'cooking',   label: 'Cooking',   icon: 'fa fa-fire' },
+                    { value: 'served',    label: 'Served',    icon: 'fa fa-concierge-bell' },
+                    { value: 'cancelled', label: 'Cancelled', icon: 'fa fa-ban'  }],
+        cooking:   [{ value: 'served',    label: 'Served',    icon: 'fa fa-concierge-bell' },
+                    { value: 'cancelled', label: 'Cancelled', icon: 'fa fa-ban'  }],
+        sending:   [{ value: 'served',    label: 'Served',    icon: 'fa fa-concierge-bell' },
+                    { value: 'cancelled', label: 'Cancelled', icon: 'fa fa-ban'  }],
+        served:    [{ value: 'complete',  label: 'Complete',  icon: 'fa fa-check-double' }],
+        complete:  [],
+        cancelled: [],
+      }
+      return map[currentStatus] || []
     },
 
     // Employee
@@ -2561,9 +3108,12 @@ export default {
       }
     },
     addNewEmployee() {
-      const code = this.empCodeInput.trim()
+      const code = this.empIdentStep === 'add'
+        ? this.empNewMemberId.trim()
+        : this.empCodeInput.trim()
       const name = this.empNewName.trim()
       if (!name) { this.addToast('กรุณากรอกชื่อสมาชิก', 'warning'); return }
+      if (!code) { this.addToast('กรุณากรอกรหัสสมาชิก', 'warning'); return }
       const emp = { code, card: this.empNewCard.trim(), memberId: this.empNewMemberId.trim(), name, dept: '', type: 'member' }
       this.employeeDB.push(emp)
       this.selectedEmployee = emp
@@ -2573,6 +3123,7 @@ export default {
       this.empNewName = ''
       this.empNewMemberId = ''
       this.empNewCard = ''
+      this.empIdentStep = 'choose'
       this.addToast('เพิ่มสมาชิก ' + name + ' สำเร็จ', 'success')
     },
     togglePrivType(id) {
@@ -2883,6 +3434,38 @@ export default {
       this.toasts.push({ id, msg, type, icon: icons[type] || icons.info })
       setTimeout(() => { this.toasts = this.toasts.filter(t => t.id !== id) }, 3000)
     },
+
+    // Kitchen Display
+    selectKitchen(id) {
+      this.selectedKitchenId = id
+      this.appScreen = 'kitchen-display'
+    },
+    isKitchenPrinted(ord) {
+      return !!this.kitchenPrintStatus[`${ord.id}_${this.selectedKitchenId}`]
+    },
+    kitchenPrint(ord) {
+      const key = `${ord.id}_${this.selectedKitchenId}`
+      this.kitchenPrintStatus = { ...this.kitchenPrintStatus, [key]: true }
+      this.addToast(`ปริ้น Order ${ord.receiptNo} เรียบร้อย`, 'success')
+    },
+    kitchenItemsPreview(ord) {
+      const kitchen = this.kitchensData.find(k => k.id === this.selectedKitchenId)
+      if (!kitchen) return ''
+      const items = ord.items.filter(item => kitchen.menus.includes(item.name))
+      const preview = items.map(i => `${i.name} x${i.qty}`).join(', ')
+      return preview.length > 65 ? preview.slice(0, 62) + '...' : preview
+    },
+    kitchenUnprintedCount(kitchenId) {
+      const kitchen = this.kitchensData.find(k => k.id === kitchenId)
+      if (!kitchen) return 0
+      return this.ordersData.filter(ord =>
+        ord.items.some(item => kitchen.menus.includes(item.name)) &&
+        !this.kitchenPrintStatus[`${ord.id}_${kitchenId}`]
+      ).length
+    },
+    refreshKitchen() {
+      this.addToast('รีเฟรชข้อมูลแล้ว', 'info')
+    },
   },
 
   watch: {
@@ -2892,6 +3475,7 @@ export default {
         this.empNewName = ''
         this.empNewMemberId = ''
         this.empNewCard = ''
+        this.empIdentStep = 'choose'
         this.$nextTick(() => this.$refs.empInput?.focus())
       }
     },
@@ -2912,6 +3496,11 @@ export default {
 
   mounted() {
     this.clock = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
+    const updateFsClock = () => {
+      this.fsCurrentTime = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    }
+    updateFsClock()
+    setInterval(updateFsClock, 1000)
     window.__pos__ = this
   }
 }
