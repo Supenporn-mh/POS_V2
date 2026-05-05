@@ -1457,9 +1457,11 @@ input:focus { outline: none; }
   font-size: 13px; font-weight: 500;
   font-family: 'IBM Plex Sans Thai', sans-serif;
 }
-.fs-stat-pending { background: #FFF4E5; color: #FF9500; }
-.fs-stat-cooking { background: #EBF5FF; color: #007AFF; }
-.fs-stat-served  { background: #F5EEFF; color: #AF52DE; }
+.fs-stat-pending  { background: #FFF4E5; color: #FF9500; }
+.fs-stat-cooking  { background: #EBF5FF; color: #007AFF; }
+.fs-stat-sending  { background: #E5F6FF; color: #32ADE6; }
+.fs-stat-complete { background: #E8FAF0; color: #34C759; }
+.fs-stat-served   { background: #F5EEFF; color: #AF52DE; }
 .fs-clock {
   font-size: 15px; font-weight: 500; color: #8E8E93;
   font-variant-numeric: tabular-nums;
@@ -1584,6 +1586,105 @@ input:focus { outline: none; }
   padding: 40px 16px; color: #C7C7CC; font-size: 14px;
 }
 .fs-col-empty i { font-size: 28px; }
+
+/* Unpaid badge on sending card */
+.fs-card-unpaid-badge {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 500; color: #FF9500;
+  background: #FFF4E5; border-radius: 8px;
+  padding: 5px 10px; margin-bottom: 10px;
+}
+
+/* Payment method tag on complete card */
+.fs-pay-method-tag {
+  font-size: 11px; font-weight: 500; color: #34C759;
+  background: #E8FAF0; border-radius: 6px;
+  padding: 2px 8px; margin-left: 6px;
+}
+
+/* Payment Modal */
+.fs-payment-modal {
+  background: #fff; border-radius: 20px; padding: 28px 24px 20px;
+  width: 400px; max-width: 92vw;
+  display: flex; flex-direction: column; gap: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.18);
+}
+.fs-pm-header { text-align: center; }
+.fs-pm-title {
+  font-size: 18px; font-weight: 700; color: #1C1C1E; margin-bottom: 6px;
+}
+.fs-pm-order-info { font-size: 14px; color: #8E8E93; margin-bottom: 4px; }
+.fs-pm-total {
+  font-size: 28px; font-weight: 700; color: #34C759;
+}
+.fs-pm-methods {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+.fs-pm-btn {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; padding: 18px 10px; border-radius: 14px;
+  border: 1.5px solid #E5E5EA; background: #fff;
+  font-size: 14px; font-weight: 500; color: #1C1C1E;
+  cursor: pointer; font-family: 'IBM Plex Sans Thai', sans-serif;
+  transition: .15s;
+}
+.fs-pm-btn i { font-size: 22px; color: #007AFF; }
+.fs-pm-btn:hover { background: #F2F7FF; border-color: #007AFF; }
+.fs-pm-cancel-btn {
+  width: 100%; height: 44px; border-radius: 12px;
+  background: #F2F2F7; color: #8E8E93;
+  border: none; font-size: 15px; font-weight: 500;
+  cursor: pointer; font-family: 'IBM Plex Sans Thai', sans-serif;
+  transition: .15s;
+}
+.fs-pm-cancel-btn:hover { background: #E5E5EA; }
+
+/* Cancel Confirm Modal */
+.fs-cancel-modal {
+  background: #fff; border-radius: 20px; padding: 32px 28px 24px;
+  width: 360px; max-width: 90vw;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.18);
+}
+.fs-cancel-icon {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: #FFF0EE; color: #FF3B30;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; margin-bottom: 4px;
+}
+.fs-cancel-title {
+  font-size: 18px; font-weight: 700; color: #1C1C1E;
+}
+.fs-cancel-body {
+  font-size: 15px; color: #3C3C43; text-align: center; line-height: 1.5;
+}
+.fs-cancel-order-no {
+  font-weight: 700; color: #FF3B30;
+}
+.fs-cancel-customer {
+  font-size: 13px; color: #8E8E93;
+  background: #F2F2F7; border-radius: 8px;
+  padding: 6px 14px; width: 100%; text-align: center;
+}
+.fs-cancel-actions {
+  display: flex; gap: 10px; width: 100%; margin-top: 8px;
+}
+.fs-cancel-btn-no {
+  flex: 1; height: 44px; border-radius: 12px;
+  background: #F2F2F7; color: #3C3C43;
+  border: none; font-size: 15px; font-weight: 500;
+  cursor: pointer; font-family: 'IBM Plex Sans Thai', sans-serif;
+  transition: .15s;
+}
+.fs-cancel-btn-no:hover { background: #E5E5EA; }
+.fs-cancel-btn-yes {
+  flex: 1; height: 44px; border-radius: 12px;
+  background: #FF3B30; color: #fff;
+  border: none; font-size: 15px; font-weight: 500;
+  cursor: pointer; font-family: 'IBM Plex Sans Thai', sans-serif;
+  transition: .15s;
+}
+.fs-cancel-btn-yes:hover { background: #D63028; }
 
 /* ดูรายการเมนู button */
 .fs-btn-items {
