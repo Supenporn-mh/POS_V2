@@ -947,9 +947,11 @@
             <div v-if="fsCancelTarget && fsCancelTarget.customerName" class="fs-cancel-customer">
               <i class="fa fa-user"></i> {{ fsCancelTarget.customerName }}
             </div>
+            <label class="cancel-reason-label" style="margin-top:12px">เหตุผลการยกเลิก *</label>
+            <textarea class="cancel-reason-textarea" v-model="fsCancelReason" placeholder="ระบุเหตุผลการยกเลิก..." rows="3"></textarea>
             <div class="fs-cancel-actions">
-              <button class="fs-cancel-btn-no" @click="fsCancelModal = false; fsCancelTarget = null">ยกเลิก</button>
-              <button class="fs-cancel-btn-yes" @click="fsConfirmCancel()">ยืนยันการยกเลิก</button>
+              <button class="fs-cancel-btn-no" @click="fsCancelModal = false; fsCancelTarget = null; fsCancelReason = ''">ยกเลิก</button>
+              <button class="fs-cancel-btn-yes" :disabled="!fsCancelReason.trim()" @click="fsCancelModal = false; openCancelPin('food')">ยืนยันการยกเลิก</button>
             </div>
           </div>
         </div>
@@ -2807,6 +2809,7 @@ export default {
       fsSelectedOrder: null,
       fsCancelModal: false,
       fsCancelTarget: null,
+      fsCancelReason: '',
       fdPaymentModal: false,
       fdPaymentTarget: null,
       fdActivePayTab: 'Cash',
@@ -3337,12 +3340,17 @@ export default {
 
     fsCancelConfirm(ord) {
       this.fsCancelTarget = ord
-      this.openCancelPin('food')
+      this.fsCancelReason = ''
+      this.fsCancelModal = true
     },
     fsConfirmCancel() {
-      if (this.fsCancelTarget) this.updateFoodStatus(this.fsCancelTarget, 'cancelled')
+      if (this.fsCancelTarget) {
+        this.fsCancelTarget.cancelReason = this.fsCancelReason
+        this.updateFoodStatus(this.fsCancelTarget, 'cancelled')
+      }
       this.fsCancelModal = false
       this.fsCancelTarget = null
+      this.fsCancelReason = ''
     },
     fdCheckPayment(ord) {
       if (ord.paymentStatus === 'success') {
