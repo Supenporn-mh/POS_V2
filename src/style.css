@@ -1519,6 +1519,21 @@ input:focus { outline: none; }
 .fs-card--muted     { opacity: 0.75; }
 .fs-card--served    { border-color: #AF52DE; background: #FDFAFF; }
 .fs-card--cancelled { opacity: 0.5; }
+.fs-card--overdue {
+  border-color: #FF3B30 !important;
+  background: #FFF5F5;
+  animation: fs-overdue-pulse 2s ease-in-out infinite;
+}
+@keyframes fs-overdue-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,59,48,0); }
+  50%       { box-shadow: 0 0 0 4px rgba(255,59,48,0.18); }
+}
+.fs-card-overdue-badge {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600; color: #FF3B30;
+  background: #FFE8E6; border-radius: 8px;
+  padding: 5px 10px; margin-bottom: 10px;
+}
 .fs-card-top {
   display: flex; justify-content: space-between; align-items: center;
   margin-bottom: 4px;
@@ -1604,9 +1619,9 @@ input:focus { outline: none; }
 
 /* Payment Modal */
 .fs-payment-modal {
-  background: #fff; border-radius: 20px; padding: 28px 24px 20px;
+  background: #fff; border-radius: 20px; padding: 24px 20px 20px;
   width: 400px; max-width: 92vw;
-  display: flex; flex-direction: column; gap: 16px;
+  display: flex; flex-direction: column; gap: 12px;
   box-shadow: 0 20px 60px rgba(0,0,0,.18);
 }
 .fs-pm-header { text-align: center; }
@@ -1614,30 +1629,78 @@ input:focus { outline: none; }
   font-size: 18px; font-weight: 700; color: #1C1C1E; margin-bottom: 6px;
 }
 .fs-pm-order-info { font-size: 14px; color: #8E8E93; margin-bottom: 4px; }
-.fs-pm-total {
-  font-size: 28px; font-weight: 700; color: #34C759;
+.fs-pm-total { font-size: 28px; font-weight: 700; color: #34C759; }
+
+/* Payment tabs — identical to .pay-tabs-row / .pay-tab-btn */
+.fs-pm-tabs-wrap { flex-shrink: 0; }
+.fs-pm-tabs-row {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 6px; background: #F2F2F7; border-radius: 12px; padding: 4px;
 }
-.fs-pm-methods {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+.fs-pm-tab-btn {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 3px; padding: 13px 4px;
+  border: none; background: transparent;
+  border-radius: 9px; cursor: pointer;
+  font-size: 11px; font-weight: 300; color: #8E8E93; line-height: 1;
+  transition: .15s; font-family: 'IBM Plex Sans Thai', sans-serif;
 }
-.fs-pm-btn {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 8px; padding: 18px 10px; border-radius: 14px;
+.fs-pm-tab-btn i { font-size: 16px; line-height: 1; }
+.fs-pm-tab-btn.active { background: #007AFF; color: #fff; box-shadow: 0 2px 8px rgba(0,122,255,.3); }
+
+/* Extra sections (member / promo / coupon / discount) */
+.fs-pm-extra-section { display: flex; flex-direction: column; gap: 6px; }
+.fs-pm-btn-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.fs-pm-extra-btn {
+  display: flex; align-items: center; gap: 8px;
+  padding: 11px 14px; border-radius: 10px;
   border: 1.5px solid #E5E5EA; background: #fff;
-  font-size: 14px; font-weight: 500; color: #1C1C1E;
+  font-size: 14px; font-weight: 400; color: #3A3A3C;
   cursor: pointer; font-family: 'IBM Plex Sans Thai', sans-serif;
   transition: .15s;
 }
-.fs-pm-btn i { font-size: 22px; color: #007AFF; }
-.fs-pm-btn:hover { background: #F2F7FF; border-color: #007AFF; }
+.fs-pm-extra-btn i { color: #007AFF; font-size: 15px; }
+.fs-pm-extra-btn.fs-pm-full { width: 100%; }
+.fs-pm-extra-btn.applied { border-color: #34C759; background: rgba(52,199,89,.06); color: #1C7A3A; }
+.fs-pm-extra-btn.applied i { color: #34C759; }
+.fs-pm-extra-btn:hover { border-color: #007AFF; background: #F0F7FF; }
+
+/* Inline input row */
+.fs-pm-inline-row { display: flex; gap: 6px; }
+.fs-pm-inline-input {
+  flex: 1; height: 38px; padding: 0 12px; border-radius: 8px;
+  border: 1.5px solid #E5E5EA; background: #F9F9F9;
+  font-size: 14px; color: #1C1C1E; font-family: 'IBM Plex Sans Thai', sans-serif;
+  outline: none; transition: border-color .15s;
+}
+.fs-pm-inline-input:focus { border-color: #007AFF; background: #fff; }
+.fs-pm-inline-ok {
+  height: 38px; padding: 0 14px; border-radius: 8px;
+  background: #007AFF; color: #fff; border: none;
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  font-family: 'IBM Plex Sans Thai', sans-serif; transition: .15s;
+}
+.fs-pm-inline-ok:hover { background: #005EC4; }
+
+/* Action row */
+.fs-pm-actions { display: grid; grid-template-columns: 1fr 1.5fr; gap: 8px; margin-top: 4px; }
 .fs-pm-cancel-btn {
-  width: 100%; height: 44px; border-radius: 12px;
+  height: 44px; border-radius: 12px;
   background: #F2F2F7; color: #8E8E93;
   border: none; font-size: 15px; font-weight: 500;
   cursor: pointer; font-family: 'IBM Plex Sans Thai', sans-serif;
   transition: .15s;
 }
 .fs-pm-cancel-btn:hover { background: #E5E5EA; }
+.fs-pm-confirm-btn {
+  height: 44px; border-radius: 12px;
+  background: #007AFF; color: #fff;
+  border: none; font-size: 15px; font-weight: 600;
+  cursor: pointer; font-family: 'IBM Plex Sans Thai', sans-serif;
+  transition: .15s; box-shadow: 0 2px 8px rgba(0,122,255,.25);
+}
+.fs-pm-confirm-btn:hover { background: #005EC4; }
 
 /* Cancel Confirm Modal */
 .fs-cancel-modal {

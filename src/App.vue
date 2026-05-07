@@ -779,12 +779,16 @@
               <span class="fs-col-badge fs-col-badge--pending">{{ ordersData.filter(o => o.foodStatus === 'pending').length }}</span>
             </div>
             <div class="fs-col-body">
-              <div v-for="ord in ordersData.filter(o => o.foodStatus === 'pending')" :key="ord.id" class="fs-card">
+              <div v-for="ord in ordersData.filter(o => o.foodStatus === 'pending')" :key="ord.id"
+                :class="['fs-card', fsOverdueMinutes(ord.time) >= 15 ? 'fs-card--overdue' : '']">
                 <div class="fs-card-top">
                   <span class="fs-card-room">{{ ord.roomNo }}</span>
                   <span class="fs-card-time">{{ ord.time }}</span>
                 </div>
                 <div class="fs-card-customer">{{ ord.customerName }}</div>
+                <div v-if="fsOverdueMinutes(ord.time) >= 15" class="fs-card-overdue-badge">
+                  <i class="fa fa-clock"></i> รอนาน {{ fsOverdueMinutes(ord.time) }} นาที
+                </div>
                 <div class="fs-card-items">
                   <div v-for="(item, i) in ord.items" :key="i" class="fs-item-row">
                     <span class="fs-item-qty">×{{ item.qty }}</span>
@@ -811,12 +815,16 @@
               <span class="fs-col-badge fs-col-badge--cooking">{{ ordersData.filter(o => o.foodStatus === 'cooking').length }}</span>
             </div>
             <div class="fs-col-body">
-              <div v-for="ord in ordersData.filter(o => o.foodStatus === 'cooking')" :key="ord.id" class="fs-card">
+              <div v-for="ord in ordersData.filter(o => o.foodStatus === 'cooking')" :key="ord.id"
+                :class="['fs-card', fsOverdueMinutes(ord.time) >= 30 ? 'fs-card--overdue' : '']">
                 <div class="fs-card-top">
                   <span class="fs-card-room">{{ ord.roomNo }}</span>
                   <span class="fs-card-time">{{ ord.time }}</span>
                 </div>
                 <div class="fs-card-customer">{{ ord.customerName }}</div>
+                <div v-if="fsOverdueMinutes(ord.time) >= 30" class="fs-card-overdue-badge">
+                  <i class="fa fa-clock"></i> ทำนาน {{ fsOverdueMinutes(ord.time) }} นาที
+                </div>
                 <div class="fs-card-items">
                   <div v-for="(item, i) in ord.items" :key="i" class="fs-item-row">
                     <span class="fs-item-qty">×{{ item.qty }}</span>
@@ -848,6 +856,9 @@
                   <span class="fs-card-time">{{ ord.time }}</span>
                 </div>
                 <div class="fs-card-customer">{{ ord.customerName }}</div>
+                <div v-if="ord.paymentStatus !== 'success'" class="fs-card-unpaid-badge">
+                  <i class="fa fa-exclamation-circle"></i> ยังไม่ชำระเงิน
+                </div>
                 <div class="fs-card-items">
                   <div v-for="(item, i) in ord.items" :key="i" class="fs-item-row">
                     <span class="fs-item-qty">×{{ item.qty }}</span>
@@ -856,7 +867,7 @@
                 </div>
                 <button class="fs-btn-items" @click="openItemModal(ord)"><i class="fa fa-list-ul"></i> ดูรายการเมนู</button>
                 <div class="fs-card-actions">
-                  <button class="fs-btn-complete" @click="updateFoodStatus(ord, 'complete')"><i class="fa fa-check-double"></i> เสร็จสิ้น</button>
+                  <button class="fs-btn-complete" @click="fdCheckPayment(ord)"><i class="fa fa-check-double"></i> เสร็จสิ้น</button>
                   <button class="fs-btn-ghost-red" @click="fsCancelConfirm(ord)"><i class="fa fa-times"></i></button>
                 </div>
               </div>
@@ -976,12 +987,16 @@
               <span class="fs-col-badge fs-col-badge--cooking">{{ ordersData.filter(o => o.foodStatus === 'cooking').length }}</span>
             </div>
             <div class="fs-col-body">
-              <div v-for="ord in ordersData.filter(o => o.foodStatus === 'cooking')" :key="ord.id" class="fs-card">
+              <div v-for="ord in ordersData.filter(o => o.foodStatus === 'cooking')" :key="ord.id"
+                :class="['fs-card', fsOverdueMinutes(ord.time) >= 30 ? 'fs-card--overdue' : '']">
                 <div class="fs-card-top">
                   <span class="fs-card-room">{{ ord.roomNo }}</span>
                   <span class="fs-card-time">{{ ord.time }}</span>
                 </div>
                 <div class="fs-card-customer">{{ ord.customerName }}</div>
+                <div v-if="fsOverdueMinutes(ord.time) >= 30" class="fs-card-overdue-badge">
+                  <i class="fa fa-clock"></i> ทำนาน {{ fsOverdueMinutes(ord.time) }} นาที
+                </div>
                 <div class="fs-card-items">
                   <div v-for="(item, i) in ord.items" :key="i" class="fs-item-row">
                     <span class="fs-item-qty">×{{ item.qty }}</span>
@@ -1065,34 +1080,6 @@
           </div>
         </div>
 
-        <!-- Payment Modal -->
-        <div v-if="fdPaymentModal" class="modal-overlay" @click.self="fdPaymentModal = false; fdPaymentTarget = null">
-          <div class="fs-payment-modal">
-            <div class="fs-pm-header">
-              <div class="fs-pm-title">เลือกวิธีชำระเงิน</div>
-              <div class="fs-pm-order-info">
-                ออเดอร์ <b>{{ fdPaymentTarget ? fdPaymentTarget.roomNo : '' }}</b>
-                · {{ fdPaymentTarget ? fdPaymentTarget.customerName : '' }}
-              </div>
-              <div class="fs-pm-total">฿ {{ fdPaymentTarget ? fdPaymentTarget.total.toLocaleString('th-TH', { minimumFractionDigits: 2 }) : '' }}</div>
-            </div>
-            <div class="fs-pm-methods">
-              <button class="fs-pm-btn" @click="fdCompleteWithPayment('เงินสด')">
-                <i class="fa fa-money-bill-wave"></i><span>เงินสด</span>
-              </button>
-              <button class="fs-pm-btn" @click="fdCompleteWithPayment('QR Code')">
-                <i class="fa fa-qrcode"></i><span>QR Code</span>
-              </button>
-              <button class="fs-pm-btn" @click="fdCompleteWithPayment('EDC')">
-                <i class="fa fa-credit-card"></i><span>EDC</span>
-              </button>
-              <button class="fs-pm-btn" @click="fdCompleteWithPayment('แม่ณี')">
-                <i class="fa fa-wallet"></i><span>แม่ณี</span>
-              </button>
-            </div>
-            <button class="fs-pm-cancel-btn" @click="fdPaymentModal = false; fdPaymentTarget = null">ยกเลิก</button>
-          </div>
-        </div>
       </div>
 
       <!-- ===== KITCHEN SELECT ===== -->
@@ -2238,6 +2225,34 @@
       </div>
     </div>
 
+    <!-- ===== CANCEL PIN MODAL ===== -->
+    <div v-if="cancelPinModal" class="modal-overlay" @click.self="cancelPinModal = false; cancelPinAction = null">
+      <div class="modal-box sm">
+        <div class="confirm-modal-body">
+          <div class="confirm-icon-wrap red"><i class="fa fa-shield-alt"></i></div>
+          <div class="confirm-title">ยืนยันยกเลิกออเดอร์</div>
+          <div class="confirm-sub">กรุณากรอกรหัสพนักงาน Admin</div>
+          <div style="width:100%;margin:12px 0 4px">
+            <input
+              class="cancel-reason-textarea"
+              style="width:100%;padding:10px 14px;font-size:15px;letter-spacing:4px;text-align:center;border-radius:10px;border:1.5px solid #E5E5EA;outline:none;box-sizing:border-box"
+              type="password"
+              v-model="cancelPinValue"
+              placeholder="รหัสพนักงาน"
+              @keydown.enter="verifyCancelPin()"
+              @input="cancelPinError = ''"
+              autofocus
+            />
+          </div>
+          <div v-if="cancelPinError" style="color:#FF3B30;font-size:13px;margin-bottom:4px">{{ cancelPinError }}</div>
+          <div class="confirm-actions">
+            <button class="btn-no" @click="cancelPinModal = false; cancelPinAction = null; cancelPinValue = ''; cancelPinError = ''">ยกเลิก</button>
+            <button class="btn-yes-red" :disabled="!cancelPinValue.trim()" @click="verifyCancelPin()">ยืนยัน</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Cancel Order Confirm -->
     <div v-if="cancelConfirm" class="modal-overlay">
       <div class="modal-box sm">
@@ -2264,7 +2279,7 @@
           <textarea class="cancel-reason-textarea" v-model="cancelOrderReason" placeholder="ระบุเหตุผลการยกเลิก..." rows="3"></textarea>
           <div class="confirm-actions">
             <button class="btn-no" @click="cancelOrderModal = false">ไม่ยกเลิก</button>
-            <button class="btn-yes-red" :disabled="!cancelOrderReason.trim()" @click="doCancelOrder()">ยืนยันยกเลิก</button>
+            <button class="btn-yes-red" :disabled="!cancelOrderReason.trim()" @click="cancelOrderModal = false; openCancelPin('order')">ยืนยันยกเลิก</button>
           </div>
         </div>
       </div>
@@ -2304,7 +2319,7 @@
             </div>
             <i class="fa fa-chevron-right" style="color:#C7C7CC"></i>
           </div>
-          <div v-if="totals.count" class="new-sale-option" @click="cancelThenNew()">
+          <div v-if="totals.count" class="new-sale-option" @click="openCancelPin('bill-new')">
             <div class="new-sale-option-icon" style="background:#FFF0EF;color:#FF3B30"><i class="fa fa-trash"></i></div>
             <div class="new-sale-option-text">
               <div class="new-sale-option-title">ยกเลิก order นี้</div>
@@ -2350,6 +2365,87 @@
           <div class="money-modal-row">ยอดเงินคงเหลือ: <strong>฿{{ moneyBalance.toFixed(2) }}</strong></div>
         </div>
         <button class="money-btn-retry" @click="moneyErrorModal = false">ลองอีกครั้ง</button>
+      </div>
+    </div>
+
+    <!-- Food Payment Modal (shared: food-serving + food-delivery) -->
+    <div v-if="fdPaymentModal" class="modal-overlay" @click.self="closeFdPaymentModal()">
+      <div class="fs-payment-modal">
+        <!-- Header -->
+        <div class="fs-pm-header">
+          <div class="fs-pm-title">เลือกวิธีชำระเงิน</div>
+          <div class="fs-pm-order-info">
+            ออเดอร์ <b>{{ fdPaymentTarget ? fdPaymentTarget.roomNo : '' }}</b>
+            · {{ fdPaymentTarget ? fdPaymentTarget.customerName : '' }}
+          </div>
+          <div class="fs-pm-total">฿ {{ fdPaymentTarget ? fdPaymentTarget.total.toLocaleString('th-TH', { minimumFractionDigits: 2 }) : '' }}</div>
+        </div>
+
+        <!-- Payment tabs — same style as เมนูการขาย -->
+        <div class="fs-pm-tabs-wrap">
+          <div class="fs-pm-tabs-row">
+            <button v-for="tab in payTabs" :key="tab.key"
+              class="fs-pm-tab-btn" :class="{ active: fdActivePayTab === tab.key }"
+              @click="fdActivePayTab = tab.key">
+              <i class="fa" :class="tab.icon"></i>{{ tab.label }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Member -->
+        <div class="fs-pm-extra-section">
+          <button class="fs-pm-extra-btn fs-pm-full"
+            :class="{ applied: fdMemberName }"
+            @click="fdActiveInput = fdActiveInput === 'member' ? null : 'member'">
+            <i class="fa fa-user-plus"></i>
+            <span>{{ fdMemberName || 'ระบุสมาชิก' }}</span>
+          </button>
+          <div v-if="fdActiveInput === 'member'" class="fs-pm-inline-row">
+            <input class="fs-pm-inline-input" v-model="fdMemberName" placeholder="ชื่อสมาชิก / รหัสบัตร" @keydown.enter="fdActiveInput = null">
+            <button class="fs-pm-inline-ok" @click="fdActiveInput = null">ตกลง</button>
+          </div>
+        </div>
+
+        <!-- Promo + Coupon -->
+        <div class="fs-pm-extra-section">
+          <div class="fs-pm-btn-pair">
+            <button class="fs-pm-extra-btn" :class="{ applied: fdPromoCode }"
+              @click="fdActiveInput = fdActiveInput === 'promo' ? null : 'promo'">
+              <i class="fa fa-wand-magic-sparkles"></i><span>โปรโมชัน</span>
+            </button>
+            <button class="fs-pm-extra-btn" :class="{ applied: fdCouponCode }"
+              @click="fdActiveInput = fdActiveInput === 'coupon' ? null : 'coupon'">
+              <i class="fa fa-ticket-alt"></i><span>{{ fdCouponCode || 'คูปอง' }}</span>
+            </button>
+          </div>
+          <div v-if="fdActiveInput === 'promo'" class="fs-pm-inline-row">
+            <input class="fs-pm-inline-input" v-model="fdPromoCode" placeholder="รหัสโปรโมชัน" @keydown.enter="fdActiveInput = null">
+            <button class="fs-pm-inline-ok" @click="fdActiveInput = null">ใช้</button>
+          </div>
+          <div v-if="fdActiveInput === 'coupon'" class="fs-pm-inline-row">
+            <input class="fs-pm-inline-input" v-model="fdCouponCode" placeholder="รหัสคูปอง" @keydown.enter="fdActiveInput = null">
+            <button class="fs-pm-inline-ok" @click="fdActiveInput = null">ใช้</button>
+          </div>
+        </div>
+
+        <!-- Discount -->
+        <div class="fs-pm-extra-section">
+          <button class="fs-pm-extra-btn fs-pm-full" :class="{ applied: fdDiscountAmt }"
+            @click="fdActiveInput = fdActiveInput === 'discount' ? null : 'discount'">
+            <i class="fa fa-tag"></i>
+            <span>{{ fdDiscountAmt ? 'ส่วนลด  -฿' + fdDiscountAmt : 'ส่วนลด' }}</span>
+          </button>
+          <div v-if="fdActiveInput === 'discount'" class="fs-pm-inline-row">
+            <input class="fs-pm-inline-input" v-model="fdDiscountAmt" type="number" min="0" placeholder="ระบุส่วนลด (฿)" @keydown.enter="fdActiveInput = null">
+            <button class="fs-pm-inline-ok" @click="fdActiveInput = null">ใช้</button>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="fs-pm-actions">
+          <button class="fs-pm-cancel-btn" @click="closeFdPaymentModal()">ยกเลิก</button>
+          <button class="fs-pm-confirm-btn" @click="fdCompleteWithPayment(fdActivePayTab)">ชำระเงิน</button>
+        </div>
       </div>
     </div>
 
@@ -2422,13 +2518,13 @@ const products = [
 
 const ordersData = [
   { id: 1, roomNo: '100101-1', phone: '0987894561', receiptNo: '1202602250010', date: '25-02-2026', time: '18:08', total: 564.96, paymentStatus: 'success', foodStatus: 'cooking', customerName: 'สมชาย ใจดี', paymentMethod: 'แม่ณี', subtotal: 480, discount: 0, vat: 48, sc: 39.96, items: [{ name: 'กะเพราไก่ไข่ดาว', qty: 2, price: 320.00, options: ['เพิ่มข้าว', 'เพิ่มเนื้อสัตว์'], note: 'โม่ใส่นัก' }, { name: 'อเมริกาโน่เย็น', qty: 1, price: 80.00, options: ['หวานน้อย 25%', 'เพิ่มช็อตกาแฟ'], note: 'แยกน้ำแข็ง' }, { name: 'น้ำเปล่า', qty: 2, price: 80.00, options: [], note: '' }], note: 'ใส่กล่อง, Delivery Info: Pickup Now, Payment Method: แม่ณี' },
-  { id: 2, roomNo: '100101-2', phone: '0987894561', receiptNo: '1202602250009', date: '25-02-2026', time: '17:08', total: 564.96, paymentStatus: '', foodStatus: 'pending', customerName: 'สมหญิง รักดี', paymentMethod: 'เงินสด', subtotal: 480, discount: 0, vat: 48, sc: 39.96, items: [{ name: 'กะเพราไก่ไข่ดาว', qty: 2, price: 320.00, options: ['เพิ่มข้าว', 'เพิ่มเนื้อสัตว์'], note: 'โม่ใส่นัก' }, { name: 'อเมริกาโน่เย็น', qty: 1, price: 80.00, options: ['หวานน้อย 25%', 'เพิ่มช็อตกาแฟ'], note: 'แยกน้ำแข็ง' }, { name: 'น้ำเปล่า', qty: 2, price: 80.00, options: [], note: '' }], note: 'ใส่กล่อง, Delivery Info: Pickup Now, Payment Method: แม่ณี' },
+  { id: 2, roomNo: '100101-2', phone: '0987894561', receiptNo: '1202602250009', date: '25-02-2026', time: '17:08', total: 564.96, paymentStatus: '', foodStatus: 'sending', customerName: 'สมหญิง รักดี', paymentMethod: 'เงินสด', subtotal: 480, discount: 0, vat: 48, sc: 39.96, items: [{ name: 'กะเพราไก่ไข่ดาว', qty: 2, price: 320.00, options: ['เพิ่มข้าว', 'เพิ่มเนื้อสัตว์'], note: 'โม่ใส่นัก' }, { name: 'อเมริกาโน่เย็น', qty: 1, price: 80.00, options: ['หวานน้อย 25%', 'เพิ่มช็อตกาแฟ'], note: 'แยกน้ำแข็ง' }, { name: 'น้ำเปล่า', qty: 2, price: 80.00, options: [], note: '' }], note: 'ใส่กล่อง, Delivery Info: Pickup Now, Payment Method: แม่ณี' },
   { id: 3, roomNo: '100101-3', phone: '0987894561', receiptNo: '1202602250008', date: '25-02-2026', time: '16:45', total: 257.00, paymentStatus: '', foodStatus: 'cancelled', customerName: 'วิชัย สุขใจ', paymentMethod: 'QR Code', subtotal: 220, discount: 0, vat: 22, sc: 19.80, items: [{ name: 'Café Latte', qty: 2, price: 160.00, options: ['ไม่ใส่น้ำตาล'], note: '' }, { name: 'คุกกี้', qty: 1, price: 45.00, options: [], note: '' }], note: '' },
   { id: 4, roomNo: '100108', phone: '0987894561', receiptNo: '1202602250007', date: '25-02-2026', time: '16:20', total: 398.00, paymentStatus: 'success', foodStatus: 'cooking', customerName: 'สมชาย ใจดี', paymentMethod: 'EDC', subtotal: 340, discount: 0, vat: 34, sc: 30.60, items: [{ name: 'Matcha Latte', qty: 2, price: 170.00, options: ['เพิ่มน้ำตาล'], note: '' }, { name: 'Croissant', qty: 2, price: 130.00, options: [], note: '' }], note: '' },
   { id: 5, roomNo: '100102', phone: '0987894561', receiptNo: '1202602250006', date: '25-02-2026', time: '15:55', total: 689.00, paymentStatus: 'success', foodStatus: 'served', customerName: 'นิดา มีสุข', paymentMethod: 'แม่ณี', subtotal: 590, discount: 0, vat: 59, sc: 53.10, items: [{ name: 'Strawberry Matcha', qty: 3, price: 360.00, options: ['หวานน้อย'], note: 'เร่งด่วน' }, { name: 'Cheesecake', qty: 2, price: 220.00, options: [], note: '' }], note: '' },
   { id: 6, roomNo: '100111', phone: '0987894561', receiptNo: '1202602250005', date: '25-02-2026', time: '15:30', total: 879.00, paymentStatus: '', foodStatus: 'pending', customerName: 'ปิยะ วงศ์ไทย', paymentMethod: 'เงินสด', subtotal: 750, discount: 0, vat: 75, sc: 67.50, items: [{ name: 'Caramel Macchiato', qty: 4, price: 360.00, options: ['เพิ่มช็อต'], note: '' }, { name: 'Banana Bread', qty: 2, price: 110.00, options: [], note: '' }, { name: 'Cookie', qty: 6, price: 270.00, options: [], note: '' }], note: 'แยกถุง' },
   { id: 7, roomNo: '100112', phone: '0987894561', receiptNo: '1202602250004', date: '25-02-2026', time: '14:50', total: 548.00, paymentStatus: '', foodStatus: 'cancelled', customerName: 'ศิรินภา ดีงาม', paymentMethod: 'QR Code', subtotal: 468, discount: 0, vat: 46.80, sc: 42.12, items: [{ name: 'Thai Tea', qty: 4, price: 260.00, options: ['หวานปกติ'], note: '' }, { name: 'Waffle', qty: 2, price: 170.00, options: [], note: '' }], note: '' },
-  { id: 8, roomNo: '100202', phone: '0987894561', receiptNo: '1202602250003', date: '25-02-2026', time: '14:10', total: 497.00, paymentStatus: '', foodStatus: 'pending', customerName: 'อรุณ สว่าง', paymentMethod: 'EDC', subtotal: 424, discount: 0, vat: 42.40, sc: 38.16, items: [{ name: 'Honey Lemon', qty: 3, price: 210.00, options: [], note: '' }, { name: 'Chocolate Cake', qty: 2, price: 180.00, options: [], note: '' }], note: '' },
+  { id: 8, roomNo: '100202', phone: '0987894561', receiptNo: '1202602250003', date: '25-02-2026', time: '14:10', total: 497.00, paymentStatus: '', foodStatus: 'sending', customerName: 'อรุณ สว่าง', paymentMethod: 'EDC', subtotal: 424, discount: 0, vat: 42.40, sc: 38.16, items: [{ name: 'Honey Lemon', qty: 3, price: 210.00, options: [], note: '' }, { name: 'Chocolate Cake', qty: 2, price: 180.00, options: [], note: '' }], note: '' },
   { id: 9, roomNo: '100109', phone: '0987894561', receiptNo: '1202602250002', date: '25-02-2026', time: '13:30', total: 1879.00, paymentStatus: 'success', foodStatus: 'cooking', customerName: 'ธนพล รุ่งเรือง', paymentMethod: 'แม่ณี', subtotal: 1600, discount: 0, vat: 160, sc: 144, items: [{ name: 'Americano Pandan', qty: 5, price: 500.00, options: ['ไม่ใส่น้ำตาล', 'เพิ่มแพนดาน'], note: '' }, { name: 'กะเพราไก่ไข่ดาว', qty: 4, price: 640.00, options: ['เพิ่มข้าว'], note: 'ไม่เผ็ด' }, { name: 'น้ำเปล่า', qty: 5, price: 200.00, options: [], note: '' }], note: 'จัดส่ง ห้อง 302' },
   { id: 10, roomNo: '100206', phone: '0987894561', receiptNo: '1202602250001', date: '25-02-2026', time: '12:00', total: 789.00, paymentStatus: '', foodStatus: 'complete', customerName: 'มาลี ศรีดี', paymentMethod: 'เงินสด', subtotal: 674, discount: 0, vat: 67.40, sc: 60.66, items: [{ name: 'Butterfly Pea Latte', qty: 4, price: 320.00, options: ['หวานน้อย 25%'], note: '' }, { name: 'Passion Fruit Soda', qty: 3, price: 225.00, options: [], note: '' }, { name: 'Croissant', qty: 2, price: 130.00, options: [], note: '' }], note: '' },
   {
@@ -2685,6 +2781,15 @@ export default {
       cancelConfirm: false,
       cancelOrderModal: false,
       cancelOrderReason: '',
+      cancelPinModal: false,
+      cancelPinValue: '',
+      cancelPinError: '',
+      cancelPinAction: null,
+      systemUsers: [
+        { code: 'ADM001', name: 'ผู้จัดการ', role: 'admin' },
+        { code: 'CSH001', name: 'สมชาย ใจดี', role: 'cashier' },
+        { code: 'CSH002', name: 'สมหญิง รักดี', role: 'cashier' },
+      ],
       heldBills: [],
       newSaleModal: false,
 
@@ -2704,6 +2809,12 @@ export default {
       fsCancelTarget: null,
       fdPaymentModal: false,
       fdPaymentTarget: null,
+      fdActivePayTab: 'Cash',
+      fdMemberName: '',
+      fdCouponCode: '',
+      fdDiscountAmt: '',
+      fdPromoCode: '',
+      fdActiveInput: null,
       fsOpenItemIdx: null,
 
       // ─── ORDERS ──────────────────────────────────────────────────────────
@@ -3215,9 +3326,18 @@ export default {
       }
     },
 
+    fsOverdueMinutes(timeStr) {
+      if (!this.fsCurrentTime || !timeStr) return 0
+      const [h, m] = timeStr.split(':').map(Number)
+      const now = new Date()
+      const orderTime = new Date()
+      orderTime.setHours(h, m, 0, 0)
+      return Math.max(0, Math.floor((now - orderTime) / 60000))
+    },
+
     fsCancelConfirm(ord) {
       this.fsCancelTarget = ord
-      this.fsCancelModal = true
+      this.openCancelPin('food')
     },
     fsConfirmCancel() {
       if (this.fsCancelTarget) this.updateFoodStatus(this.fsCancelTarget, 'cancelled')
@@ -3238,8 +3358,17 @@ export default {
       this.fdPaymentTarget.paymentMethod = method
       this.updateFoodStatus(this.fdPaymentTarget, 'complete')
       this.addToast(`ชำระเงินสำเร็จ · ${this.fdPaymentTarget.roomNo} (${method})`, 'success')
+      this.closeFdPaymentModal()
+    },
+    closeFdPaymentModal() {
       this.fdPaymentModal = false
       this.fdPaymentTarget = null
+      this.fdActivePayTab = 'Cash'
+      this.fdMemberName = ''
+      this.fdCouponCode = ''
+      this.fdDiscountAmt = ''
+      this.fdPromoCode = ''
+      this.fdActiveInput = null
     },
 
     openItemModal(ord) {
@@ -3434,10 +3563,35 @@ export default {
       this.orderNote = ''
     },
 
+    // Cancel PIN
+    openCancelPin(action) {
+      this.cancelPinValue = ''
+      this.cancelPinError = ''
+      this.cancelPinAction = action
+      this.cancelPinModal = true
+    },
+    verifyCancelPin() {
+      const code = this.cancelPinValue.trim()
+      const admin = this.systemUsers.find(u => u.code === code && u.role === 'admin')
+      if (!admin) {
+        this.cancelPinError = 'รหัสไม่ถูกต้อง หรือไม่มีสิทธิ์ยกเลิกออเดอร์'
+        this.cancelPinValue = ''
+        return
+      }
+      this.cancelPinModal = false
+      this.cancelPinError = ''
+      const action = this.cancelPinAction
+      this.cancelPinAction = null
+      if (action === 'bill') this.doCancelBill()
+      else if (action === 'bill-new') this.cancelThenNew()
+      else if (action === 'order') this.doCancelOrder()
+      else if (action === 'food') this.fsConfirmCancel()
+    },
+
     // Cancel
     cancelOrderConfirm() {
       if (!this.currentBill.items.length) { this.addToast('ไม่มีรายการ', 'warning'); return }
-      this.cancelConfirm = true
+      this.openCancelPin('bill')
     },
     doCancelBill() {
       this.shiftData.cancelCount++
