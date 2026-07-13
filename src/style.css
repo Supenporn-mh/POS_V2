@@ -3362,6 +3362,33 @@ input:focus { outline: none; }
 .po-badge-missed    { background: #FFF0EE; color: #FF3B30; }
 .po-badge-cancelled { background: #FFF0EE; color: #FF3B30; }
 
+/* Reservation detail modal (§5) — cancel section */
+.po-modal-icon-box {
+  width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
+  background: #FFF0EE; color: #FF3B30; display: flex; align-items: center; justify-content: center; font-size: 16px;
+}
+.po-modal-id { font-size: 11px; color: #8E8E93; margin-top: 2px; } /* Caption */
+.po-reason-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
+.po-reason-chip {
+  background: #fff; border: 1.5px solid #E5E5EA; border-radius: 20px;
+  padding: 8px 16px; font-size: 13px; font-weight: 500; color: #3C3C43; cursor: pointer; /* Label scale */
+}
+.po-reason-chip.active { background: #EBF5FF; border-color: #007AFF; color: #007AFF; }
+.po-pin-input {
+  width: 100%; padding: 10px 14px; font-size: 16px; letter-spacing: 6px; text-align: center;
+  border-radius: 10px; border: 1.5px solid #EBF5FF; background: #EBF5FF; outline: none; box-sizing: border-box;
+  font-family: inherit; color: #1C1C1E;
+}
+.po-pin-input:focus { border-color: #007AFF; }
+.po-pin-hint { font-size: 11px; color: #8E8E93; margin-top: 6px; } /* Caption */
+.po-pin-error { font-size: 12px; color: #FF3B30; margin-top: 4px; }
+.po-cancel-warning {
+  display: flex; align-items: flex-start; gap: 8px;
+  background: #FFF0EE; color: #FF3B30; border-radius: 10px;
+  padding: 10px 12px; font-size: 12px; line-height: 1.5; margin-top: 14px;
+}
+.po-cancel-warning i { margin-top: 2px; }
+
 /* Staff overview list bits */
 .po-filter-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 16px 28px 0; }
 .po-date-input, .po-search-input {

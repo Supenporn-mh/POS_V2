@@ -2545,13 +2545,18 @@
 
     <!-- ===== PRE-ORDER: RESERVATION DETAIL MODAL (§5) ===== -->
     <div v-if="poDetailModal && poDetailReservation" class="modal-overlay" @click.self="poCloseDetail()">
-      <div class="modal-box sm">
+      <div class="modal-box sm" style="position:relative">
+        <button class="po-result-close" @click="poCloseDetail()">×</button>
         <div class="confirm-modal-body" style="align-items:stretch;text-align:left">
-          <div style="display:flex;justify-content:space-between;align-items:center;width:100%">
-            <div class="confirm-title" style="margin:0">รายละเอียดการจอง</div>
+          <div style="display:flex;align-items:center;gap:10px;width:100%">
+            <div class="po-modal-icon-box"><i class="fa fa-calendar-days"></i></div>
+            <div style="flex:1;min-width:0">
+              <div class="confirm-title" style="margin:0">รายละเอียดการจอง</div>
+              <div class="po-modal-id">{{ poDetailReservation.id }}</div>
+            </div>
             <span class="po-badge" :class="poStatusMeta(poEffectiveStatus(poDetailReservation)).badge">{{ poStatusMeta(poEffectiveStatus(poDetailReservation)).label }}</span>
           </div>
-          <div style="margin-top:10px;font-size:14px;line-height:1.7;color:#3C3C43;width:100%">
+          <div style="margin-top:14px;font-size:14px;line-height:1.7;color:#3C3C43;width:100%">
             <div><b>{{ poCardInfo(poDetailReservation.cardId) ? poCardInfo(poDetailReservation.cardId).name : poDetailReservation.cardId }}</b> · {{ poCardInfo(poDetailReservation.cardId) ? poCardInfo(poDetailReservation.cardId).cls : '' }}</div>
             <div>วันที่ {{ poFormatDate(poDetailReservation.date) }} · {{ poPeriodOf(poDetailReservation.mealKey) ? poPeriodOf(poDetailReservation.mealKey).mealName : '' }}</div>
             <div v-if="poDetailReservation.collectedAt">เวลารับจริง {{ poDetailReservation.collectedAt }}</div>
@@ -2567,15 +2572,32 @@
 
           <template v-if="!['collected', 'cancelled'].includes(poEffectiveStatus(poDetailReservation))">
             <div class="nav-divider" style="margin:14px 0;width:100%"></div>
-            <label class="cancel-reason-label">เหตุผลการยกเลิก *</label>
-            <select class="orders-filter-select" style="width:100%" v-model="poCancelReasonSel">
-              <option value="">เลือกเหตุผล</option>
-              <option v-for="r in poCancelReasonOptions" :key="r" :value="r">{{ r }}</option>
-            </select>
-            <textarea v-if="poCancelReasonSel === 'อื่นๆ'" class="cancel-reason-textarea" style="width:100%;margin-top:8px" v-model="poCancelReasonOther" placeholder="ระบุเหตุผลเพิ่มเติม..." rows="2"></textarea>
+
+            <label class="cancel-reason-label" style="margin-top:0">เหตุผลการยกเลิก *</label>
+            <div class="po-reason-chips">
+              <button
+                v-for="r in poCancelReasonOptions" :key="r" type="button"
+                class="po-reason-chip" :class="{ active: poCancelReasonSel === r }"
+                @click="poCancelReasonSel = r"
+              >{{ r }}</button>
+            </div>
+
+            <label class="cancel-reason-label">รายละเอียดเพิ่มเติม</label>
+            <textarea class="cancel-reason-textarea" style="width:100%" v-model="poCancelReasonOther" placeholder="รายละเอียดเพิ่มเติม..." rows="2"></textarea>
+
+            <label class="cancel-reason-label">รหัสยืนยัน (PIN) *</label>
+            <input type="password" class="po-pin-input" v-model="poCancelPinValue" placeholder="••••" maxlength="6" @input="poCancelPinError = ''" @keydown.enter="poConfirmCancelReservation()">
+            <div class="po-pin-hint">กรอก PIN ของคุณเพื่อยืนยันการยกเลิก</div>
+            <div v-if="poCancelPinError" class="po-pin-error">{{ poCancelPinError }}</div>
+
+            <div class="po-cancel-warning">
+              <i class="fa fa-triangle-exclamation"></i>
+              <span>การยกเลิกนี้ไม่สามารถย้อนกลับได้ และจะถูกบันทึกไว้ในระบบ</span>
+            </div>
+
             <div class="confirm-actions" style="width:100%;margin-top:14px">
-              <button class="btn-no" @click="poCloseDetail()">ปิด</button>
-              <button class="btn-yes-red" :disabled="!poCancelReasonSel || (poCancelReasonSel === 'อื่นๆ' && !poCancelReasonOther.trim())" @click="poConfirmCancelReservation()">ยืนยันยกเลิกการจอง</button>
+              <button class="btn-no" @click="poCloseDetail()">ย้อนกลับ</button>
+              <button class="btn-yes-red" :disabled="!poCancelReasonSel || (poCancelReasonSel === 'อื่นๆ' && !poCancelReasonOther.trim()) || !poCancelPinValue.trim()" @click="poConfirmCancelReservation()">ยืนยันยกเลิก</button>
             </div>
           </template>
           <template v-else>
@@ -3348,13 +3370,14 @@ export default {
       poStaffTo: '',
       poStaffPeriodTab: 'all',
       poStaffSearch: '',
-      // modal รายละเอียด + ยกเลิก (§5) — ใช้ cancelPinModal/verifyCancelPin เดิมร่วมกัน
+      // modal รายละเอียด + ยกเลิก (§5) — PIN ยืนยันอยู่ในโมดัลนี้เอง ไม่ใช้ cancelPinModal กลางแล้ว
       poDetailModal: false,
       poDetailReservation: null,
       poCancelReasonSel: '',
       poCancelReasonOther: '',
       poCancelReasonOptions: ['นักเรียนลาป่วย', 'ผู้ปกครองยกเลิกล่วงหน้า', 'สั่งอาหารผิดรายการ', 'อื่นๆ'],
-      poPendingCancelReason: '',
+      poCancelPinValue: '',
+      poCancelPinError: '',
       // จอ 2 — customer display (หน้าต่างเบราว์เซอร์ที่ 2 + BroadcastChannel)
       poCustomerWindow: null,
       poBroadcastChannel: null,
@@ -4079,7 +4102,6 @@ export default {
       else if (action === 'bill-new') this.cancelThenNew()
       else if (action === 'order') this.doCancelOrder()
       else if (action === 'food') this.fsConfirmCancel()
-      else if (action === 'preorder-cancel') this.poDoCancelReservation()
     },
 
     // Cancel
@@ -4489,10 +4511,13 @@ export default {
       this.poShowResult({ case: 'success', cardId: reservation.cardId, card: this.poCardInfo(reservation.cardId), reservation })
     },
     // modal รายละเอียดร่วม (§5) — ใช้ร่วมกับหน้าภาพรวม staff
+    // PIN ยืนยันยกเลิกอยู่ในโมดัลเดียวกันนี้เลย ไม่แยกไปเปิด modal PIN กลางอีกต่อไป (ตาม UI ที่ยืนยันไว้)
     poOpenDetail(reservation) {
       this.poDetailReservation = reservation
       this.poCancelReasonSel = ''
       this.poCancelReasonOther = ''
+      this.poCancelPinValue = ''
+      this.poCancelPinError = ''
       this.poDetailModal = true
     },
     poCloseDetail() {
@@ -4500,26 +4525,27 @@ export default {
       this.poDetailReservation = null
       this.poCancelReasonSel = ''
       this.poCancelReasonOther = ''
+      this.poCancelPinValue = ''
+      this.poCancelPinError = ''
     },
     poConfirmCancelReservation() {
       if (!this.poDetailReservation) return
-      const reason = this.poCancelReasonSel === 'อื่นๆ' ? this.poCancelReasonOther.trim() : this.poCancelReasonSel
+      const note = this.poCancelReasonOther.trim()
+      const reason = this.poCancelReasonSel === 'อื่นๆ' ? note : (note ? `${this.poCancelReasonSel} — ${note}` : this.poCancelReasonSel)
       if (!reason) return
-      this.poPendingCancelReason = reason
-      this.poDetailModal = false
-      this.openCancelPin('preorder-cancel')
-    },
-    poDoCancelReservation() {
-      const res = this.poDetailReservation
-      if (!res) return
-      const code = this.cancelPinValue.trim()
+      const code = this.poCancelPinValue.trim()
       const admin = this.systemUsers.find(u => u.code === code && u.role === 'admin')
+      if (!admin) {
+        this.poCancelPinError = 'รหัสไม่ถูกต้อง หรือไม่มีสิทธิ์ยกเลิกการจอง'
+        this.poCancelPinValue = ''
+        return
+      }
+      const res = this.poDetailReservation
       res.status = 'cancelled'
-      res.cancelReason = this.poPendingCancelReason
-      res.cancelledBy = admin ? `${admin.name} (${admin.code})` : 'พนักงาน'
+      res.cancelReason = reason
+      res.cancelledBy = `${admin.name} (${admin.code})`
       res.cancelledAt = new Date().toLocaleString('th-TH')
-      this.poPendingCancelReason = ''
-      this.poDetailReservation = null
+      this.poCloseDetail()
       this.addToast('ยกเลิกการจองแล้ว', 'info')
     },
     // จอ 2 — customer display (หน้าต่างที่ 2 + BroadcastChannel, ดูรายละเอียดใน plan)
