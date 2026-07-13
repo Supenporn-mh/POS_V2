@@ -1,7 +1,78 @@
 <template>
   <div>
+    <!-- ===================== PRE-ORDER CUSTOMER DISPLAY (จอ 2) ===================== -->
+    <div v-if="poIsCustomerDisplay" class="po-display-root">
+      <template v-if="!poResult">
+        <div class="po-display-idle">
+          <div class="po-display-logo"><i class="fa fa-utensils"></i></div>
+          <div class="po-display-welcome">ยินดีต้อนรับ</div>
+          <div class="po-display-sub">แตะบัตรเพื่อรับอาหาร Pre-Order</div>
+        </div>
+      </template>
+      <template v-else-if="poResult.case === 'success'">
+        <div class="po-display-result po-display-success">
+          <i class="fa fa-check-circle"></i>
+          <div class="po-display-title">ขอบคุณค่ะ/ครับ</div>
+          <div class="po-display-name">{{ poResult.card && poResult.card.name }}</div>
+          <div class="po-display-items">
+            <div v-for="(it, i) in (poResult.reservation ? poResult.reservation.items : [])" :key="i">{{ it.name }} ×{{ it.qty }}</div>
+          </div>
+        </div>
+      </template>
+      <template v-else-if="poResult.case === 'duplicate'">
+        <div class="po-display-result po-display-warning">
+          <i class="fa fa-info-circle"></i>
+          <div class="po-display-title">รับอาหารไปแล้ว</div>
+          <div class="po-display-name">{{ poResult.card && poResult.card.name }}</div>
+        </div>
+      </template>
+      <template v-else-if="poResult.case === 'detail'">
+        <div class="po-display-result">
+          <div class="po-display-name">{{ poResult.card && poResult.card.name }}</div>
+          <div class="po-display-items">
+            <div v-for="(it, i) in (poResult.reservation ? poResult.reservation.items : [])" :key="i">{{ it.name }} ×{{ it.qty }}</div>
+          </div>
+        </div>
+      </template>
+      <template v-else-if="poResult.case === 'case1'">
+        <div class="po-display-result po-display-info"><div class="po-display-title">ไม่พบรายการจอง</div></div>
+      </template>
+      <template v-else-if="poResult.case === 'case2'">
+        <div class="po-display-result po-display-warning">
+          <div class="po-display-title">จองไว้{{ poResult.period ? poResult.period.mealName : '' }}</div>
+          <div class="po-display-sub">รับได้ {{ poFormatWindow(poResult.period) }}</div>
+        </div>
+      </template>
+      <template v-else-if="poResult.case === 'case3'">
+        <div class="po-display-result po-display-info">
+          <div class="po-display-title">ยังไม่ถึงเวลารับ</div>
+          <div class="po-display-sub">เปิดรับ {{ poResult.period ? poResult.period.start : '' }} น.</div>
+        </div>
+      </template>
+      <template v-else-if="poResult.case === 'case4'">
+        <div class="po-display-result po-display-danger">
+          <div class="po-display-title">พ้นเวลารับแล้ว</div><div class="po-display-sub">กรุณาติดต่อพนักงาน</div>
+        </div>
+      </template>
+      <template v-else-if="poResult.case === 'case5'">
+        <div class="po-display-result po-display-info"><div class="po-display-title">ไม่พบข้อมูลบัตรนี้</div><div class="po-display-sub">กรุณาติดต่อพนักงาน</div></div>
+      </template>
+      <template v-else-if="poResult.case === 'case6'">
+        <div class="po-display-result po-display-danger"><div class="po-display-title">บัตรถูกระงับใช้งาน</div><div class="po-display-sub">กรุณาติดต่อพนักงาน</div></div>
+      </template>
+      <template v-else-if="poResult.case === 'case7'">
+        <div class="po-display-result po-display-danger"><div class="po-display-title">การจองนี้ถูกยกเลิกแล้ว</div><div class="po-display-sub">กรุณาติดต่อพนักงาน</div></div>
+      </template>
+      <template v-else-if="poResult.case === 'case8'">
+        <div class="po-display-result po-display-warning"><div class="po-display-title">ยังไม่ชำระเงิน</div><div class="po-display-sub">แจ้งพนักงานก่อนรับอาหาร</div></div>
+      </template>
+      <template v-else-if="poResult.case === 'case9-loading' || poResult.case === 'case9-timeout'">
+        <div class="po-display-result po-display-info"><i class="fa fa-spinner fa-spin"></i><div class="po-display-title">กำลังตรวจสอบข้อมูล...</div></div>
+      </template>
+    </div>
+
     <!-- ===================== LOGIN ===================== -->
-    <div v-if="appScreen === 'login'" class="upos-login">
+    <div v-else-if="appScreen === 'login'" class="upos-login">
       <div class="login-left">
         <div class="login-brand">
           <div class="login-logo-box"><i class="fa fa-cash-register"></i></div>
@@ -100,6 +171,14 @@
             <div class="feature-card-icon fi-teal"><i class="fa fa-wallet"></i></div>
             <div><div class="feature-card-name">การจัดการเงิน</div><div class="feature-card-sub">Money Management</div></div>
           </div>
+          <div class="feature-card" @click="openPreOrderIdle()">
+            <div class="feature-card-icon fi-blue"><i class="fa fa-id-card-clip"></i></div>
+            <div><div class="feature-card-name">Pre-Order</div><div class="feature-card-sub">แตะบัตรรับอาหาร</div></div>
+          </div>
+          <div class="feature-card" @click="appScreen = 'preorder-staff'">
+            <div class="feature-card-icon fi-red"><i class="fa fa-clipboard-list"></i></div>
+            <div><div class="feature-card-name">ภาพรวม Pre-Order</div><div class="feature-card-sub">สำหรับพนักงาน</div></div>
+          </div>
         </div>
       </div>
     </div>
@@ -130,6 +209,16 @@
           <template v-else-if="appScreen === 'food-delivery'">
             <div class="nav-item active">
               <i class="fa fa-motorcycle"></i><span>ส่งอาหาร</span>
+            </div>
+          </template>
+          <template v-else-if="appScreen === 'preorder-idle' || appScreen === 'preorder-history'">
+            <div class="nav-item active">
+              <i class="fa fa-id-card-clip"></i><span>Pre-Order</span>
+            </div>
+          </template>
+          <template v-else-if="appScreen === 'preorder-staff'">
+            <div class="nav-item active">
+              <i class="fa fa-clipboard-list"></i><span>ภาพรวม Pre-Order</span>
             </div>
           </template>
           <template v-else>
@@ -1388,6 +1477,215 @@
         </div>
       </div>
 
+      <!-- ===== PRE-ORDER: IDLE / TAP (จอ 1 นักเรียน) — §3.1-3.4 ===== -->
+      <div v-else-if="appScreen === 'preorder-idle'" class="po-main">
+        <div class="po-topbar">
+          <div>
+            <h1 class="po-page-title">Pre-Order</h1>
+            <span class="po-page-sub">แตะบัตรรับอาหาร</span>
+          </div>
+          <div class="po-topbar-right">
+            <div class="po-clock">{{ poCurrentTime }}</div>
+            <button class="po-btn-ghost" @click="poOpenCustomerDisplay()"><i class="fa fa-tv"></i> เปิดจอลูกค้า</button>
+          </div>
+        </div>
+
+        <div class="po-idle-body">
+          <template v-if="!poResult">
+            <div class="po-idle-card">
+              <div class="po-idle-icon"><i class="fa fa-id-card-clip"></i></div>
+              <div class="po-idle-title">แตะบัตรเพื่อรับอาหาร</div>
+              <div class="po-idle-meal">
+                <span v-if="poIdleCurrentPeriod">กำลังเปิดรับ {{ poIdleCurrentPeriod.mealName }} ({{ poFormatWindow(poIdleCurrentPeriod) }})</span>
+                <span v-else>ขณะนี้ยังไม่เปิดรับมื้อใดอยู่</span>
+              </div>
+              <input class="po-scan-input" v-model="poCardInput" placeholder="แตะบัตร หรือพิมพ์เลขบัตรแล้วกด Enter" autofocus @keydown.enter="poSubmitCardInput()">
+            </div>
+            <button class="po-history-btn" @click="poOpenHistory()"><i class="fa fa-history"></i> ประวัติการจอง</button>
+
+            <div class="po-testtools">
+              <button class="po-testtools-toggle" @click="poShowTestTools = !poShowTestTools">
+                <i class="fa fa-flask"></i> เครื่องมือทดสอบ
+                <i :class="['fa', poShowTestTools ? 'fa-chevron-up' : 'fa-chevron-down']"></i>
+              </button>
+              <div v-if="poShowTestTools" class="po-testtools-panel">
+                <button v-for="qp in poQuickPicks" :key="qp.label" class="po-qp-btn" @click="poQuickPickTap(qp)">{{ qp.label }}</button>
+                <button class="po-qp-btn po-qp-btn--offline" :class="{ active: poOfflineSim }" @click="poToggleOfflineSim()">
+                  <i class="fa fa-wifi"></i> จำลองระบบออฟไลน์ ({{ poOfflineSim ? 'เปิด' : 'ปิด' }})
+                </button>
+              </div>
+            </div>
+          </template>
+
+          <!-- ===== RESULT OVERLAY — §3.2/3.3/3.4 + edge cases §4 ===== -->
+          <div v-else class="po-result-card">
+            <button v-if="['detail', 'case4', 'case8', 'case9-timeout'].includes(poResult.case)" class="po-result-close" @click="poBackToIdle()">×</button>
+
+            <template v-if="poResult.case === 'detail'">
+              <div class="po-badge" :class="poStatusMeta(poEffectiveStatus(poResult.reservation, poResult.mockNow)).badge">{{ poStatusMeta(poEffectiveStatus(poResult.reservation, poResult.mockNow)).label }}</div>
+              <div class="po-result-avatar"><i class="fa fa-user"></i></div>
+              <div class="po-result-name">{{ poResult.card.name }}</div>
+              <div class="po-result-class">{{ poResult.card.cls }}</div>
+              <div class="po-result-items">
+                <div v-for="(it, i) in poResult.reservation.items" :key="i" class="po-result-item-row"><span>{{ it.name }}</span><span>×{{ it.qty }}</span></div>
+                <div v-if="poResult.reservation.allergyNote" class="po-result-allergy"><i class="fa fa-triangle-exclamation"></i> {{ poResult.reservation.allergyNote }}</div>
+              </div>
+              <button class="po-btn-primary" @click="poConfirmCollect()"><i class="fa fa-check"></i> ยืนยันรับอาหาร</button>
+            </template>
+
+            <template v-else-if="poResult.case === 'success'">
+              <div class="po-result-icon po-icon-success"><i class="fa fa-check-circle"></i></div>
+              <div class="po-result-title">รับอาหารสำเร็จ</div>
+              <div class="po-result-name">{{ poResult.card.name }}</div>
+              <div class="po-result-items">
+                <div v-for="(it, i) in poResult.reservation.items" :key="i" class="po-result-item-row"><span>{{ it.name }}</span><span>×{{ it.qty }}</span></div>
+              </div>
+              <div class="po-result-time">เวลา {{ poResult.reservation.collectedAt }}</div>
+            </template>
+
+            <template v-else-if="poResult.case === 'duplicate'">
+              <div class="po-result-icon po-icon-warning"><i class="fa fa-triangle-exclamation"></i></div>
+              <div class="po-result-title">รับอาหารไปแล้ว</div>
+              <div class="po-result-sub">{{ poResult.card.name }} รับไปแล้วเมื่อ {{ poResult.reservation.collectedAt }}</div>
+              <div class="po-result-footnote">หากมีข้อสงสัย ติดต่อพนักงานโรงอาหาร</div>
+            </template>
+
+            <template v-else-if="poResult.case === 'case1'">
+              <div class="po-result-icon po-icon-info"><i class="fa fa-circle-info"></i></div>
+              <div class="po-result-title">ไม่พบรายการจอง</div>
+              <div class="po-result-sub">{{ poResult.card.name }} ยังไม่ได้จองมื้อนี้</div>
+            </template>
+
+            <template v-else-if="poResult.case === 'case2'">
+              <div class="po-result-icon po-icon-warning"><i class="fa fa-triangle-exclamation"></i></div>
+              <div class="po-result-title">จองไว้{{ poResult.period.mealName }}</div>
+              <div class="po-result-sub">รับได้ {{ poFormatWindow(poResult.period) }}</div>
+            </template>
+
+            <template v-else-if="poResult.case === 'case3'">
+              <div class="po-result-icon po-icon-info"><i class="fa fa-clock"></i></div>
+              <div class="po-result-title">ยังไม่ถึงเวลารับ</div>
+              <div class="po-result-sub">เปิดรับ {{ poResult.period.start }} น.</div>
+            </template>
+
+            <template v-else-if="poResult.case === 'case4'">
+              <div class="po-result-icon po-icon-danger"><i class="fa fa-circle-xmark"></i></div>
+              <div class="po-result-title">พ้นเวลารับแล้ว</div>
+              <button class="po-btn-secondary" @click="poRequestOverride(poResult.reservation)"><i class="fa fa-user-shield"></i> แจ้งพนักงานให้ override</button>
+            </template>
+
+            <template v-else-if="poResult.case === 'case5'">
+              <div class="po-result-icon po-icon-info"><i class="fa fa-circle-info"></i></div>
+              <div class="po-result-title">ไม่พบข้อมูลบัตรนี้</div>
+              <div class="po-result-sub">กรุณาติดต่อพนักงาน</div>
+            </template>
+
+            <template v-else-if="poResult.case === 'case6'">
+              <div class="po-result-icon po-icon-danger"><i class="fa fa-ban"></i></div>
+              <div class="po-result-title">บัตรถูกระงับใช้งาน</div>
+              <div class="po-result-sub">กรุณาติดต่อพนักงาน</div>
+            </template>
+
+            <template v-else-if="poResult.case === 'case7'">
+              <div class="po-result-icon po-icon-danger"><i class="fa fa-ban"></i></div>
+              <div class="po-result-title">การจองนี้ถูกยกเลิกแล้ว</div>
+              <div class="po-result-sub">กรุณาติดต่อพนักงาน</div>
+            </template>
+
+            <template v-else-if="poResult.case === 'case8'">
+              <div class="po-result-icon po-icon-warning"><i class="fa fa-circle-exclamation"></i></div>
+              <div class="po-result-title">ยังไม่ชำระเงิน</div>
+              <div class="po-result-sub">แจ้งพนักงานก่อนรับอาหาร</div>
+            </template>
+
+            <template v-else-if="poResult.case === 'case9-loading'">
+              <div class="po-result-icon po-icon-info"><i class="fa fa-spinner fa-spin"></i></div>
+              <div class="po-result-title">กำลังตรวจสอบข้อมูล...</div>
+            </template>
+
+            <template v-else-if="poResult.case === 'case9-timeout'">
+              <div class="po-result-icon po-icon-info"><i class="fa fa-wifi"></i></div>
+              <div class="po-result-title">เชื่อมต่อไม่ได้ ลองใหม่อีกครั้ง</div>
+              <button class="po-btn-secondary" @click="poToggleOfflineSim(); poBackToIdle()"><i class="fa fa-rotate-right"></i> ปิดโหมดทดสอบ / ลองใหม่</button>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== PRE-ORDER: HISTORY (§3.5 — รายบุคคล) ===== -->
+      <div v-else-if="appScreen === 'preorder-history'" class="po-main">
+        <div class="po-topbar">
+          <button class="po-back-btn" @click="appScreen = 'preorder-idle'"><i class="fa fa-chevron-left"></i> กลับ</button>
+          <div><h1 class="po-page-title">ประวัติการจอง</h1><span class="po-page-sub">รายบุคคล</span></div>
+        </div>
+
+        <div v-if="poHistoryStep === 'scan'" class="po-history-scan">
+          <div class="po-idle-icon"><i class="fa fa-id-card-clip"></i></div>
+          <div class="po-idle-title">แตะบัตรเพื่อดูประวัติของคุณ</div>
+          <input class="po-scan-input" v-model="poHistoryCardInput" placeholder="แตะบัตร หรือพิมพ์เลขบัตรแล้วกด Enter" autofocus @keydown.enter="poHistorySubmitCard()">
+        </div>
+
+        <div v-else class="po-history-list-wrap">
+          <div class="po-history-student">{{ poHistoryCard.name }} · {{ poHistoryCard.cls }}</div>
+          <div class="po-filter-bar">
+            <input type="date" class="po-date-input" v-model="poHistoryFrom">
+            <span>ถึง</span>
+            <input type="date" class="po-date-input" v-model="poHistoryTo">
+          </div>
+          <div class="po-tab-bar">
+            <button class="po-tab" :class="{ active: poHistoryPeriodTab === 'all' }" @click="poHistoryPeriodTab = 'all'">ทั้งหมด</button>
+            <button v-for="p in preOrderMealPeriods" :key="p.key" class="po-tab" :class="{ active: poHistoryPeriodTab === p.key }" @click="poHistoryPeriodTab = p.key">{{ p.tabName }}</button>
+          </div>
+
+          <div v-if="poHistoryGroupedByDate.length === 0" class="po-empty"><i class="fa fa-inbox"></i><span>ไม่พบรายการ</span></div>
+          <div v-for="grp in poHistoryGroupedByDate" :key="grp.date" class="po-history-group">
+            <div class="po-history-date">{{ poFormatDate(grp.date) }}</div>
+            <div v-for="res in grp.items" :key="res.id" class="po-history-row" @click="poOpenDetail(res)">
+              <div class="po-history-row-main">
+                <span class="po-history-meal">{{ poPeriodOf(res.mealKey) ? poPeriodOf(res.mealKey).mealName : '' }}</span>
+                <span class="po-history-items-preview">{{ res.items.map(i => i.name).join(', ') }}</span>
+              </div>
+              <span class="po-badge" :class="poStatusMeta(poEffectiveStatus(res)).badge">{{ poStatusMeta(poEffectiveStatus(res)).label }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== PRE-ORDER: STAFF OVERVIEW (§6) ===== -->
+      <div v-else-if="appScreen === 'preorder-staff'" class="po-main">
+        <div class="po-topbar">
+          <div><h1 class="po-page-title">ภาพรวม Pre-Order</h1><span class="po-page-sub">สำหรับพนักงาน</span></div>
+        </div>
+
+        <div class="po-filter-bar">
+          <input type="date" class="po-date-input" v-model="poStaffFrom">
+          <span>ถึง</span>
+          <input type="date" class="po-date-input" v-model="poStaffTo">
+          <input class="po-search-input" v-model="poStaffSearch" placeholder="ค้นหาชื่อ / ชั้น">
+        </div>
+        <div class="po-tab-bar">
+          <button class="po-tab" :class="{ active: poStaffPeriodTab === 'all' }" @click="poStaffPeriodTab = 'all'">ทั้งหมด</button>
+          <button v-for="p in preOrderMealPeriods" :key="p.key" class="po-tab" :class="{ active: poStaffPeriodTab === p.key }" @click="poStaffPeriodTab = p.key">{{ p.tabName }}</button>
+        </div>
+
+        <div class="po-summary-row">
+          <div class="po-summary-tile"><div class="po-summary-num">{{ poStaffSummary.total }}</div><div class="po-summary-label">จองทั้งหมด</div></div>
+          <div class="po-summary-tile po-summary--ok"><div class="po-summary-num">{{ poStaffSummary.collected }}</div><div class="po-summary-label">มารับแล้ว</div></div>
+          <div class="po-summary-tile po-summary--bad"><div class="po-summary-num">{{ poStaffSummary.missed }}</div><div class="po-summary-label">ไม่มารับ</div></div>
+        </div>
+
+        <div class="po-staff-list">
+          <div v-if="poStaffFilteredList.length === 0" class="po-empty"><i class="fa fa-inbox"></i><span>ไม่พบรายการ</span></div>
+          <div v-for="res in poStaffFilteredList" :key="res.id" class="po-history-row" @click="poOpenDetail(res)">
+            <div class="po-history-row-main">
+              <span class="po-history-student-name">{{ poCardInfo(res.cardId) ? poCardInfo(res.cardId).name : res.cardId }}</span>
+              <span class="po-history-meta">{{ poCardInfo(res.cardId) ? poCardInfo(res.cardId).cls : '' }} · {{ poFormatDate(res.date) }} · {{ poPeriodOf(res.mealKey) ? poPeriodOf(res.mealKey).mealName : '' }}</span>
+            </div>
+            <span class="po-badge" :class="poStatusMeta(poEffectiveStatus(res)).badge">{{ poStatusMeta(poEffectiveStatus(res)).label }}</span>
+          </div>
+        </div>
+      </div>
+
       <!-- RIGHT PANEL: Order Summary -->
       <div v-if="appScreen === 'pos'" class="order-panel">
         <!-- Header -->
@@ -2255,6 +2553,50 @@
       </div>
     </div>
 
+    <!-- ===== PRE-ORDER: RESERVATION DETAIL MODAL (§5) ===== -->
+    <div v-if="poDetailModal && poDetailReservation" class="modal-overlay" @click.self="poCloseDetail()">
+      <div class="modal-box sm">
+        <div class="confirm-modal-body" style="align-items:stretch;text-align:left">
+          <div style="display:flex;justify-content:space-between;align-items:center;width:100%">
+            <div class="confirm-title" style="margin:0">รายละเอียดการจอง</div>
+            <span class="po-badge" :class="poStatusMeta(poEffectiveStatus(poDetailReservation)).badge">{{ poStatusMeta(poEffectiveStatus(poDetailReservation)).label }}</span>
+          </div>
+          <div style="margin-top:10px;font-size:14px;line-height:1.7;color:#3A3A3C;width:100%">
+            <div><b>{{ poCardInfo(poDetailReservation.cardId) ? poCardInfo(poDetailReservation.cardId).name : poDetailReservation.cardId }}</b> · {{ poCardInfo(poDetailReservation.cardId) ? poCardInfo(poDetailReservation.cardId).cls : '' }}</div>
+            <div>วันที่ {{ poFormatDate(poDetailReservation.date) }} · {{ poPeriodOf(poDetailReservation.mealKey) ? poPeriodOf(poDetailReservation.mealKey).mealName : '' }}</div>
+            <div v-if="poDetailReservation.collectedAt">เวลารับจริง {{ poDetailReservation.collectedAt }}</div>
+            <div style="margin-top:6px">
+              <div v-for="(it, i) in poDetailReservation.items" :key="i">• {{ it.name }} ×{{ it.qty }}</div>
+            </div>
+            <div v-if="poDetailReservation.allergyNote" style="color:#FF9500;margin-top:4px"><i class="fa fa-triangle-exclamation"></i> {{ poDetailReservation.allergyNote }}</div>
+            <div v-if="poDetailReservation.status === 'cancelled'" style="margin-top:8px;color:#8E8E93">
+              ยกเลิกโดย {{ poDetailReservation.cancelledBy }} เมื่อ {{ poDetailReservation.cancelledAt }}<br>
+              เหตุผล: {{ poDetailReservation.cancelReason }}
+            </div>
+          </div>
+
+          <template v-if="!['collected', 'cancelled'].includes(poEffectiveStatus(poDetailReservation))">
+            <div class="nav-divider" style="margin:14px 0;width:100%"></div>
+            <label class="cancel-reason-label">เหตุผลการยกเลิก *</label>
+            <select class="orders-filter-select" style="width:100%" v-model="poCancelReasonSel">
+              <option value="">เลือกเหตุผล</option>
+              <option v-for="r in poCancelReasonOptions" :key="r" :value="r">{{ r }}</option>
+            </select>
+            <textarea v-if="poCancelReasonSel === 'อื่นๆ'" class="cancel-reason-textarea" style="width:100%;margin-top:8px" v-model="poCancelReasonOther" placeholder="ระบุเหตุผลเพิ่มเติม..." rows="2"></textarea>
+            <div class="confirm-actions" style="width:100%;margin-top:14px">
+              <button class="btn-no" @click="poCloseDetail()">ปิด</button>
+              <button class="btn-yes-red" :disabled="!poCancelReasonSel || (poCancelReasonSel === 'อื่นๆ' && !poCancelReasonOther.trim())" @click="poConfirmCancelReservation()">ยืนยันยกเลิกการจอง</button>
+            </div>
+          </template>
+          <template v-else>
+            <div class="confirm-actions" style="width:100%;margin-top:14px">
+              <button class="btn-no" @click="poCloseDetail()">ปิด</button>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+
     <!-- Cancel Order Confirm -->
     <div v-if="cancelConfirm" class="modal-overlay">
       <div class="modal-box sm">
@@ -2666,6 +3008,88 @@ const moneyTransactionsData = [
   { datetime: '24/04/2026  08:15:00', type: 'topup',  merchant: 'ผ่านแม่ณี',          items: [],                    amount: 200.00 },
 ]
 
+// ══════════════════════════════════════════════════════════════════════════
+// PRE-ORDER TAP-TO-COLLECT — mock data (POS_D4504_TAP_TO_COLLECT_SPEC.md)
+// ══════════════════════════════════════════════════════════════════════════
+const preOrderMealPeriods = [
+  { key: 'breakfast', tabName: 'รอบเช้า',    mealName: 'มื้อเช้า',    start: '07:00', end: '08:30' },
+  { key: 'lunch',     tabName: 'รอบกลางวัน', mealName: 'มื้อกลางวัน', start: '11:00', end: '13:00' },
+  { key: 'dinner',    tabName: 'รอบเย็น',    mealName: 'มื้อเย็น',    start: '16:00', end: '17:30' },
+]
+
+function poDateStr(offsetDays) {
+  const d = new Date()
+  d.setDate(d.getDate() + offsetDays)
+  return d.toISOString().slice(0, 10)
+}
+const PO_TODAY = poDateStr(0)
+const PO_YESTERDAY = poDateStr(-1)
+const PO_TOMORROW = poDateStr(1)
+
+// cardId → student directory (no real hardware — cardId is whatever the scanner/keyboard-wedge types)
+const preOrderCards = {
+  '1001001': { name: 'ด.ช. ปกรณ์ วงศ์สุข',      cls: 'ป.4/1' },
+  '1001002': { name: 'ด.ญ. พิมพ์ชนก แสงทอง',    cls: 'ป.4/2' },
+  '1001003': { name: 'ด.ช. ธนกฤต ศรีสุข',        cls: 'ป.5/1' },
+  '1001004': { name: 'ด.ญ. ชนิสรา บุญมี',        cls: 'ป.5/2' },
+  '1001005': { name: 'ด.ช. ภูริณัฐ เจริญสุข',    cls: 'ป.6/1' },
+  '1001006': { name: 'ด.ญ. ณัฏฐณิชา ทองดี',      cls: 'ป.3/1' },
+  '1001007': { name: 'ด.ช. กิตติภูมิ รุ่งเรือง', cls: 'ป.3/2' },
+  '1001008': { name: 'ด.ญ. อรวรรณ พันธ์ทอง',    cls: 'ป.4/1' }, // ไม่มีจองวันนี้เลย (case 1)
+  '9009009': { name: 'ด.ช. วีรภัทร ขันแข็ง',      cls: 'ป.6/2' }, // บัตรถูกระงับ (case 6)
+}
+const preOrderSuspendedCards = ['9009009']
+
+let poResSeq = 0
+function poRes(fields) {
+  poResSeq++
+  return {
+    id: 'PORES' + String(poResSeq).padStart(4, '0'),
+    allergyNote: '', paid: true, status: 'confirmed',
+    collectedAt: null, cancelReason: null, cancelledBy: null, cancelledAt: null, overridden: false,
+    demoLabel: null, demoMockNow: null,
+    ...fields,
+  }
+}
+
+// demoMockNow: เฉพาะรายการ quick-pick ที่ผลลัพธ์ขึ้นกับเวลาปัจจุบัน (case 2/3/4/ปกติ) — บังคับเวลาให้ demo
+// ได้ผลลัพธ์ตรงเคสเสมอไม่ว่าจะทดสอบตอนไหน ส่วนการพิมพ์เลขบัตรจริงในช่อง input จะใช้เวลาจริงเสมอ (ไม่ผ่าน mockNow)
+const preOrderReservations = [
+  poRes({ cardId: '1001001', date: PO_TODAY, mealKey: 'lunch',
+    items: [{ name: 'ข้าวผัดกะเพราไก่ไข่ดาว', qty: 1 }, { name: 'น้ำเปล่า', qty: 1 }],
+    demoLabel: 'ปกติ (จองแล้ว/รอรับ)', demoMockNow: '12:00' }),
+  poRes({ cardId: '1001002', date: PO_TODAY, mealKey: 'lunch',
+    items: [{ name: 'ข้าวหมูทอดกระเทียม', qty: 1 }],
+    status: 'collected', collectedAt: '11:32',
+    demoLabel: 'รับไปแล้ว (ทดสอบแตะซ้ำ)' }),
+  poRes({ cardId: '1001003', date: PO_TODAY, mealKey: 'breakfast',
+    items: [{ name: 'ข้าวต้มหมู', qty: 1 }],
+    demoLabel: 'จองไว้คนละมื้อ', demoMockNow: '12:00' }),
+  poRes({ cardId: '1001004', date: PO_TODAY, mealKey: 'dinner',
+    items: [{ name: 'ก๋วยเตี๋ยวน้ำใส', qty: 1 }],
+    demoLabel: 'มาก่อนเวลาเปิดรับ', demoMockNow: '10:00' }),
+  poRes({ cardId: '1001005', date: PO_TODAY, mealKey: 'breakfast',
+    items: [{ name: 'ข้าวเหนียวหมูปิ้ง', qty: 1 }],
+    demoLabel: 'พ้นเวลารับแล้ว', demoMockNow: '13:30' }),
+  poRes({ cardId: '1001006', date: PO_TODAY, mealKey: 'lunch',
+    items: [{ name: 'ข้าวมันไก่', qty: 1 }],
+    status: 'cancelled', cancelReason: 'ผู้ปกครองยกเลิกล่วงหน้า', cancelledBy: 'ผู้จัดการ (ADM001)', cancelledAt: PO_YESTERDAY + ' 18:20',
+    demoLabel: 'ออเดอร์ถูกยกเลิกแล้ว' }),
+  poRes({ cardId: '1001007', date: PO_TODAY, mealKey: 'lunch',
+    items: [{ name: 'สปาเก็ตตี้ผัดขี้เมาไก่', qty: 1 }],
+    paid: false,
+    demoLabel: 'ยังไม่ชำระเงิน' }),
+  // ประวัติ (ไม่มี demoLabel — ใช้ทดสอบหน้าประวัติ/ภาพรวม staff เท่านั้น ไม่โชว์เป็น quick-pick)
+  poRes({ cardId: '1001001', date: PO_YESTERDAY, mealKey: 'lunch',
+    items: [{ name: 'ข้าวผัดหมู', qty: 1 }], status: 'collected', collectedAt: '11:45' }),
+  poRes({ cardId: '1001001', date: PO_TOMORROW, mealKey: 'breakfast',
+    items: [{ name: 'ข้าวต้มไก่', qty: 1 }] }),
+  poRes({ cardId: '1001002', date: PO_YESTERDAY, mealKey: 'dinner',
+    items: [{ name: 'ข้าวผัดอเมริกัน', qty: 1 }] }), // ผ่านมื้อไปแล้ว → คำนวณเป็น "ไม่มารับ" อัตโนมัติ
+  poRes({ cardId: '1001003', date: PO_YESTERDAY, mealKey: 'breakfast',
+    items: [{ name: 'ข้าวต้มหมู', qty: 1 }], status: 'collected', collectedAt: '07:40' }),
+]
+
 export default {
   name: 'App',
   data() {
@@ -2914,6 +3338,42 @@ export default {
       kitchenOrderModal: null,
       kitchenShowHistory: false,
       kitchenHistoryDate: new Date().toLocaleDateString('en-CA'),
+
+      // ─── PRE-ORDER TAP-TO-COLLECT ────────────────────────────────────────
+      preOrderMealPeriods,
+      preOrderCards,
+      preOrderSuspendedCards,
+      preOrderReservations,
+      poCurrentTime: '',
+      poCardInput: '',
+      poShowTestTools: false,
+      poOfflineSim: false,
+      poResult: null,
+      poResultTimer: null,
+      // ประวัติการจองรายบุคคล (§3.5) — ต้องแตะบัตรก่อนเพื่อระบุตัวตน แล้วค่อยเห็นประวัติของตัวเอง
+      poHistoryStep: 'scan',
+      poHistoryCard: null,
+      poHistoryCardInput: '',
+      poHistoryFrom: '',
+      poHistoryTo: '',
+      poHistoryPeriodTab: 'all',
+      // ภาพรวม staff (§6)
+      poStaffFrom: '',
+      poStaffTo: '',
+      poStaffPeriodTab: 'all',
+      poStaffSearch: '',
+      // modal รายละเอียด + ยกเลิก (§5) — ใช้ cancelPinModal/verifyCancelPin เดิมร่วมกัน
+      poDetailModal: false,
+      poDetailReservation: null,
+      poCancelReasonSel: '',
+      poCancelReasonOther: '',
+      poCancelReasonOptions: ['นักเรียนลาป่วย', 'ผู้ปกครองยกเลิกล่วงหน้า', 'สั่งอาหารผิดรายการ', 'อื่นๆ'],
+      poPendingCancelReason: '',
+      poOverrideTarget: null,
+      // จอ 2 — customer display (หน้าต่างเบราว์เซอร์ที่ 2 + BroadcastChannel)
+      poCustomerWindow: null,
+      poBroadcastChannel: null,
+      poIsCustomerDisplay: false,
     }
   },
 
@@ -3096,6 +3556,64 @@ export default {
       const kitchen = this.kitchensData.find(k => k.id === this.selectedKitchenId)
       if (!kitchen) return []
       return this.kitchenOrderModal.items.filter(item => kitchen.menus.includes(item.name))
+    },
+
+    // ─── PRE-ORDER TAP-TO-COLLECT ────────────────────────────────────────
+    poQuickPicks() {
+      const fromRes = this.preOrderReservations
+        .filter(r => r.demoLabel)
+        .map(r => ({ label: r.demoLabel, cardId: r.cardId, mockNow: r.demoMockNow }))
+      return [
+        ...fromRes,
+        { label: 'ไม่พบรายการจอง', cardId: '1001008', mockNow: null },
+        { label: 'ไม่พบข้อมูลบัตรนี้', cardId: '0000000', mockNow: null },
+        { label: 'บัตรถูกระงับใช้งาน', cardId: '9009009', mockNow: null },
+      ]
+    },
+    poIdleCurrentPeriod() {
+      return this.poFindActivePeriod(this.poNowMinutes(null))
+    },
+    poHistoryFilteredList() {
+      if (!this.poHistoryCard) return []
+      return this.preOrderReservations.filter(r => {
+        if (r.cardId !== this.poHistoryCard.cardId) return false
+        if (this.poHistoryFrom && r.date < this.poHistoryFrom) return false
+        if (this.poHistoryTo && r.date > this.poHistoryTo) return false
+        if (this.poHistoryPeriodTab !== 'all' && r.mealKey !== this.poHistoryPeriodTab) return false
+        return true
+      }).sort((a, b) => b.date.localeCompare(a.date))
+    },
+    poHistoryGroupedByDate() {
+      const groups = {}
+      this.poHistoryFilteredList.forEach(r => {
+        if (!groups[r.date]) groups[r.date] = []
+        groups[r.date].push(r)
+      })
+      return Object.keys(groups).sort((a, b) => b.localeCompare(a)).map(date => ({ date, items: groups[date] }))
+    },
+    poStaffFilteredList() {
+      const q = this.poStaffSearch.trim().toLowerCase()
+      return this.preOrderReservations.filter(r => {
+        if (this.poStaffFrom && r.date < this.poStaffFrom) return false
+        if (this.poStaffTo && r.date > this.poStaffTo) return false
+        if (this.poStaffPeriodTab !== 'all' && r.mealKey !== this.poStaffPeriodTab) return false
+        if (q) {
+          const card = this.poCardInfo(r.cardId)
+          const hay = ((card && card.name) || '') + ' ' + ((card && card.cls) || '')
+          if (!hay.toLowerCase().includes(q)) return false
+        }
+        return true
+      }).sort((a, b) => b.date.localeCompare(a.date))
+    },
+    poStaffSummary() {
+      const list = this.poStaffFilteredList
+      let collected = 0, missed = 0
+      list.forEach(r => {
+        const eff = this.poEffectiveStatus(r)
+        if (eff === 'collected') collected++
+        if (eff === 'missed') missed++
+      })
+      return { total: list.length, collected, missed }
     },
   },
 
@@ -3594,6 +4112,8 @@ export default {
       else if (action === 'bill-new') this.cancelThenNew()
       else if (action === 'order') this.doCancelOrder()
       else if (action === 'food') this.fsConfirmCancel()
+      else if (action === 'preorder-cancel') this.poDoCancelReservation()
+      else if (action === 'preorder-override') this.poDoOverrideCollect()
     },
 
     // Cancel
@@ -3821,6 +4341,244 @@ export default {
     refreshKitchen() {
       this.addToast('รีเฟรชข้อมูลแล้ว', 'info')
     },
+
+    // ═══════════════════════════════════════════════════════════════════
+    // PRE-ORDER TAP-TO-COLLECT
+    // ═══════════════════════════════════════════════════════════════════
+    openPreOrderIdle() {
+      this.appScreen = 'preorder-idle'
+      this.poResult = null
+      this.poCardInput = ''
+      this.poShowTestTools = false
+      this.poOfflineSim = false
+      this.poInitBroadcast()
+    },
+    poMinutesOf(hhmm) {
+      const [h, m] = hhmm.split(':').map(Number)
+      return h * 60 + m
+    },
+    poNowMinutes(mockNow) {
+      if (mockNow) return this.poMinutesOf(mockNow)
+      const d = new Date()
+      return d.getHours() * 60 + d.getMinutes()
+    },
+    poFindActivePeriod(nowMin) {
+      return this.preOrderMealPeriods.find(p => nowMin >= this.poMinutesOf(p.start) && nowMin <= this.poMinutesOf(p.end)) || null
+    },
+    poCardInfo(cardId) {
+      return this.preOrderCards[cardId] || null
+    },
+    poPeriodOf(mealKey) {
+      return this.preOrderMealPeriods.find(p => p.key === mealKey) || null
+    },
+    poFormatWindow(period) {
+      return period ? `${period.start}-${period.end} น.` : ''
+    },
+    poFormatDate(dateStr) {
+      if (!dateStr) return ''
+      const d = new Date(dateStr + 'T00:00:00')
+      return d.toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: 'numeric' })
+    },
+    // สถานะที่แสดงจริง — confirmed/ready/missed คำนวณจากเวลาปัจจุบันเทียบวันที่+ช่วงเวลาของรอบที่จอง (ดู assumption ในแผน)
+    // mockNow: ใช้เฉพาะตอนแสดงผล poResult ที่มาจากปุ่ม quick-pick (ดู poHandleTap) เพื่อให้ badge
+    // สอดคล้องกับเคสที่ demo อยู่จริง — หน้าประวัติ/ภาพรวม staff ไม่ส่ง mockNow จึงคำนวณจากเวลาจริงเสมอ
+    poEffectiveStatus(res, mockNow = null) {
+      if (res.status === 'collected') return 'collected'
+      if (res.status === 'cancelled') return 'cancelled'
+      if (res.date > PO_TODAY) return 'confirmed'
+      if (res.date < PO_TODAY) return 'missed'
+      const period = this.poPeriodOf(res.mealKey)
+      if (!period) return 'confirmed'
+      const nowMin = this.poNowMinutes(mockNow)
+      if (nowMin > this.poMinutesOf(period.end)) return 'missed'
+      if (nowMin >= this.poMinutesOf(period.start)) return 'ready'
+      return 'confirmed'
+    },
+    poStatusMeta(effStatus) {
+      const map = {
+        confirmed: { label: 'จองแล้ว',   badge: 'po-badge-confirmed' },
+        ready:     { label: 'รอวันรับ',   badge: 'po-badge-ready' },
+        collected: { label: 'รับแล้ว',    badge: 'po-badge-collected' },
+        missed:    { label: 'ไม่มารับ',   badge: 'po-badge-missed' },
+        cancelled: { label: 'ยกเลิกแล้ว', badge: 'po-badge-cancelled' },
+      }
+      return map[effStatus] || map.confirmed
+    },
+    poSubmitCardInput() {
+      const code = this.poCardInput.trim()
+      if (!code) return
+      this.poHandleTap(code)
+      this.poCardInput = ''
+    },
+    poQuickPickTap(qp) {
+      this.poHandleTap(qp.cardId, { mockNow: qp.mockNow })
+    },
+    poToggleOfflineSim() {
+      this.poOfflineSim = !this.poOfflineSim
+      if (!this.poOfflineSim && this.poResult && (this.poResult.case === 'case9-loading' || this.poResult.case === 'case9-timeout')) {
+        this.poBackToIdle()
+      }
+    },
+    // ลำดับการตรวจตามสเปก §4 — mockNow ใช้เฉพาะปุ่ม quick-pick เพื่อ demo เคสที่ขึ้นกับเวลาให้ตรงเสมอ
+    // การพิมพ์เลขบัตรจริงในช่อง input (ไม่ส่ง mockNow) จะใช้เวลาปัจจุบันจริงเสมอ
+    poHandleTap(cardId, opts = {}) {
+      clearTimeout(this.poResultTimer)
+      const mockNow = opts.mockNow || null
+
+      if (this.poOfflineSim) {
+        this.poResult = { case: 'case9-loading', cardId }
+        this.poBroadcastResult()
+        this.poResultTimer = setTimeout(() => {
+          this.poResult = { case: 'case9-timeout', cardId }
+          this.poBroadcastResult()
+        }, 1500)
+        return
+      }
+
+      const card = this.poCardInfo(cardId)
+      if (!card) { this.poShowResult({ case: 'case5', cardId }); return }
+      if (this.preOrderSuspendedCards.includes(cardId)) { this.poShowResult({ case: 'case6', cardId, card }); return }
+
+      const todays = this.preOrderReservations.filter(r => r.cardId === cardId && r.date === PO_TODAY)
+      if (todays.length === 0) { this.poShowResult({ case: 'case1', cardId, card }); return }
+
+      const res = todays[0]
+      if (res.status === 'cancelled') { this.poShowResult({ case: 'case7', cardId, card, reservation: res }); return }
+      if (res.paid === false) { this.poShowResult({ case: 'case8', cardId, card, reservation: res }); return }
+      if (res.status === 'collected') { this.poShowResult({ case: 'duplicate', cardId, card, reservation: res }); return }
+
+      const period = this.poPeriodOf(res.mealKey)
+      const nowMin = this.poNowMinutes(mockNow)
+      const active = this.poFindActivePeriod(nowMin)
+      if (active && active.key !== res.mealKey) { this.poShowResult({ case: 'case2', cardId, card, reservation: res, period }); return }
+      if (nowMin < this.poMinutesOf(period.start)) { this.poShowResult({ case: 'case3', cardId, card, reservation: res, period }); return }
+      if (nowMin > this.poMinutesOf(period.end)) { this.poShowResult({ case: 'case4', cardId, card, reservation: res, period }); return }
+      this.poShowResult({ case: 'detail', cardId, card, reservation: res, period, mockNow })
+    },
+    poShowResult(payload) {
+      this.poResult = payload
+      this.poBroadcastResult()
+      // case4 (พ้นเวลา) และ case8 (ยังไม่ชำระเงิน) รอ action พนักงาน ไม่ auto กลับ — ตาม spec §4
+      const autoCases = ['success', 'duplicate', 'case1', 'case2', 'case3', 'case5', 'case6', 'case7']
+      if (autoCases.includes(payload.case)) {
+        const delay = (payload.case === 'success' || payload.case === 'duplicate') ? 3000 : 4000
+        this.poResultTimer = setTimeout(() => this.poBackToIdle(), delay)
+      }
+    },
+    poBackToIdle() {
+      clearTimeout(this.poResultTimer)
+      this.poResult = null
+      this.poBroadcastResult()
+    },
+    poConfirmCollect() {
+      if (!this.poResult || !this.poResult.reservation) return
+      const res = this.poResult.reservation
+      res.status = 'collected'
+      res.collectedAt = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
+      this.poShowResult({ case: 'success', cardId: this.poResult.cardId, card: this.poResult.card, reservation: res })
+    },
+    poRequestOverride(reservation) {
+      this.poOverrideTarget = reservation
+      this.openCancelPin('preorder-override')
+    },
+    poDoOverrideCollect() {
+      const res = this.poOverrideTarget
+      if (!res) return
+      const code = this.cancelPinValue.trim()
+      const admin = this.systemUsers.find(u => u.code === code && u.role === 'admin')
+      res.status = 'collected'
+      res.overridden = true
+      res.collectedAt = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
+      this.poOverrideTarget = null
+      this.addToast(`Override รับอาหารสำเร็จโดย ${admin ? admin.name : 'พนักงาน'}`, 'success')
+      this.poShowResult({ case: 'success', cardId: res.cardId, card: this.poCardInfo(res.cardId), reservation: res })
+    },
+    // ประวัติการจองรายบุคคล (§3.5) — ต้องแตะบัตรก่อนเพื่อระบุตัวตนนักเรียน
+    poOpenHistory() {
+      this.poHistoryStep = 'scan'
+      this.poHistoryCard = null
+      this.poHistoryCardInput = ''
+      this.poHistoryFrom = ''
+      this.poHistoryTo = ''
+      this.poHistoryPeriodTab = 'all'
+      this.appScreen = 'preorder-history'
+    },
+    poHistorySubmitCard() {
+      const cardId = this.poHistoryCardInput.trim()
+      if (!cardId) return
+      const card = this.poCardInfo(cardId)
+      if (!card) { this.addToast('ไม่พบข้อมูลบัตรนี้', 'error'); return }
+      this.poHistoryCard = { cardId, ...card }
+      this.poHistoryStep = 'list'
+    },
+    // modal รายละเอียดร่วม (§5) — ใช้ทั้งจากหน้าประวัติและหน้าภาพรวม staff
+    poOpenDetail(reservation) {
+      this.poDetailReservation = reservation
+      this.poCancelReasonSel = ''
+      this.poCancelReasonOther = ''
+      this.poDetailModal = true
+    },
+    poCloseDetail() {
+      this.poDetailModal = false
+      this.poDetailReservation = null
+      this.poCancelReasonSel = ''
+      this.poCancelReasonOther = ''
+    },
+    poConfirmCancelReservation() {
+      if (!this.poDetailReservation) return
+      const reason = this.poCancelReasonSel === 'อื่นๆ' ? this.poCancelReasonOther.trim() : this.poCancelReasonSel
+      if (!reason) return
+      this.poPendingCancelReason = reason
+      this.poDetailModal = false
+      this.openCancelPin('preorder-cancel')
+    },
+    poDoCancelReservation() {
+      const res = this.poDetailReservation
+      if (!res) return
+      const code = this.cancelPinValue.trim()
+      const admin = this.systemUsers.find(u => u.code === code && u.role === 'admin')
+      res.status = 'cancelled'
+      res.cancelReason = this.poPendingCancelReason
+      res.cancelledBy = admin ? `${admin.name} (${admin.code})` : 'พนักงาน'
+      res.cancelledAt = new Date().toLocaleString('th-TH')
+      this.poPendingCancelReason = ''
+      this.poDetailReservation = null
+      this.addToast('ยกเลิกการจองแล้ว', 'info')
+    },
+    // จอ 2 — customer display (หน้าต่างที่ 2 + BroadcastChannel, ดูรายละเอียดใน plan)
+    poInitBroadcast() {
+      if (this.poBroadcastChannel || typeof BroadcastChannel === 'undefined') return
+      this.poBroadcastChannel = new BroadcastChannel('preorder-sync')
+      if (this.poIsCustomerDisplay) {
+        this.poBroadcastChannel.onmessage = (ev) => {
+          this.poResult = (ev.data && ev.data.type === 'result') ? ev.data.payload : null
+        }
+      }
+    },
+    poBroadcastResult() {
+      if (!this.poBroadcastChannel || this.poIsCustomerDisplay) return
+      const r = this.poResult
+      // JSON round-trip: poResult/reservation are Vue reactive proxies, which BroadcastChannel's
+      // structured-clone algorithm can fail to clone — plain data only.
+      const payload = r ? JSON.parse(JSON.stringify(this.poCustomerSafePayload(r))) : null
+      this.poBroadcastChannel.postMessage({ type: 'result', payload })
+    },
+    // ตัดฟิลด์อ่อนไหวก่อนส่งไปจอ 2 (ไม่ส่งเหตุผลยกเลิก/PIN/ฯลฯ — ตาม spec §7)
+    poCustomerSafePayload(r) {
+      const safe = { case: r.case, cardId: r.cardId }
+      if (r.card) safe.card = { name: r.card.name, cls: r.card.cls }
+      if (r.reservation) {
+        safe.reservation = { items: r.reservation.items, collectedAt: r.reservation.collectedAt, mealKey: r.reservation.mealKey }
+      }
+      if (r.period) safe.period = { mealName: r.period.mealName, start: r.period.start, end: r.period.end }
+      return safe
+    },
+    poOpenCustomerDisplay() {
+      this.poInitBroadcast()
+      const url = window.location.origin + window.location.pathname + '?display=preorder-customer'
+      this.poCustomerWindow = window.open(url, 'preorderCustomerDisplay', 'width=480,height=854')
+      if (!this.poCustomerWindow) this.addToast('เบราว์เซอร์บล็อกป๊อปอัป กรุณาอนุญาตแล้วลองใหม่', 'error')
+    },
   },
 
   watch: {
@@ -3852,11 +4610,24 @@ export default {
   mounted() {
     this.clock = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
     const updateFsClock = () => {
-      this.fsCurrentTime = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+      const t = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+      this.fsCurrentTime = t
+      this.poCurrentTime = t
     }
     updateFsClock()
     setInterval(updateFsClock, 1000)
+
+    if (new URLSearchParams(window.location.search).get('display') === 'preorder-customer') {
+      this.poIsCustomerDisplay = true
+      this.poInitBroadcast()
+    }
+
     window.__pos__ = this
+  },
+
+  beforeUnmount() {
+    if (this.poBroadcastChannel) this.poBroadcastChannel.close()
+    clearTimeout(this.poResultTimer)
   }
 }
 </script>
