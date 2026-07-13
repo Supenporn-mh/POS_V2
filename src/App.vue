@@ -1651,7 +1651,7 @@
           <input type="date" class="po-date-input" v-model="poStaffFrom">
           <span>ถึง</span>
           <input type="date" class="po-date-input" v-model="poStaffTo">
-          <input class="po-search-input" v-model="poStaffSearch" placeholder="ค้นหาชื่อ / ชั้น">
+          <input class="po-search-input" v-model="poStaffSearch" placeholder="ค้นหาชื่อ / รหัสนักเรียน / เลขบัตร">
         </div>
         <div class="po-tab-bar">
           <button class="po-tab" :class="{ active: poStaffPeriodTab === 'all' }" @click="poStaffPeriodTab = 'all'">ทั้งหมด</button>
@@ -3040,15 +3040,15 @@ const PO_TOMORROW = poDateStr(1)
 
 // cardId → student directory (no real hardware — cardId is whatever the scanner/keyboard-wedge types)
 const preOrderCards = {
-  '1001001': { name: 'ด.ช. ปกรณ์ วงศ์สุข',      cls: 'ป.4/1' },
-  '1001002': { name: 'ด.ญ. พิมพ์ชนก แสงทอง',    cls: 'ป.4/2' },
-  '1001003': { name: 'ด.ช. ธนกฤต ศรีสุข',        cls: 'ป.5/1' },
-  '1001004': { name: 'ด.ญ. ชนิสรา บุญมี',        cls: 'ป.5/2' },
-  '1001005': { name: 'ด.ช. ภูริณัฐ เจริญสุข',    cls: 'ป.6/1' },
-  '1001006': { name: 'ด.ญ. ณัฏฐณิชา ทองดี',      cls: 'ป.3/1' },
-  '1001007': { name: 'ด.ช. กิตติภูมิ รุ่งเรือง', cls: 'ป.3/2' },
-  '1001008': { name: 'ด.ญ. อรวรรณ พันธ์ทอง',    cls: 'ป.4/1' }, // ไม่มีจองวันนี้เลย (case 1)
-  '9009009': { name: 'ด.ช. วีรภัทร ขันแข็ง',      cls: 'ป.6/2' }, // บัตรถูกระงับ (case 6)
+  '1001001': { name: 'ด.ช. ปกรณ์ วงศ์สุข',      cls: 'ป.4/1', studentId: 'STD24001' },
+  '1001002': { name: 'ด.ญ. พิมพ์ชนก แสงทอง',    cls: 'ป.4/2', studentId: 'STD24002' },
+  '1001003': { name: 'ด.ช. ธนกฤต ศรีสุข',        cls: 'ป.5/1', studentId: 'STD24003' },
+  '1001004': { name: 'ด.ญ. ชนิสรา บุญมี',        cls: 'ป.5/2', studentId: 'STD24004' },
+  '1001005': { name: 'ด.ช. ภูริณัฐ เจริญสุข',    cls: 'ป.6/1', studentId: 'STD24005' },
+  '1001006': { name: 'ด.ญ. ณัฏฐณิชา ทองดี',      cls: 'ป.3/1', studentId: 'STD24006' },
+  '1001007': { name: 'ด.ช. กิตติภูมิ รุ่งเรือง', cls: 'ป.3/2', studentId: 'STD24007' },
+  '1001008': { name: 'ด.ญ. อรวรรณ พันธ์ทอง',    cls: 'ป.4/1', studentId: 'STD24008' }, // ไม่มีจองวันนี้เลย (case 1)
+  '9009009': { name: 'ด.ช. วีรภัทร ขันแข็ง',      cls: 'ป.6/2', studentId: 'STD24009' }, // บัตรถูกระงับ (case 6)
 }
 const preOrderSuspendedCards = ['9009009']
 
@@ -3589,7 +3589,7 @@ export default {
         if (this.poStaffPeriodTab !== 'all' && r.mealKey !== this.poStaffPeriodTab) return false
         if (q) {
           const card = this.poCardInfo(r.cardId)
-          const hay = ((card && card.name) || '') + ' ' + ((card && card.cls) || '')
+          const hay = [card && card.name, card && card.cls, card && card.studentId, r.cardId].filter(Boolean).join(' ')
           if (!hay.toLowerCase().includes(q)) return false
         }
         return true
