@@ -1,73 +1,82 @@
 <template>
   <div>
     <!-- ===================== PRE-ORDER CUSTOMER DISPLAY (จอ 2) ===================== -->
+    <!-- ใช้ component เดียวกับผลลัพธ์จอ 1 ทั้งหมด (po-result-card/po-icon-*/po-badge ฯลฯ) — light theme
+         เดียวกันทั้งระบบ ไม่มีธีมมืด/สีแยกสำหรับจอนี้ตามที่ยืนยันไว้ -->
     <div v-if="poIsCustomerDisplay" class="po-display-root">
       <template v-if="!poResult">
-        <div class="po-display-idle">
-          <div class="po-display-logo"><i class="fa fa-utensils"></i></div>
-          <div class="po-display-welcome">ยินดีต้อนรับ</div>
-          <div class="po-display-sub">แตะบัตรเพื่อรับอาหาร Pre-Order</div>
+        <div class="po-idle-card">
+          <div class="po-idle-icon"><i class="fa fa-utensils"></i></div>
+          <div class="po-idle-title">ยินดีต้อนรับ</div>
+          <div class="po-idle-meal">แตะบัตรเพื่อรับอาหาร Pre-Order</div>
         </div>
       </template>
       <template v-else-if="poResult.case === 'success'">
-        <div class="po-display-result po-display-success">
-          <i class="fa fa-check-circle"></i>
-          <div class="po-display-title">ขอบคุณค่ะ/ครับ</div>
-          <div class="po-display-name">{{ poResult.card && poResult.card.name }}</div>
-          <div class="po-display-items">
-            <div v-for="(it, i) in (poResult.reservation ? poResult.reservation.items : [])" :key="i">{{ it.name }} ×{{ it.qty }}</div>
+        <div class="po-result-card">
+          <div class="po-result-icon po-icon-success"><i class="fa fa-check-circle"></i></div>
+          <div class="po-result-title">ขอบคุณค่ะ/ครับ</div>
+          <div class="po-result-name">{{ poResult.card && poResult.card.name }}</div>
+          <div class="po-result-items">
+            <div v-for="(it, i) in (poResult.reservation ? poResult.reservation.items : [])" :key="i" class="po-result-item-row"><span>{{ it.name }}</span><span>×{{ it.qty }}</span></div>
           </div>
         </div>
       </template>
       <template v-else-if="poResult.case === 'duplicate'">
-        <div class="po-display-result po-display-warning">
-          <i class="fa fa-info-circle"></i>
-          <div class="po-display-title">รับอาหารไปแล้ว</div>
-          <div class="po-display-name">{{ poResult.card && poResult.card.name }}</div>
+        <div class="po-result-card">
+          <div class="po-result-icon po-icon-warning"><i class="fa fa-triangle-exclamation"></i></div>
+          <div class="po-result-title">รับอาหารไปแล้ว</div>
+          <div class="po-result-name">{{ poResult.card && poResult.card.name }}</div>
         </div>
       </template>
       <template v-else-if="poResult.case === 'detail'">
-        <div class="po-display-result">
-          <div class="po-display-name">{{ poResult.card && poResult.card.name }}</div>
-          <div class="po-display-items">
-            <div v-for="(it, i) in (poResult.reservation ? poResult.reservation.items : [])" :key="i">{{ it.name }} ×{{ it.qty }}</div>
+        <div class="po-result-card">
+          <div class="po-result-name">{{ poResult.card && poResult.card.name }}</div>
+          <div class="po-result-items">
+            <div v-for="(it, i) in (poResult.reservation ? poResult.reservation.items : [])" :key="i" class="po-result-item-row"><span>{{ it.name }}</span><span>×{{ it.qty }}</span></div>
           </div>
         </div>
       </template>
       <template v-else-if="poResult.case === 'case1'">
-        <div class="po-display-result po-display-info"><div class="po-display-title">ไม่พบรายการจอง</div></div>
+        <div class="po-result-card"><div class="po-result-icon po-icon-neutral"><i class="fa fa-circle-info"></i></div><div class="po-result-title">ไม่พบรายการจอง</div></div>
       </template>
       <template v-else-if="poResult.case === 'case2'">
-        <div class="po-display-result po-display-warning">
-          <div class="po-display-title">จองไว้{{ poResult.period ? poResult.period.mealName : '' }}</div>
-          <div class="po-display-sub">รับได้ {{ poFormatWindow(poResult.period) }}</div>
+        <div class="po-result-card">
+          <div class="po-result-icon po-icon-warning"><i class="fa fa-triangle-exclamation"></i></div>
+          <div class="po-result-title">จองไว้{{ poResult.period ? poResult.period.mealName : '' }}</div>
+          <div class="po-result-sub">รับได้ {{ poFormatWindow(poResult.period) }}</div>
         </div>
       </template>
       <template v-else-if="poResult.case === 'case3'">
-        <div class="po-display-result po-display-info">
-          <div class="po-display-title">ยังไม่ถึงเวลารับ</div>
-          <div class="po-display-sub">เปิดรับ {{ poResult.period ? poResult.period.start : '' }} น.</div>
+        <div class="po-result-card">
+          <div class="po-result-icon po-icon-info"><i class="fa fa-clock"></i></div>
+          <div class="po-result-title">ยังไม่ถึงเวลารับ</div>
+          <div class="po-result-sub">เปิดรับ {{ poResult.period ? poResult.period.start : '' }} น.</div>
         </div>
       </template>
       <template v-else-if="poResult.case === 'case4'">
-        <div class="po-display-result po-display-danger">
-          <div class="po-display-title">พ้นเวลารับแล้ว</div><div class="po-display-sub">กรุณาติดต่อพนักงาน</div>
+        <div class="po-result-card">
+          <div class="po-result-icon po-icon-danger"><i class="fa fa-circle-xmark"></i></div>
+          <div class="po-result-title">พ้นเวลารับแล้ว</div><div class="po-result-sub">กรุณาติดต่อพนักงาน</div>
         </div>
       </template>
       <template v-else-if="poResult.case === 'case5'">
-        <div class="po-display-result po-display-info"><div class="po-display-title">ไม่พบข้อมูลบัตรนี้</div><div class="po-display-sub">กรุณาติดต่อพนักงาน</div></div>
+        <div class="po-result-card"><div class="po-result-icon po-icon-neutral"><i class="fa fa-circle-info"></i></div><div class="po-result-title">ไม่พบข้อมูลบัตรนี้</div><div class="po-result-sub">กรุณาติดต่อพนักงาน</div></div>
       </template>
       <template v-else-if="poResult.case === 'case6'">
-        <div class="po-display-result po-display-danger"><div class="po-display-title">บัตรถูกระงับใช้งาน</div><div class="po-display-sub">กรุณาติดต่อพนักงาน</div></div>
+        <div class="po-result-card"><div class="po-result-icon po-icon-danger"><i class="fa fa-ban"></i></div><div class="po-result-title">บัตรถูกระงับใช้งาน</div><div class="po-result-sub">กรุณาติดต่อพนักงาน</div></div>
       </template>
       <template v-else-if="poResult.case === 'case7'">
-        <div class="po-display-result po-display-danger"><div class="po-display-title">การจองนี้ถูกยกเลิกแล้ว</div><div class="po-display-sub">กรุณาติดต่อพนักงาน</div></div>
+        <div class="po-result-card"><div class="po-result-icon po-icon-danger"><i class="fa fa-ban"></i></div><div class="po-result-title">การจองนี้ถูกยกเลิกแล้ว</div><div class="po-result-sub">กรุณาติดต่อพนักงาน</div></div>
       </template>
       <template v-else-if="poResult.case === 'case8'">
-        <div class="po-display-result po-display-warning"><div class="po-display-title">ยังไม่ชำระเงิน</div><div class="po-display-sub">แจ้งพนักงานก่อนรับอาหาร</div></div>
+        <div class="po-result-card"><div class="po-result-icon po-icon-warning"><i class="fa fa-circle-exclamation"></i></div><div class="po-result-title">ยังไม่ชำระเงิน</div><div class="po-result-sub">แจ้งพนักงานก่อนรับอาหาร</div></div>
       </template>
       <template v-else-if="poResult.case === 'case9-loading' || poResult.case === 'case9-timeout'">
-        <div class="po-display-result po-display-info"><i class="fa fa-spinner fa-spin"></i><div class="po-display-title">กำลังตรวจสอบข้อมูล...</div></div>
+        <div class="po-result-card"><div class="po-result-icon po-icon-neutral"><i class="fa fa-spinner fa-spin"></i></div><div class="po-result-title">กำลังตรวจสอบข้อมูล...</div></div>
+      </template>
+      <!-- §4.5 เคส B/C — fallback กลางเดียวกัน ไม่แยกรายละเอียดให้ลูกค้าเห็น (เคส A/D ไม่ส่งอะไรมาเลย จอนี้เลยไม่มี branch) -->
+      <template v-else-if="poResult.case === 'hw-contact-staff'">
+        <div class="po-result-card"><div class="po-result-icon po-icon-neutral"><i class="fa fa-circle-info"></i></div><div class="po-result-title">กรุณาติดต่อพนักงาน</div></div>
       </template>
     </div>
 
@@ -1513,13 +1522,16 @@
                 <button class="po-qp-btn po-qp-btn--offline" :class="{ active: poOfflineSim }" @click="poToggleOfflineSim()">
                   <i class="fa fa-wifi"></i> จำลองระบบออฟไลน์ ({{ poOfflineSim ? 'เปิด' : 'ปิด' }})
                 </button>
+                <button class="po-qp-btn" @click="poSimulateMisread()">แตะบัตรไม่สำเร็จ ({{ poMisreadCount }}/3)</button>
+                <button class="po-qp-btn" @click="poSimulateReaderFailure()">เครื่องอ่านบัตรขัดข้อง</button>
+                <button class="po-qp-btn" @click="poDemoDebounce()">แตะซ้ำระหว่างประมวลผล (debounce)</button>
               </div>
             </div>
           </template>
 
-          <!-- ===== RESULT OVERLAY — §3.2/3.3/3.4 + edge cases §4 ===== -->
+          <!-- ===== RESULT OVERLAY — §3.2/3.3/3.4 + edge cases §4/§4.5 ===== -->
           <div v-else class="po-result-card">
-            <button v-if="['detail', 'case4', 'case8', 'case9-timeout'].includes(poResult.case)" class="po-result-close" @click="poBackToIdle()">×</button>
+            <button v-if="['detail', 'case4', 'case8', 'case9-timeout', 'hwB', 'hwC'].includes(poResult.case)" class="po-result-close" @click="poBackToIdle()">×</button>
 
             <template v-if="poResult.case === 'detail'">
               <div class="po-badge" :class="poStatusMeta(poEffectiveStatus(poResult.reservation, poResult.mockNow)).badge">{{ poStatusMeta(poEffectiveStatus(poResult.reservation, poResult.mockNow)).label }}</div>
@@ -1551,7 +1563,7 @@
             </template>
 
             <template v-else-if="poResult.case === 'case1'">
-              <div class="po-result-icon po-icon-info"><i class="fa fa-circle-info"></i></div>
+              <div class="po-result-icon po-icon-neutral"><i class="fa fa-circle-info"></i></div>
               <div class="po-result-title">ไม่พบรายการจอง</div>
               <div class="po-result-sub">{{ poResult.card.name }} ยังไม่ได้จองมื้อนี้</div>
             </template>
@@ -1575,7 +1587,7 @@
             </template>
 
             <template v-else-if="poResult.case === 'case5'">
-              <div class="po-result-icon po-icon-info"><i class="fa fa-circle-info"></i></div>
+              <div class="po-result-icon po-icon-neutral"><i class="fa fa-circle-info"></i></div>
               <div class="po-result-title">ไม่พบข้อมูลบัตรนี้</div>
               <div class="po-result-sub">กรุณาติดต่อพนักงาน</div>
             </template>
@@ -1599,14 +1611,35 @@
             </template>
 
             <template v-else-if="poResult.case === 'case9-loading'">
-              <div class="po-result-icon po-icon-info"><i class="fa fa-spinner fa-spin"></i></div>
+              <div class="po-result-icon po-icon-neutral"><i class="fa fa-spinner fa-spin"></i></div>
               <div class="po-result-title">กำลังตรวจสอบข้อมูล...</div>
             </template>
 
             <template v-else-if="poResult.case === 'case9-timeout'">
-              <div class="po-result-icon po-icon-info"><i class="fa fa-wifi"></i></div>
+              <div class="po-result-icon po-icon-neutral"><i class="fa fa-wifi"></i></div>
               <div class="po-result-title">เชื่อมต่อไม่ได้ ลองใหม่อีกครั้ง</div>
               <button class="po-btn-secondary" @click="poToggleOfflineSim(); poBackToIdle()"><i class="fa fa-rotate-right"></i> ปิดโหมดทดสอบ / ลองใหม่</button>
+            </template>
+
+            <!-- §4.5 เคสแตะบัตรไม่ผ่าน (ฮาร์ดแวร์) — คนละกลุ่มจาก business case ด้านบน -->
+            <template v-else-if="poResult.case === 'hwA'">
+              <div class="po-result-icon po-icon-info"><i class="fa fa-arrows-rotate"></i></div>
+              <div class="po-result-title">แตะบัตรอีกครั้ง</div>
+            </template>
+
+            <template v-else-if="poResult.case === 'hwB'">
+              <div class="po-result-icon po-icon-warning"><i class="fa fa-id-card"></i></div>
+              <div class="po-result-title">อ่านบัตรไม่ได้ กรุณาติดต่อพนักงาน</div>
+            </template>
+
+            <template v-else-if="poResult.case === 'hwC'">
+              <div class="po-result-icon po-icon-danger"><i class="fa fa-screwdriver-wrench"></i></div>
+              <div class="po-result-title">เครื่องอ่านบัตรขัดข้อง กรุณาติดต่อพนักงาน</div>
+            </template>
+
+            <template v-else-if="poResult.case === 'hwD'">
+              <div class="po-result-icon po-icon-neutral"><i class="fa fa-spinner fa-spin"></i></div>
+              <div class="po-result-title">กำลังดำเนินการ กรุณารอสักครู่</div>
             </template>
           </div>
         </div>
@@ -2561,7 +2594,7 @@
             <div class="confirm-title" style="margin:0">รายละเอียดการจอง</div>
             <span class="po-badge" :class="poStatusMeta(poEffectiveStatus(poDetailReservation)).badge">{{ poStatusMeta(poEffectiveStatus(poDetailReservation)).label }}</span>
           </div>
-          <div style="margin-top:10px;font-size:14px;line-height:1.7;color:#3A3A3C;width:100%">
+          <div style="margin-top:10px;font-size:14px;line-height:1.7;color:#3C3C43;width:100%">
             <div><b>{{ poCardInfo(poDetailReservation.cardId) ? poCardInfo(poDetailReservation.cardId).name : poDetailReservation.cardId }}</b> · {{ poCardInfo(poDetailReservation.cardId) ? poCardInfo(poDetailReservation.cardId).cls : '' }}</div>
             <div>วันที่ {{ poFormatDate(poDetailReservation.date) }} · {{ poPeriodOf(poDetailReservation.mealKey) ? poPeriodOf(poDetailReservation.mealKey).mealName : '' }}</div>
             <div v-if="poDetailReservation.collectedAt">เวลารับจริง {{ poDetailReservation.collectedAt }}</div>
@@ -3350,6 +3383,9 @@ export default {
       poOfflineSim: false,
       poResult: null,
       poResultTimer: null,
+      // §4.5 เคสแตะบัตรไม่ผ่าน (hardware) — คนละกลุ่มกับ business edge case §4
+      poMisreadCount: 0,
+      poProcessing: false,
       // ประวัติการจองรายบุคคล (§3.5) — ต้องแตะบัตรก่อนเพื่อระบุตัวตน แล้วค่อยเห็นประวัติของตัวเอง
       poHistoryStep: 'scan',
       poHistoryCard: null,
@@ -3369,7 +3405,6 @@ export default {
       poCancelReasonOther: '',
       poCancelReasonOptions: ['นักเรียนลาป่วย', 'ผู้ปกครองยกเลิกล่วงหน้า', 'สั่งอาหารผิดรายการ', 'อื่นๆ'],
       poPendingCancelReason: '',
-      poOverrideTarget: null,
       // จอ 2 — customer display (หน้าต่างเบราว์เซอร์ที่ 2 + BroadcastChannel)
       poCustomerWindow: null,
       poBroadcastChannel: null,
@@ -4113,7 +4148,6 @@ export default {
       else if (action === 'order') this.doCancelOrder()
       else if (action === 'food') this.fsConfirmCancel()
       else if (action === 'preorder-cancel') this.poDoCancelReservation()
-      else if (action === 'preorder-override') this.poDoOverrideCollect()
     },
 
     // Cancel
@@ -4422,6 +4456,9 @@ export default {
     // ลำดับการตรวจตามสเปก §4 — mockNow ใช้เฉพาะปุ่ม quick-pick เพื่อ demo เคสที่ขึ้นกับเวลาให้ตรงเสมอ
     // การพิมพ์เลขบัตรจริงในช่อง input (ไม่ส่ง mockNow) จะใช้เวลาปัจจุบันจริงเสมอ
     poHandleTap(cardId, opts = {}) {
+      // §4.5 เคส D — แตะซ้ำระหว่างเครื่องกำลังประมวลผลรายการก่อนหน้า กันไม่ให้ยิง request ซ้ำ (UI-level เท่านั้น)
+      if (this.poProcessing) { this.poShowResult({ case: 'hwD' }); return }
+      this.poProcessing = true
       clearTimeout(this.poResultTimer)
       const mockNow = opts.mockNow || null
 
@@ -4431,6 +4468,7 @@ export default {
         this.poResultTimer = setTimeout(() => {
           this.poResult = { case: 'case9-timeout', cardId }
           this.poBroadcastResult()
+          this.poProcessing = false
         }, 1500)
         return
       }
@@ -4455,18 +4493,51 @@ export default {
       if (nowMin > this.poMinutesOf(period.end)) { this.poShowResult({ case: 'case4', cardId, card, reservation: res, period }); return }
       this.poShowResult({ case: 'detail', cardId, card, reservation: res, period, mockNow })
     },
+    // §4.5 เคส A/B — อ่านบัตรไม่สำเร็จระดับฮาร์ดแวร์ (คนละกลุ่มกับ business case §4 ที่อ่านผ่านแต่ข้อมูลมีปัญหา)
+    // นับ retry ใน session นี้ ถ้าเกิน limit สลับไปเคส B อัตโนมัติ ไม่ให้แตะไม่รู้จบ
+    poSimulateMisread() {
+      if (this.poProcessing) { this.poShowResult({ case: 'hwD' }); return }
+      const RETRY_LIMIT = 3
+      this.poMisreadCount++
+      if (this.poMisreadCount >= RETRY_LIMIT) {
+        this.poShowResult({ case: 'hwB', errorCode: 'CARD_MISREAD_LIMIT' })
+      } else {
+        this.poShowResult({ case: 'hwA', errorCode: 'CARD_MISREAD_RETRY', attempt: this.poMisreadCount })
+      }
+    },
+    // §4.5 เคส C — ตัวอ่านบัตรขัดข้องทั้งเครื่อง แยก errorCode จากเคส B ชัดเจนระดับโค้ด ไม่ปนกับบัตรชำรุด
+    poSimulateReaderFailure() {
+      if (this.poProcessing) { this.poShowResult({ case: 'hwD' }); return }
+      this.addToast('แจ้งพนักงาน/แอดมิน: เครื่องอ่านบัตรขัดข้อง (errorCode: READER_HW_FAULT)', 'error')
+      this.poShowResult({ case: 'hwC', errorCode: 'READER_HW_FAULT' })
+    },
+    // ปุ่ม demo เดียว จำลอง §4.5 เคส D จริง — ยิง tap ซ้ำระหว่างที่ tap แรกกำลังประมวลผล (offline-sim) อยู่
+    poDemoDebounce() {
+      this.poOfflineSim = true
+      this.poHandleTap('demo-debounce')
+      this.poHandleTap('demo-debounce')
+    },
     poShowResult(payload) {
+      this.poProcessing = false
+      if (payload.case !== 'hwA') this.poMisreadCount = 0
       this.poResult = payload
       this.poBroadcastResult()
-      // case4 (พ้นเวลา) และ case8 (ยังไม่ชำระเงิน) รอ action พนักงาน ไม่ auto กลับ — ตาม spec §4
-      const autoCases = ['success', 'duplicate', 'case1', 'case2', 'case3', 'case5', 'case6', 'case7']
-      if (autoCases.includes(payload.case)) {
-        const delay = (payload.case === 'success' || payload.case === 'duplicate') ? 3000 : 4000
-        this.poResultTimer = setTimeout(() => this.poBackToIdle(), delay)
+      // case4/case8/hwB/hwC รอ action พนักงาน ไม่ auto กลับ — ตาม spec §4/§4.5
+      const delayMap = {
+        success: 3000, duplicate: 3000,
+        case1: 4000, case2: 4000, case3: 4000, case5: 4000, case6: 4000, case7: 4000,
+        hwA: 2500, hwD: 2000,
+      }
+      if (delayMap[payload.case]) {
+        this.poResultTimer = setTimeout(() => this.poBackToIdle(), delayMap[payload.case])
       }
     },
     poBackToIdle() {
+      // หมายเหตุ: ไม่ reset poMisreadCount ตรงนี้ — เคส A auto-dismiss กลับ idle ทุกครั้งด้วยตัวมันเอง
+      // ถ้า reset ที่นี่ นับ retry ข้าม session (A→idle→A→idle→A) ไม่ได้เลย ต้องปล่อยให้ poShowResult
+      // เป็นคนคุม (reset เฉพาะตอนเจอเคสอื่นที่ไม่ใช่ hwA เท่านั้น)
       clearTimeout(this.poResultTimer)
+      this.poProcessing = false
       this.poResult = null
       this.poBroadcastResult()
     },
@@ -4477,21 +4548,13 @@ export default {
       res.collectedAt = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
       this.poShowResult({ case: 'success', cardId: this.poResult.cardId, card: this.poResult.card, reservation: res })
     },
+    // เคส 4 override — ยืนยันกับทีมแล้วว่าไม่ต้องขอรหัส supervisor เหมือนยกเลิก กดแล้วเปลี่ยนสถานะทันที (spec §8)
     poRequestOverride(reservation) {
-      this.poOverrideTarget = reservation
-      this.openCancelPin('preorder-override')
-    },
-    poDoOverrideCollect() {
-      const res = this.poOverrideTarget
-      if (!res) return
-      const code = this.cancelPinValue.trim()
-      const admin = this.systemUsers.find(u => u.code === code && u.role === 'admin')
-      res.status = 'collected'
-      res.overridden = true
-      res.collectedAt = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
-      this.poOverrideTarget = null
-      this.addToast(`Override รับอาหารสำเร็จโดย ${admin ? admin.name : 'พนักงาน'}`, 'success')
-      this.poShowResult({ case: 'success', cardId: res.cardId, card: this.poCardInfo(res.cardId), reservation: res })
+      reservation.status = 'collected'
+      reservation.overridden = true
+      reservation.collectedAt = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
+      this.addToast('Override รับอาหารสำเร็จ', 'success')
+      this.poShowResult({ case: 'success', cardId: reservation.cardId, card: this.poCardInfo(reservation.cardId), reservation })
     },
     // ประวัติการจองรายบุคคล (§3.5) — ต้องแตะบัตรก่อนเพื่อระบุตัวตนนักเรียน
     poOpenHistory() {
@@ -4558,6 +4621,8 @@ export default {
     poBroadcastResult() {
       if (!this.poBroadcastChannel || this.poIsCustomerDisplay) return
       const r = this.poResult
+      // §4.5 เคส A/D — จอ 2 "คงหน้าเดิมไว้เฉยๆ" ตามสเปก ไม่ส่งอะไรไปเลย (ต่างจาก null ที่แปลว่ากลับ idle)
+      if (r && (r.case === 'hwA' || r.case === 'hwD')) return
       // JSON round-trip: poResult/reservation are Vue reactive proxies, which BroadcastChannel's
       // structured-clone algorithm can fail to clone — plain data only.
       const payload = r ? JSON.parse(JSON.stringify(this.poCustomerSafePayload(r))) : null
@@ -4565,6 +4630,8 @@ export default {
     },
     // ตัดฟิลด์อ่อนไหวก่อนส่งไปจอ 2 (ไม่ส่งเหตุผลยกเลิก/PIN/ฯลฯ — ตาม spec §7)
     poCustomerSafePayload(r) {
+      // §4.5 เคส B/C — จอ 2 โชว์ fallback กลาง "กรุณาติดต่อพนักงาน" เดียวกัน ไม่แยก error code ให้ลูกค้าเห็น
+      if (r.case === 'hwB' || r.case === 'hwC') return { case: 'hw-contact-staff' }
       const safe = { case: r.case, cardId: r.cardId }
       if (r.card) safe.card = { name: r.card.name, cls: r.card.cls }
       if (r.reservation) {
