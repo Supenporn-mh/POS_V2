@@ -184,10 +184,6 @@
             <div class="feature-card-icon fi-blue"><i class="fa fa-id-card-clip"></i></div>
             <div><div class="feature-card-name">Pre-Order</div><div class="feature-card-sub">แตะบัตรรับอาหาร</div></div>
           </div>
-          <div class="feature-card" @click="appScreen = 'preorder-staff'">
-            <div class="feature-card-icon fi-red"><i class="fa fa-clipboard-list"></i></div>
-            <div><div class="feature-card-name">ภาพรวม Pre-Order</div><div class="feature-card-sub">สำหรับพนักงาน</div></div>
-          </div>
         </div>
       </div>
     </div>
@@ -220,7 +216,7 @@
               <i class="fa fa-motorcycle"></i><span>ส่งอาหาร</span>
             </div>
           </template>
-          <template v-else-if="appScreen === 'preorder-idle' || appScreen === 'preorder-history'">
+          <template v-else-if="appScreen === 'preorder-idle'">
             <div class="nav-item active">
               <i class="fa fa-id-card-clip"></i><span>Pre-Order</span>
             </div>
@@ -1510,7 +1506,7 @@
               </div>
               <input class="po-scan-input" v-model="poCardInput" placeholder="แตะบัตร หรือพิมพ์เลขบัตรแล้วกด Enter" autofocus @keydown.enter="poSubmitCardInput()">
             </div>
-            <button class="po-history-btn" @click="poOpenHistory()"><i class="fa fa-history"></i> ประวัติการจอง</button>
+            <button class="po-history-btn" @click="appScreen = 'preorder-staff'"><i class="fa fa-history"></i> ประวัติการจอง</button>
 
             <div class="po-testtools">
               <button class="po-testtools-toggle" @click="poShowTestTools = !poShowTestTools">
@@ -1645,46 +1641,7 @@
         </div>
       </div>
 
-      <!-- ===== PRE-ORDER: HISTORY (§3.5 — รายบุคคล) ===== -->
-      <div v-else-if="appScreen === 'preorder-history'" class="po-main">
-        <div class="po-topbar">
-          <button class="po-back-btn" @click="appScreen = 'preorder-idle'"><i class="fa fa-chevron-left"></i> กลับ</button>
-          <div><h1 class="po-page-title">ประวัติการจอง</h1><span class="po-page-sub">รายบุคคล</span></div>
-        </div>
-
-        <div v-if="poHistoryStep === 'scan'" class="po-history-scan">
-          <div class="po-idle-icon"><i class="fa fa-id-card-clip"></i></div>
-          <div class="po-idle-title">แตะบัตรเพื่อดูประวัติของคุณ</div>
-          <input class="po-scan-input" v-model="poHistoryCardInput" placeholder="แตะบัตร หรือพิมพ์เลขบัตรแล้วกด Enter" autofocus @keydown.enter="poHistorySubmitCard()">
-        </div>
-
-        <div v-else class="po-history-list-wrap">
-          <div class="po-history-student">{{ poHistoryCard.name }} · {{ poHistoryCard.cls }}</div>
-          <div class="po-filter-bar">
-            <input type="date" class="po-date-input" v-model="poHistoryFrom">
-            <span>ถึง</span>
-            <input type="date" class="po-date-input" v-model="poHistoryTo">
-          </div>
-          <div class="po-tab-bar">
-            <button class="po-tab" :class="{ active: poHistoryPeriodTab === 'all' }" @click="poHistoryPeriodTab = 'all'">ทั้งหมด</button>
-            <button v-for="p in preOrderMealPeriods" :key="p.key" class="po-tab" :class="{ active: poHistoryPeriodTab === p.key }" @click="poHistoryPeriodTab = p.key">{{ p.tabName }}</button>
-          </div>
-
-          <div v-if="poHistoryGroupedByDate.length === 0" class="po-empty"><i class="fa fa-inbox"></i><span>ไม่พบรายการ</span></div>
-          <div v-for="grp in poHistoryGroupedByDate" :key="grp.date" class="po-history-group">
-            <div class="po-history-date">{{ poFormatDate(grp.date) }}</div>
-            <div v-for="res in grp.items" :key="res.id" class="po-history-row" @click="poOpenDetail(res)">
-              <div class="po-history-row-main">
-                <span class="po-history-meal">{{ poPeriodOf(res.mealKey) ? poPeriodOf(res.mealKey).mealName : '' }}</span>
-                <span class="po-history-items-preview">{{ res.items.map(i => i.name).join(', ') }}</span>
-              </div>
-              <span class="po-badge" :class="poStatusMeta(poEffectiveStatus(res)).badge">{{ poStatusMeta(poEffectiveStatus(res)).label }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ===== PRE-ORDER: STAFF OVERVIEW (§6) ===== -->
+      <!-- ===== PRE-ORDER: STAFF OVERVIEW (§6) — ปุ่ม "ประวัติการจอง" บนหน้า idle พาตรงมาที่นี่ ===== -->
       <div v-else-if="appScreen === 'preorder-staff'" class="po-main">
         <div class="po-topbar">
           <div><h1 class="po-page-title">ภาพรวม Pre-Order</h1><span class="po-page-sub">สำหรับพนักงาน</span></div>
@@ -3386,14 +3343,7 @@ export default {
       // §4.5 เคสแตะบัตรไม่ผ่าน (hardware) — คนละกลุ่มกับ business edge case §4
       poMisreadCount: 0,
       poProcessing: false,
-      // ประวัติการจองรายบุคคล (§3.5) — ต้องแตะบัตรก่อนเพื่อระบุตัวตน แล้วค่อยเห็นประวัติของตัวเอง
-      poHistoryStep: 'scan',
-      poHistoryCard: null,
-      poHistoryCardInput: '',
-      poHistoryFrom: '',
-      poHistoryTo: '',
-      poHistoryPeriodTab: 'all',
-      // ภาพรวม staff (§6)
+      // ภาพรวม staff (§6) — ปุ่ม "ประวัติการจอง" บนหน้า idle พาตรงมาหน้านี้เลย (ไม่ต้องแตะบัตรระบุตัวตนอีกต่อไป)
       poStaffFrom: '',
       poStaffTo: '',
       poStaffPeriodTab: 'all',
@@ -3607,24 +3557,6 @@ export default {
     },
     poIdleCurrentPeriod() {
       return this.poFindActivePeriod(this.poNowMinutes(null))
-    },
-    poHistoryFilteredList() {
-      if (!this.poHistoryCard) return []
-      return this.preOrderReservations.filter(r => {
-        if (r.cardId !== this.poHistoryCard.cardId) return false
-        if (this.poHistoryFrom && r.date < this.poHistoryFrom) return false
-        if (this.poHistoryTo && r.date > this.poHistoryTo) return false
-        if (this.poHistoryPeriodTab !== 'all' && r.mealKey !== this.poHistoryPeriodTab) return false
-        return true
-      }).sort((a, b) => b.date.localeCompare(a.date))
-    },
-    poHistoryGroupedByDate() {
-      const groups = {}
-      this.poHistoryFilteredList.forEach(r => {
-        if (!groups[r.date]) groups[r.date] = []
-        groups[r.date].push(r)
-      })
-      return Object.keys(groups).sort((a, b) => b.localeCompare(a)).map(date => ({ date, items: groups[date] }))
     },
     poStaffFilteredList() {
       const q = this.poStaffSearch.trim().toLowerCase()
@@ -4556,25 +4488,7 @@ export default {
       this.addToast('Override รับอาหารสำเร็จ', 'success')
       this.poShowResult({ case: 'success', cardId: reservation.cardId, card: this.poCardInfo(reservation.cardId), reservation })
     },
-    // ประวัติการจองรายบุคคล (§3.5) — ต้องแตะบัตรก่อนเพื่อระบุตัวตนนักเรียน
-    poOpenHistory() {
-      this.poHistoryStep = 'scan'
-      this.poHistoryCard = null
-      this.poHistoryCardInput = ''
-      this.poHistoryFrom = ''
-      this.poHistoryTo = ''
-      this.poHistoryPeriodTab = 'all'
-      this.appScreen = 'preorder-history'
-    },
-    poHistorySubmitCard() {
-      const cardId = this.poHistoryCardInput.trim()
-      if (!cardId) return
-      const card = this.poCardInfo(cardId)
-      if (!card) { this.addToast('ไม่พบข้อมูลบัตรนี้', 'error'); return }
-      this.poHistoryCard = { cardId, ...card }
-      this.poHistoryStep = 'list'
-    },
-    // modal รายละเอียดร่วม (§5) — ใช้ทั้งจากหน้าประวัติและหน้าภาพรวม staff
+    // modal รายละเอียดร่วม (§5) — ใช้ร่วมกับหน้าภาพรวม staff
     poOpenDetail(reservation) {
       this.poDetailReservation = reservation
       this.poCancelReasonSel = ''
