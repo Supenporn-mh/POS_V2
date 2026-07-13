@@ -3339,6 +3339,8 @@ input:focus { outline: none; }
 .po-result-items { width: 100%; margin-top: 10px; text-align: left; }
 .po-result-item-row { display: flex; justify-content: space-between; font-size: 14px; color: #3C3C43; padding: 4px 0; } /* Body */
 .po-result-allergy { font-size: 11px; color: #FF9500; margin-top: 6px; } /* Caption */
+/* บุฟเฟต์ — ยอดเงินที่จ่าย ใช้สเกล Display-XL เดียวกับตัวเลขยอดเงินหน้าการเงิน (§3 typography) */
+.buf-display-amount { font-size: 44px; font-weight: 500; color: #007AFF; margin-top: 8px; }
 .po-btn-primary {
   /* NOTE: design system Label scale (13px/500) lists "ปุ่ม" as its example, but that would shrink this
      full-width primary CTA text below comfortable kiosk touch-target legibility — kept larger pending

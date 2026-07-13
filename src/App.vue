@@ -80,6 +80,31 @@
       </template>
     </div>
 
+    <!-- ===================== BUFFET CUSTOMER DISPLAY (จอ 2) ===================== -->
+    <!-- ใช้ component/token เดียวกับ Pre-Order (light theme เดียวกันทั้งระบบ) แต่ผลลัพธ์/BroadcastChannel แยกกันคนละตัว -->
+    <div v-else-if="bufIsCustomerDisplay" class="po-display-root">
+      <template v-if="!bufResult">
+        <div class="po-idle-card">
+          <div class="po-idle-icon"><i class="fa fa-utensils"></i></div>
+          <div class="po-idle-title">ยินดีต้อนรับ</div>
+          <div class="po-idle-meal">บุฟเฟต์ — แตะบัตรเพื่อชำระเงิน</div>
+        </div>
+      </template>
+      <template v-else-if="bufResult.case === 'success'">
+        <div class="po-result-card">
+          <div class="po-result-icon po-icon-success"><i class="fa fa-check-circle"></i></div>
+          <div class="po-result-title">ขอบคุณค่ะ</div>
+          <div class="buf-display-amount">฿{{ bufResult.amount }}</div>
+        </div>
+      </template>
+      <template v-else-if="bufResult.case === 'buf-contact-staff'">
+        <div class="po-result-card"><div class="po-result-icon po-icon-neutral"><i class="fa fa-circle-info"></i></div><div class="po-result-title">กรุณาติดต่อพนักงาน</div></div>
+      </template>
+      <template v-else-if="bufResult.case === 'case9-loading' || bufResult.case === 'case9-timeout'">
+        <div class="po-result-card"><div class="po-result-icon po-icon-neutral"><i class="fa fa-spinner fa-spin"></i></div><div class="po-result-title">กำลังตรวจสอบข้อมูล...</div></div>
+      </template>
+    </div>
+
     <!-- ===================== LOGIN ===================== -->
     <div v-else-if="appScreen === 'login'" class="upos-login">
       <div class="login-left">
@@ -184,6 +209,10 @@
             <div class="feature-card-icon fi-blue"><i class="fa fa-id-card-clip"></i></div>
             <div><div class="feature-card-name">Pre-Order</div><div class="feature-card-sub">แตะบัตรรับอาหาร</div></div>
           </div>
+          <div class="feature-card" @click="openBuffetIdle()">
+            <div class="feature-card-icon fi-orange"><i class="fa fa-utensils"></i></div>
+            <div><div class="feature-card-name">บุฟเฟต์</div><div class="feature-card-sub">Walk-in แตะบัตรจ่ายเลย</div></div>
+          </div>
         </div>
       </div>
     </div>
@@ -224,6 +253,16 @@
           <template v-else-if="appScreen === 'preorder-staff'">
             <div class="nav-item active">
               <i class="fa fa-clipboard-list"></i><span>ภาพรวม Pre-Order</span>
+            </div>
+          </template>
+          <template v-else-if="appScreen === 'buffet-idle'">
+            <div class="nav-item active">
+              <i class="fa fa-utensils"></i><span>บุฟเฟต์</span>
+            </div>
+          </template>
+          <template v-else-if="appScreen === 'buffet-staff'">
+            <div class="nav-item active">
+              <i class="fa fa-clipboard-list"></i><span>ภาพรวมบุฟเฟต์</span>
             </div>
           </template>
           <template v-else>
@@ -1679,6 +1718,162 @@
         </div>
       </div>
 
+      <!-- ===== BUFFET: IDLE / TAP (จอ 1 walk-in) — §3.1/3.2/3.3/3.4 ===== -->
+      <div v-else-if="appScreen === 'buffet-idle'" class="po-main">
+        <div class="po-topbar">
+          <div>
+            <h1 class="po-page-title">บุฟเฟต์</h1>
+            <span class="po-page-sub">Walk-in แตะบัตรจ่ายเลย</span>
+          </div>
+          <div class="po-topbar-right">
+            <div class="po-clock">{{ bufCurrentTime }}</div>
+            <button class="po-btn-ghost" @click="bufOpenCustomerDisplay()"><i class="fa fa-tv"></i> เปิดจอลูกค้า</button>
+          </div>
+        </div>
+
+        <div class="po-idle-body">
+          <template v-if="!bufResult">
+            <div class="po-idle-card">
+              <div class="po-idle-icon"><i class="fa fa-utensils"></i></div>
+              <div class="po-idle-title">แตะบัตรเพื่อชำระบุฟเฟต์</div>
+              <div class="po-idle-meal">ยอดขึ้นกับระดับชั้นของนักเรียน</div>
+              <input class="po-scan-input" v-model="bufCardInput" placeholder="แตะบัตร หรือพิมพ์เลขบัตรแล้วกด Enter" autofocus @keydown.enter="bufSubmitCardInput()">
+            </div>
+            <button class="po-history-btn" @click="appScreen = 'buffet-staff'"><i class="fa fa-history"></i> ประวัติ</button>
+
+            <div class="po-testtools">
+              <button class="po-testtools-toggle" @click="bufShowTestTools = !bufShowTestTools">
+                <i class="fa fa-flask"></i> เครื่องมือทดสอบ
+                <i :class="['fa', bufShowTestTools ? 'fa-chevron-up' : 'fa-chevron-down']"></i>
+              </button>
+              <div v-if="bufShowTestTools" class="po-testtools-panel">
+                <button v-for="qp in bufQuickPicks" :key="qp.label" class="po-qp-btn" @click="bufQuickPickTap(qp)">{{ qp.label }}</button>
+                <button class="po-qp-btn po-qp-btn--offline" :class="{ active: bufOfflineSim }" @click="bufToggleOfflineSim()">
+                  <i class="fa fa-wifi"></i> จำลองระบบออฟไลน์ ({{ bufOfflineSim ? 'เปิด' : 'ปิด' }})
+                </button>
+                <button class="po-qp-btn" @click="bufSimulateMisread()">แตะบัตรไม่สำเร็จ ({{ bufMisreadCount }}/3)</button>
+                <button class="po-qp-btn" @click="bufSimulateReaderFailure()">เครื่องอ่านบัตรขัดข้อง</button>
+                <button class="po-qp-btn" @click="bufDemoDebounce()">แตะซ้ำระหว่างประมวลผล (debounce)</button>
+              </div>
+            </div>
+          </template>
+
+          <!-- ===== RESULT OVERLAY ===== -->
+          <div v-else class="po-result-card">
+            <button v-if="['buf-insufficient', 'hwB', 'hwC', 'case9-timeout'].includes(bufResult.case)" class="po-result-close" @click="bufBackToIdle()">×</button>
+
+            <template v-if="bufResult.case === 'success'">
+              <div class="po-result-icon po-icon-success"><i class="fa fa-check-circle"></i></div>
+              <div class="po-result-title">ชำระเงินสำเร็จ</div>
+              <div class="po-result-name">{{ bufResult.card.name }}</div>
+              <div class="po-result-class">{{ bufResult.tier ? bufResult.tier.label : '' }} · บุฟเฟต์</div>
+              <div class="buf-display-amount">฿{{ bufResult.amount }}</div>
+            </template>
+
+            <template v-else-if="bufResult.case === 'buf-duplicate'">
+              <div class="po-result-icon po-icon-warning"><i class="fa fa-triangle-exclamation"></i></div>
+              <div class="po-result-title">มื้อนี้ชำระบุฟเฟต์ไปแล้ว</div>
+              <div class="po-result-sub">{{ bufResult.card.name }} จ่ายไปแล้วเมื่อ {{ bufResult.time }}</div>
+            </template>
+
+            <template v-else-if="bufResult.case === 'buf-insufficient'">
+              <div class="po-result-icon po-icon-warning"><i class="fa fa-circle-exclamation"></i></div>
+              <div class="po-result-title">ยอดเงินไม่เพียงพอ</div>
+              <div class="po-result-sub">ยอดที่ต้องจ่าย ฿{{ bufResult.amount }} · ยอดคงเหลือ ฿{{ bufResult.balance }}</div>
+              <div class="po-result-sub">กรุณาเติมเงินหรือติดต่อพนักงาน</div>
+            </template>
+
+            <template v-else-if="bufResult.case === 'case5'">
+              <div class="po-result-icon po-icon-neutral"><i class="fa fa-circle-info"></i></div>
+              <div class="po-result-title">ไม่พบข้อมูลบัตรนี้</div>
+              <div class="po-result-sub">กรุณาติดต่อพนักงาน</div>
+            </template>
+
+            <template v-else-if="bufResult.case === 'case6'">
+              <div class="po-result-icon po-icon-danger"><i class="fa fa-ban"></i></div>
+              <div class="po-result-title">บัตรถูกระงับใช้งาน</div>
+              <div class="po-result-sub">กรุณาติดต่อพนักงาน</div>
+            </template>
+
+            <template v-else-if="bufResult.case === 'case9-loading'">
+              <div class="po-result-icon po-icon-neutral"><i class="fa fa-spinner fa-spin"></i></div>
+              <div class="po-result-title">กำลังตรวจสอบข้อมูล...</div>
+            </template>
+            <template v-else-if="bufResult.case === 'case9-timeout'">
+              <div class="po-result-icon po-icon-neutral"><i class="fa fa-wifi"></i></div>
+              <div class="po-result-title">เชื่อมต่อไม่ได้ ลองใหม่อีกครั้ง</div>
+              <button class="po-btn-secondary" @click="bufToggleOfflineSim(); bufBackToIdle()"><i class="fa fa-rotate-right"></i> ปิดโหมดทดสอบ / ลองใหม่</button>
+            </template>
+
+            <template v-else-if="bufResult.case === 'hwA'">
+              <div class="po-result-icon po-icon-info"><i class="fa fa-arrows-rotate"></i></div>
+              <div class="po-result-title">แตะบัตรอีกครั้ง</div>
+            </template>
+            <template v-else-if="bufResult.case === 'hwB'">
+              <div class="po-result-icon po-icon-warning"><i class="fa fa-id-card"></i></div>
+              <div class="po-result-title">อ่านบัตรไม่ได้ กรุณาติดต่อพนักงาน</div>
+            </template>
+            <template v-else-if="bufResult.case === 'hwC'">
+              <div class="po-result-icon po-icon-danger"><i class="fa fa-screwdriver-wrench"></i></div>
+              <div class="po-result-title">เครื่องอ่านบัตรขัดข้อง กรุณาติดต่อพนักงาน</div>
+            </template>
+            <template v-else-if="bufResult.case === 'hwD'">
+              <div class="po-result-icon po-icon-neutral"><i class="fa fa-spinner fa-spin"></i></div>
+              <div class="po-result-title">กำลังดำเนินการ กรุณารอสักครู่</div>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== BUFFET: STAFF OVERVIEW + DRILL-DOWN (§5) ===== -->
+      <div v-else-if="appScreen === 'buffet-staff'" class="po-main">
+        <div class="po-topbar">
+          <div><h1 class="po-page-title">ภาพรวมบุฟเฟต์</h1><span class="po-page-sub">สำหรับพนักงาน</span></div>
+        </div>
+
+        <template v-if="!bufDrillTier">
+          <div class="po-filter-bar">
+            <input type="date" class="po-date-input" v-model="bufStaffFrom">
+            <span>ถึง</span>
+            <input type="date" class="po-date-input" v-model="bufStaffTo">
+          </div>
+
+          <div class="po-summary-row">
+            <div class="po-summary-tile"><div class="po-summary-num">{{ bufStaffSummary.totalPeople }}</div><div class="po-summary-label">จำนวนคนทั้งหมด</div></div>
+            <div class="po-summary-tile po-summary--confirmed"><div class="po-summary-num">฿{{ bufStaffSummary.totalAmount }}</div><div class="po-summary-label">ยอดรวม</div></div>
+          </div>
+
+          <div class="po-staff-list">
+            <div v-if="bufTierBreakdown.length === 0" class="po-empty"><i class="fa fa-inbox"></i><span>ไม่พบรายการ</span></div>
+            <div v-for="row in bufTierBreakdown" :key="row.tier.key" class="po-history-row" @click="bufOpenDrill(row.tier.key)">
+              <div class="po-history-row-main">
+                <span class="po-history-student-name">{{ row.tier.label }}</span>
+                <span class="po-history-meta">฿{{ row.tier.price }}/คน · {{ row.count }} คน</span>
+              </div>
+              <span class="po-badge po-badge-ready">฿{{ row.subtotal }}</span>
+            </div>
+          </div>
+        </template>
+
+        <template v-else>
+          <div class="po-filter-bar">
+            <button class="po-back-btn" @click="bufCloseDrill()"><i class="fa fa-chevron-left"></i> กลับ</button>
+            <div class="po-history-student" style="margin:0">{{ bufGradeTierOf(bufDrillTier) ? bufGradeTierOf(bufDrillTier).label : '' }}</div>
+            <input class="po-search-input" v-model="bufDrillSearch" placeholder="ค้นหาชื่อ">
+          </div>
+          <div class="po-staff-list">
+            <div v-if="bufDrillList.length === 0" class="po-empty"><i class="fa fa-inbox"></i><span>ไม่พบรายการ</span></div>
+            <div v-for="tx in bufDrillList" :key="tx.id" class="po-history-row" @click="bufOpenVoid(tx)">
+              <div class="po-history-row-main">
+                <span class="po-history-student-name">{{ bufCardInfo(tx.cardId) ? bufCardInfo(tx.cardId).name : tx.cardId }}</span>
+                <span class="po-history-meta">{{ bufGradeTierOf(tx.gradeTier) ? bufGradeTierOf(tx.gradeTier).label : '' }} · {{ tx.time }} น.</span>
+              </div>
+              <span class="po-badge po-badge-confirmed">฿{{ tx.amount }}</span>
+            </div>
+          </div>
+        </template>
+      </div>
+
       <!-- RIGHT PANEL: Order Summary -->
       <div v-if="appScreen === 'pos'" class="order-panel">
         <!-- Header -->
@@ -2612,6 +2807,52 @@
       </div>
     </div>
 
+    <!-- ===== BUFFET: VOID/REFUND MODAL (§6) ===== -->
+    <div v-if="bufVoidModal && bufVoidTarget" class="modal-overlay" @click.self="bufCloseVoid()">
+      <div class="modal-box sm" style="position:relative">
+        <button class="po-result-close" @click="bufCloseVoid()">×</button>
+        <div class="confirm-modal-body" style="align-items:stretch;text-align:left">
+          <div style="display:flex;align-items:center;gap:10px;width:100%">
+            <div class="po-modal-icon-box"><i class="fa fa-receipt"></i></div>
+            <div style="flex:1;min-width:0">
+              <div class="confirm-title" style="margin:0">ยกเลิกรายการบุฟเฟต์</div>
+              <div class="po-modal-id">{{ bufVoidTarget.id }}</div>
+            </div>
+          </div>
+          <div style="margin-top:14px;font-size:14px;line-height:1.7;color:#3C3C43;width:100%">
+            <div><b>{{ bufCardInfo(bufVoidTarget.cardId) ? bufCardInfo(bufVoidTarget.cardId).name : bufVoidTarget.cardId }}</b> · {{ bufGradeTierOf(bufVoidTarget.gradeTier) ? bufGradeTierOf(bufVoidTarget.gradeTier).label : '' }}</div>
+            <div>วันที่ {{ bufFormatDate(bufVoidTarget.date) }} · เวลา {{ bufVoidTarget.time }} น.</div>
+            <div style="margin-top:6px">ยอดที่จ่าย ฿{{ bufVoidTarget.amount }}</div>
+          </div>
+
+          <div class="nav-divider" style="margin:14px 0;width:100%"></div>
+
+          <label class="cancel-reason-label" style="margin-top:0">เหตุผลการยกเลิก *</label>
+          <div class="po-reason-chips">
+            <button v-for="r in bufVoidReasonOptions" :key="r" type="button" class="po-reason-chip" :class="{ active: bufVoidReasonSel === r }" @click="bufVoidReasonSel = r">{{ r }}</button>
+          </div>
+
+          <label class="cancel-reason-label">รายละเอียดเพิ่มเติม</label>
+          <textarea class="cancel-reason-textarea" style="width:100%" v-model="bufVoidReasonOther" placeholder="รายละเอียดเพิ่มเติม..." rows="2"></textarea>
+
+          <label class="cancel-reason-label">รหัสยืนยัน (PIN) *</label>
+          <input type="password" class="po-pin-input" v-model="bufVoidPinValue" placeholder="••••" maxlength="6" @input="bufVoidPinError = ''" @keydown.enter="bufConfirmVoid()">
+          <div class="po-pin-hint">กรอก PIN ของคุณเพื่อยืนยันการยกเลิก</div>
+          <div v-if="bufVoidPinError" class="po-pin-error">{{ bufVoidPinError }}</div>
+
+          <div class="po-cancel-warning">
+            <i class="fa fa-triangle-exclamation"></i>
+            <span>การยกเลิกนี้จะคืนเงินเข้าเครดิตนักเรียนอัตโนมัติ และไม่สามารถย้อนกลับได้</span>
+          </div>
+
+          <div class="confirm-actions" style="width:100%;margin-top:14px">
+            <button class="btn-no" @click="bufCloseVoid()">ย้อนกลับ</button>
+            <button class="btn-yes-red" :disabled="!bufVoidReasonSel || (bufVoidReasonSel === 'อื่นๆ' && !bufVoidReasonOther.trim()) || !bufVoidPinValue.trim()" @click="bufConfirmVoid()">ยืนยันยกเลิกรายการ</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Cancel Order Confirm -->
     <div v-if="cancelConfirm" class="modal-overlay">
       <div class="modal-box sm">
@@ -3105,6 +3346,80 @@ const preOrderReservations = [
     items: [{ name: 'ข้าวต้มหมู', qty: 1 }], status: 'collected', collectedAt: '07:40' }),
 ]
 
+// ══════════════════════════════════════════════════════════════════════════
+// BUFFET (WALK-IN, ไม่มีการจอง) — POS_D4504_BUFFET_SPEC.md
+// แยก table/state จาก Pre-Order ทั้งหมดตามที่สเปกกำหนดไว้ (ไม่มีสถานะการจอง 5 แบบ,
+// เป็น transaction ทันที) — แม้ตัวอย่างข้อมูลจะใช้นักเรียน/บัตรชุดเดียวกันเพื่อความสมจริง
+// ก็ไม่ import/อ้างอิง object ของ Pre-Order เลยแม้แต่จุดเดียว
+// ══════════════════════════════════════════════════════════════════════════
+function bufDateStr(offsetDays) {
+  const d = new Date()
+  d.setDate(d.getDate() + offsetDays)
+  return d.toISOString().slice(0, 10)
+}
+const BUF_TODAY = bufDateStr(0)
+const BUF_YESTERDAY = bufDateStr(-1)
+
+// ราคาต่อระดับชั้น — mock ตามที่ยืนยันไว้ (รอตัวเลขจริงจากทีม)
+const buffetGradeTiers = [
+  { key: 'p-junior', label: 'ป.1-3', price: 20 },
+  { key: 'p-senior', label: 'ป.4-6', price: 25 },
+  { key: 'm-junior', label: 'ม.ต้น', price: 30 },
+  { key: 'm-senior', label: 'ม.ปลาย', price: 35 },
+]
+
+// รอบมื้อของบุฟเฟต์ (คนละ config กับ preOrderMealPeriods แม้ค่าจะใกล้เคียงกัน — ใช้ตรวจ "แตะซ้ำในมื้อเดียวกัน")
+const buffetRounds = [
+  { key: 'breakfast', tabName: 'รอบเช้า',    mealName: 'มื้อเช้า',    start: '07:00', end: '08:30' },
+  { key: 'lunch',     tabName: 'รอบกลางวัน', mealName: 'มื้อกลางวัน', start: '11:00', end: '13:00' },
+  { key: 'dinner',    tabName: 'รอบเย็น',    mealName: 'มื้อเย็น',    start: '16:00', end: '17:30' },
+]
+
+// cardId → นักเรียนฝั่งบุฟเฟต์ (ระดับชั้นอย่างเดียว ไม่มี /ห้อง ตามสเปก + ยอดเครดิตคงเหลือในบัตร)
+const buffetCards = {
+  '1001001': { name: 'ด.ช. ปกรณ์ วงศ์สุข',      gradeTier: 'p-senior', balance: 150 },
+  '1001002': { name: 'ด.ญ. พิมพ์ชนก แสงทอง',    gradeTier: 'p-senior', balance: 80 },
+  '1001003': { name: 'ด.ช. ธนกฤต ศรีสุข',        gradeTier: 'p-junior', balance: 15 },   // ยอดน้อยกว่าราคา แต่ยังไม่ชนเพดาน -200
+  '1001004': { name: 'ด.ญ. ชนิสรา บุญมี',        gradeTier: 'm-junior', balance: 200 },
+  '1001005': { name: 'ด.ช. ภูริณัฐ เจริญสุข',    gradeTier: 'm-senior', balance: 300 },
+  '1001006': { name: 'ด.ญ. ณัฏฐณิชา ทองดี',      gradeTier: 'p-junior', balance: -190 },  // ใกล้เพดาน -200 (เดโม insufficient-blocked)
+  '1001007': { name: 'ด.ช. กิตติภูมิ รุ่งเรือง', gradeTier: 'm-junior', balance: 100 },
+  '1001008': { name: 'ด.ญ. อรวรรณ พันธ์ทอง',    gradeTier: 'p-senior', balance: 50 },
+  '9009009': { name: 'ด.ช. วีรภัทร ขันแข็ง',      gradeTier: 'm-senior', balance: 100 }, // บัตรถูกระงับ
+}
+const buffetSuspendedCards = ['9009009']
+
+let bufTxSeq = 0
+function bufTx(fields) {
+  bufTxSeq++
+  return {
+    id: 'BUFTX' + String(bufTxSeq).padStart(4, '0'),
+    voided: false, voidReason: null, voidedBy: null, voidedAt: null,
+    demoLabel: null, demoMockNow: null,
+    ...fields,
+  }
+}
+
+const buffetTransactions = [
+  bufTx({ cardId: '1001001', date: BUF_TODAY, round: 'lunch', time: '11:20', gradeTier: 'p-senior', amount: 25 }),
+  bufTx({ cardId: '1001004', date: BUF_TODAY, round: 'lunch', time: '11:35', gradeTier: 'm-junior', amount: 30 }),
+  bufTx({ cardId: '1001005', date: BUF_TODAY, round: 'lunch', time: '11:50', gradeTier: 'm-senior', amount: 35 }),
+  bufTx({ cardId: '1001007', date: BUF_TODAY, round: 'breakfast', time: '07:15', gradeTier: 'm-junior', amount: 30 }),
+  bufTx({ cardId: '1001008', date: BUF_TODAY, round: 'breakfast', time: '07:25', gradeTier: 'p-senior', amount: 25 }),
+  bufTx({ cardId: '1001002', date: BUF_YESTERDAY, round: 'lunch', time: '11:40', gradeTier: 'p-senior', amount: 25,
+    voided: true, voidReason: 'จ่ายผิดคน', voidedBy: 'ผู้จัดการ (ADM001)', voidedAt: BUF_YESTERDAY + ' 15:00' }),
+]
+
+// รายการ quick-pick demo — ไม่บันทึกเป็น transaction จริงจนกว่าจะแตะ (ต่างจาก Pre-Order ที่ demo ผูกกับ reservation ที่มีอยู่แล้ว)
+const buffetQuickPicks = [
+  { label: 'ปกติ (จ่ายสำเร็จ)', cardId: '1001002', mockNow: '12:00' },
+  { label: 'แตะซ้ำ (จ่ายมื้อนี้ไปแล้ว)', cardId: '1001001', mockNow: '12:00' },
+  { label: 'ยอดไม่พอ แต่ไม่เกิน -200 (ผ่าน)', cardId: '1001003', mockNow: '12:00' },
+  { label: 'ยอดไม่พอ เกิน -200 (บล็อก)', cardId: '1001006', mockNow: '12:00' },
+  { label: 'ไม่พบข้อมูลบัตรนี้', cardId: '0000000', mockNow: null },
+  { label: 'บัตรถูกระงับใช้งาน', cardId: '9009009', mockNow: null },
+]
+
 export default {
   name: 'App',
   data() {
@@ -3385,6 +3700,40 @@ export default {
       poCustomerWindow: null,
       poBroadcastChannel: null,
       poIsCustomerDisplay: false,
+
+      // ─── BUFFET (WALK-IN) ─────────────────────────────────────────────────
+      // table/state ทั้งหมดตั้งแต่ตรงนี้เป็นต้นไปแยกจาก Pre-Order (po*) 100% ตามสเปก
+      buffetGradeTiers,
+      buffetRounds,
+      buffetCards,
+      buffetSuspendedCards,
+      buffetTransactions,
+      buffetQuickPicks,
+      bufCurrentTime: '',
+      bufCardInput: '',
+      bufShowTestTools: false,
+      bufOfflineSim: false,
+      bufResult: null,
+      bufResultTimer: null,
+      bufProcessing: false,
+      bufMisreadCount: 0,
+      // ภาพรวม staff + drill-down ตามระดับชั้น (§5)
+      bufStaffFrom: '',
+      bufStaffTo: '',
+      bufDrillTier: null,
+      bufDrillSearch: '',
+      // modal ยกเลิกรายการ/void-refund (§6)
+      bufVoidModal: false,
+      bufVoidTarget: null,
+      bufVoidReasonSel: '',
+      bufVoidReasonOther: '',
+      bufVoidReasonOptions: ['จ่ายผิดคน', 'จ่ายซ้ำโดยไม่ตั้งใจ', 'นักเรียนไม่ได้เข้าบุฟเฟต์จริง', 'อื่นๆ'],
+      bufVoidPinValue: '',
+      bufVoidPinError: '',
+      // จอ 2 — customer display (ช่องทาง BroadcastChannel แยกจาก Pre-Order)
+      bufCustomerWindow: null,
+      bufBroadcastChannel: null,
+      bufIsCustomerDisplay: false,
     }
   },
 
@@ -3603,6 +3952,41 @@ export default {
       const counts = { confirmed: 0, ready: 0, collected: 0, missed: 0, cancelled: 0 }
       list.forEach(r => { counts[this.poEffectiveStatus(r)]++ })
       return { total: list.length, ...counts }
+    },
+
+    // ─── BUFFET (WALK-IN) ─────────────────────────────────────────────────
+    bufQuickPicks() { return this.buffetQuickPicks },
+    // ตัดรายการที่ถูก void ออกจากทั้งสรุปยอดและ drill-down ทันทีตามสเปก §6 ("ตัดออกจากยอดสรุปภาพรวม")
+    bufStaffFilteredTx() {
+      return this.buffetTransactions.filter(t => {
+        if (t.voided) return false
+        if (this.bufStaffFrom && t.date < this.bufStaffFrom) return false
+        if (this.bufStaffTo && t.date > this.bufStaffTo) return false
+        return true
+      })
+    },
+    bufStaffSummary() {
+      const list = this.bufStaffFilteredTx
+      return { totalPeople: list.length, totalAmount: list.reduce((s, t) => s + t.amount, 0) }
+    },
+    bufTierBreakdown() {
+      const list = this.bufStaffFilteredTx
+      return this.buffetGradeTiers.map(tier => {
+        const rows = list.filter(t => t.gradeTier === tier.key)
+        return { tier, count: rows.length, subtotal: rows.reduce((s, t) => s + t.amount, 0) }
+      })
+    },
+    bufDrillList() {
+      if (!this.bufDrillTier) return []
+      const q = this.bufDrillSearch.trim().toLowerCase()
+      return this.bufStaffFilteredTx
+        .filter(t => t.gradeTier === this.bufDrillTier)
+        .filter(t => {
+          if (!q) return true
+          const card = this.bufCardInfo(t.cardId)
+          return ((card && card.name) || '').toLowerCase().includes(q)
+        })
+        .sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time))
     },
   },
 
@@ -4585,6 +4969,219 @@ export default {
       this.poCustomerWindow = window.open(url, 'preorderCustomerDisplay', 'width=480,height=854')
       if (!this.poCustomerWindow) this.addToast('เบราว์เซอร์บล็อกป๊อปอัป กรุณาอนุญาตแล้วลองใหม่', 'error')
     },
+
+    // ═══════════════════════════════════════════════════════════════════
+    // BUFFET (WALK-IN) — table/state/method ทั้งหมดแยกจาก Pre-Order (po*) 100%
+    // ═══════════════════════════════════════════════════════════════════
+    openBuffetIdle() {
+      this.appScreen = 'buffet-idle'
+      this.bufResult = null
+      this.bufCardInput = ''
+      this.bufShowTestTools = false
+      this.bufOfflineSim = false
+      this.bufInitBroadcast()
+    },
+    bufMinutesOf(hhmm) {
+      const [h, m] = hhmm.split(':').map(Number)
+      return h * 60 + m
+    },
+    bufNowMinutes(mockNow) {
+      if (mockNow) return this.bufMinutesOf(mockNow)
+      const d = new Date()
+      return d.getHours() * 60 + d.getMinutes()
+    },
+    bufFindActiveRound(nowMin) {
+      return this.buffetRounds.find(r => nowMin >= this.bufMinutesOf(r.start) && nowMin <= this.bufMinutesOf(r.end)) || null
+    },
+    bufCardInfo(cardId) {
+      return this.buffetCards[cardId] || null
+    },
+    bufGradeTierOf(key) {
+      return this.buffetGradeTiers.find(t => t.key === key) || null
+    },
+    bufFormatDate(dateStr) {
+      if (!dateStr) return ''
+      const d = new Date(dateStr + 'T00:00:00')
+      return d.toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: 'numeric' })
+    },
+    bufSubmitCardInput() {
+      const code = this.bufCardInput.trim()
+      if (!code) return
+      this.bufHandleTap(code)
+      this.bufCardInput = ''
+    },
+    bufQuickPickTap(qp) {
+      this.bufHandleTap(qp.cardId, { mockNow: qp.mockNow })
+    },
+    bufToggleOfflineSim() {
+      this.bufOfflineSim = !this.bufOfflineSim
+      if (!this.bufOfflineSim && this.bufResult && (this.bufResult.case === 'case9-loading' || this.bufResult.case === 'case9-timeout')) {
+        this.bufBackToIdle()
+      }
+    },
+    // §3.3 — เคสฮาร์ดแวร์ใช้ข้อความ/สีเดียวกับ Pre-Order ตรงๆ ตามสเปก (ไม่ออกแบบใหม่) แต่ state แยกกันคนละตัว
+    bufSimulateMisread() {
+      if (this.bufProcessing) { this.bufShowResult({ case: 'hwD' }); return }
+      const RETRY_LIMIT = 3
+      this.bufMisreadCount++
+      if (this.bufMisreadCount >= RETRY_LIMIT) {
+        this.bufShowResult({ case: 'hwB', errorCode: 'CARD_MISREAD_LIMIT' })
+      } else {
+        this.bufShowResult({ case: 'hwA', errorCode: 'CARD_MISREAD_RETRY' })
+      }
+    },
+    bufSimulateReaderFailure() {
+      if (this.bufProcessing) { this.bufShowResult({ case: 'hwD' }); return }
+      this.addToast('แจ้งพนักงาน/แอดมิน: เครื่องอ่านบัตรขัดข้อง (errorCode: READER_HW_FAULT)', 'error')
+      this.bufShowResult({ case: 'hwC', errorCode: 'READER_HW_FAULT' })
+    },
+    bufDemoDebounce() {
+      this.bufOfflineSim = true
+      this.bufHandleTap('demo-debounce')
+      this.bufHandleTap('demo-debounce')
+    },
+    // ลำดับตรวจ: ฮาร์ดแวร์/ออฟไลน์ → บัตร → แตะซ้ำในมื้อเดียวกัน (§3.4) → ยอดเงิน (ปล่อยผ่านได้ถึง -200 ตามที่ยืนยัน) → จ่ายสำเร็จ
+    bufHandleTap(cardId, opts = {}) {
+      if (this.bufProcessing) { this.bufShowResult({ case: 'hwD' }); return }
+      this.bufProcessing = true
+      clearTimeout(this.bufResultTimer)
+      const mockNow = opts.mockNow || null
+
+      if (this.bufOfflineSim) {
+        this.bufResult = { case: 'case9-loading', cardId }
+        this.bufBroadcastResult()
+        this.bufResultTimer = setTimeout(() => {
+          this.bufResult = { case: 'case9-timeout', cardId }
+          this.bufBroadcastResult()
+          this.bufProcessing = false
+        }, 1500)
+        return
+      }
+
+      const card = this.bufCardInfo(cardId)
+      if (!card) { this.bufShowResult({ case: 'case5', cardId }); return }
+      if (this.buffetSuspendedCards.includes(cardId)) { this.bufShowResult({ case: 'case6', cardId, card }); return }
+
+      const tier = this.bufGradeTierOf(card.gradeTier)
+      const nowMin = this.bufNowMinutes(mockNow)
+      const active = this.bufFindActiveRound(nowMin)
+
+      if (active) {
+        const already = this.buffetTransactions.find(t => !t.voided && t.cardId === cardId && t.date === BUF_TODAY && t.round === active.key)
+        if (already) { this.bufShowResult({ case: 'buf-duplicate', cardId, card, time: already.time }); return }
+      }
+
+      const amount = tier ? tier.price : 0
+      const projected = card.balance - amount
+      if (projected < -200) {
+        this.bufShowResult({ case: 'buf-insufficient', cardId, card, tier, amount, balance: card.balance })
+        return
+      }
+
+      card.balance = projected
+      const newTx = bufTx({
+        cardId, date: BUF_TODAY, round: active ? active.key : null,
+        time: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
+        gradeTier: card.gradeTier, amount,
+      })
+      this.buffetTransactions.push(newTx)
+      this.bufShowResult({ case: 'success', cardId, card, tier, amount, tx: newTx })
+    },
+    bufShowResult(payload) {
+      this.bufProcessing = false
+      if (payload.case !== 'hwA') this.bufMisreadCount = 0
+      this.bufResult = payload
+      this.bufBroadcastResult()
+      // 'buf-insufficient', case9-*, hwB, hwC รอ action พนักงาน ไม่ auto กลับ (เหมือนหลักการเดียวกับ Pre-Order)
+      const delayMap = { success: 3000, 'buf-duplicate': 3000, case5: 4000, case6: 4000, hwA: 2500, hwD: 2000 }
+      if (delayMap[payload.case]) {
+        this.bufResultTimer = setTimeout(() => this.bufBackToIdle(), delayMap[payload.case])
+      }
+    },
+    bufBackToIdle() {
+      clearTimeout(this.bufResultTimer)
+      this.bufProcessing = false
+      this.bufResult = null
+      this.bufBroadcastResult()
+    },
+    // ภาพรวม staff + drill-down ตามระดับชั้น (§5)
+    bufOpenDrill(tierKey) {
+      this.bufDrillTier = tierKey
+      this.bufDrillSearch = ''
+    },
+    bufCloseDrill() {
+      this.bufDrillTier = null
+      this.bufDrillSearch = ''
+    },
+    // modal ยกเลิกรายการ/void-refund (§6)
+    bufOpenVoid(tx) {
+      this.bufVoidTarget = tx
+      this.bufVoidReasonSel = ''
+      this.bufVoidReasonOther = ''
+      this.bufVoidPinValue = ''
+      this.bufVoidPinError = ''
+      this.bufVoidModal = true
+    },
+    bufCloseVoid() {
+      this.bufVoidModal = false
+      this.bufVoidTarget = null
+      this.bufVoidReasonSel = ''
+      this.bufVoidReasonOther = ''
+      this.bufVoidPinValue = ''
+      this.bufVoidPinError = ''
+    },
+    bufConfirmVoid() {
+      if (!this.bufVoidTarget) return
+      const note = this.bufVoidReasonOther.trim()
+      const reason = this.bufVoidReasonSel === 'อื่นๆ' ? note : (note ? `${this.bufVoidReasonSel} — ${note}` : this.bufVoidReasonSel)
+      if (!reason) return
+      const code = this.bufVoidPinValue.trim()
+      const admin = this.systemUsers.find(u => u.code === code && u.role === 'admin')
+      if (!admin) {
+        this.bufVoidPinError = 'รหัสไม่ถูกต้อง หรือไม่มีสิทธิ์ยกเลิกรายการ'
+        this.bufVoidPinValue = ''
+        return
+      }
+      const tx = this.bufVoidTarget
+      tx.voided = true
+      tx.voidReason = reason
+      tx.voidedBy = `${admin.name} (${admin.code})`
+      tx.voidedAt = new Date().toLocaleString('th-TH')
+      // refund เข้าเครดิตอัตโนมัติ ตามที่ยืนยันไว้
+      const card = this.bufCardInfo(tx.cardId)
+      if (card) card.balance += tx.amount
+      this.bufCloseVoid()
+      this.addToast('ยกเลิกรายการและคืนเงินเข้าเครดิตแล้ว', 'info')
+    },
+    // จอ 2 — customer display (BroadcastChannel แยกช่องจาก Pre-Order)
+    bufInitBroadcast() {
+      if (this.bufBroadcastChannel || typeof BroadcastChannel === 'undefined') return
+      this.bufBroadcastChannel = new BroadcastChannel('buffet-sync')
+      if (this.bufIsCustomerDisplay) {
+        this.bufBroadcastChannel.onmessage = (ev) => {
+          this.bufResult = (ev.data && ev.data.type === 'result') ? ev.data.payload : null
+        }
+      }
+    },
+    bufBroadcastResult() {
+      if (!this.bufBroadcastChannel || this.bufIsCustomerDisplay) return
+      const r = this.bufResult
+      if (r && (r.case === 'hwA' || r.case === 'hwD')) return
+      const payload = r ? JSON.parse(JSON.stringify(this.bufCustomerSafePayload(r))) : null
+      this.bufBroadcastChannel.postMessage({ type: 'result', payload })
+    },
+    // §4 — จอ 2 โชว์แค่ยอดที่จ่าย ไม่โชว่ชื่อ/ระดับชั้น (ความเป็นส่วนตัวระหว่างต่อคิว) เคส edge ใช้ fallback กลางหมด
+    bufCustomerSafePayload(r) {
+      if (['hwB', 'hwC', 'case5', 'case6', 'buf-insufficient', 'buf-duplicate'].includes(r.case)) return { case: 'buf-contact-staff' }
+      if (r.case === 'success') return { case: 'success', amount: r.amount }
+      return { case: r.case }
+    },
+    bufOpenCustomerDisplay() {
+      this.bufInitBroadcast()
+      const url = window.location.origin + window.location.pathname + '?display=buffet-customer'
+      this.bufCustomerWindow = window.open(url, 'buffetCustomerDisplay', 'width=480,height=854')
+      if (!this.bufCustomerWindow) this.addToast('เบราว์เซอร์บล็อกป๊อปอัป กรุณาอนุญาตแล้วลองใหม่', 'error')
+    },
   },
 
   watch: {
@@ -4619,13 +5216,18 @@ export default {
       const t = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
       this.fsCurrentTime = t
       this.poCurrentTime = t
+      this.bufCurrentTime = t
     }
     updateFsClock()
     setInterval(updateFsClock, 1000)
 
-    if (new URLSearchParams(window.location.search).get('display') === 'preorder-customer') {
+    const displayParam = new URLSearchParams(window.location.search).get('display')
+    if (displayParam === 'preorder-customer') {
       this.poIsCustomerDisplay = true
       this.poInitBroadcast()
+    } else if (displayParam === 'buffet-customer') {
+      this.bufIsCustomerDisplay = true
+      this.bufInitBroadcast()
     }
 
     window.__pos__ = this
@@ -4633,7 +5235,9 @@ export default {
 
   beforeUnmount() {
     if (this.poBroadcastChannel) this.poBroadcastChannel.close()
+    if (this.bufBroadcastChannel) this.bufBroadcastChannel.close()
     clearTimeout(this.poResultTimer)
+    clearTimeout(this.bufResultTimer)
   }
 }
 </script>
