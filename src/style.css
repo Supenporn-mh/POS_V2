@@ -3363,13 +3363,13 @@ input:focus { outline: none; }
 .po-badge-cancelled { background: #FFF0EE; color: #FF3B30; }
 
 /* Staff overview list bits */
-.po-filter-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.po-filter-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 16px 28px 0; }
 .po-date-input, .po-search-input {
   border: 1.5px solid #E5E5EA; border-radius: 10px; padding: 8px 12px; font-size: 13px; outline: none; font-family: inherit;
 }
 .po-search-input { flex: 1; min-width: 160px; }
 .po-date-input:focus, .po-search-input:focus { border-color: #007AFF; }
-.po-tab-bar { display: flex; gap: 8px; flex-wrap: wrap; }
+.po-tab-bar { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 28px 0; }
 .po-tab {
   background: #fff; border: 1px solid #E5E5EA; border-radius: 20px;
   padding: 7px 16px; font-size: 13px; font-weight: 500; color: #3C3C43; cursor: pointer;
@@ -3389,7 +3389,7 @@ input:focus { outline: none; }
 }
 
 /* Staff overview summary tiles */
-.po-summary-row { display: flex; gap: 12px; padding: 0 28px; }
+.po-summary-row { display: flex; gap: 12px; padding: 16px 28px 0; }
 .po-summary-tile {
   flex: 1; background: #fff; border-radius: 14px; padding: 14px; text-align: center;
   box-shadow: 0 1px 3px rgba(0,0,0,.05);
