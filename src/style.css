@@ -3415,16 +3415,19 @@ input:focus { outline: none; }
   display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 40px 0; color: #C7C7CC; font-size: 14px;
 }
 
-/* Staff overview summary tiles */
-.po-summary-row { display: flex; gap: 12px; padding: 16px 28px 0; }
+/* Staff overview summary tiles — ครบ 5 สถานะ + รวมทั้งหมด (สีตรงกับ badge ของสถานะเดียวกันเป๊ะ ดู §2.1) */
+.po-summary-row { display: flex; flex-wrap: wrap; gap: 12px; padding: 16px 28px 0; }
 .po-summary-tile {
-  flex: 1; background: #fff; border-radius: 14px; padding: 14px; text-align: center;
+  flex: 1 1 140px; background: #fff; border-radius: 14px; padding: 14px; text-align: center;
   box-shadow: 0 1px 3px rgba(0,0,0,.05);
 }
 .po-summary-num { font-size: 28px; font-weight: 500; color: #1C1C1E; } /* Display — ตัวเลขสรุปยอดใหญ่ */
 .po-summary-label { font-size: 11px; color: #8E8E93; margin-top: 2px; } /* Caption */
-.po-summary--ok .po-summary-num { color: #34C759; }
-.po-summary--bad .po-summary-num { color: #FF3B30; }
+.po-summary--confirmed .po-summary-num { color: #34C759; } /* green — Confirmed */
+.po-summary--ready     .po-summary-num { color: #007AFF; } /* blue — Ready to collect */
+.po-summary--collected .po-summary-num { color: #8E8E93; } /* gray — Collected */
+.po-summary--missed    .po-summary-num { color: #FF3B30; } /* red — Missed */
+.po-summary--cancelled .po-summary-num { color: #FF3B30; } /* red — Cancelled */
 .po-staff-list { padding: 12px 28px 24px; display: flex; flex-direction: column; gap: 8px; }
 
 /* จอ 2 — Customer display (หน้าต่างเบราว์เซอร์ที่ 2) — light theme เดียวกับจอ 1 ทั้งหมด

@@ -1660,8 +1660,11 @@
 
         <div class="po-summary-row">
           <div class="po-summary-tile"><div class="po-summary-num">{{ poStaffSummary.total }}</div><div class="po-summary-label">จองทั้งหมด</div></div>
-          <div class="po-summary-tile po-summary--ok"><div class="po-summary-num">{{ poStaffSummary.collected }}</div><div class="po-summary-label">มารับแล้ว</div></div>
-          <div class="po-summary-tile po-summary--bad"><div class="po-summary-num">{{ poStaffSummary.missed }}</div><div class="po-summary-label">ไม่มารับ</div></div>
+          <div class="po-summary-tile po-summary--confirmed"><div class="po-summary-num">{{ poStaffSummary.confirmed }}</div><div class="po-summary-label">จองแล้ว</div></div>
+          <div class="po-summary-tile po-summary--ready"><div class="po-summary-num">{{ poStaffSummary.ready }}</div><div class="po-summary-label">รอวันรับ</div></div>
+          <div class="po-summary-tile po-summary--collected"><div class="po-summary-num">{{ poStaffSummary.collected }}</div><div class="po-summary-label">รับแล้ว</div></div>
+          <div class="po-summary-tile po-summary--missed"><div class="po-summary-num">{{ poStaffSummary.missed }}</div><div class="po-summary-label">ไม่มารับ</div></div>
+          <div class="po-summary-tile po-summary--cancelled"><div class="po-summary-num">{{ poStaffSummary.cancelled }}</div><div class="po-summary-label">ยกเลิกแล้ว</div></div>
         </div>
 
         <div class="po-staff-list">
@@ -3597,13 +3600,9 @@ export default {
     },
     poStaffSummary() {
       const list = this.poStaffFilteredList
-      let collected = 0, missed = 0
-      list.forEach(r => {
-        const eff = this.poEffectiveStatus(r)
-        if (eff === 'collected') collected++
-        if (eff === 'missed') missed++
-      })
-      return { total: list.length, collected, missed }
+      const counts = { confirmed: 0, ready: 0, collected: 0, missed: 0, cancelled: 0 }
+      list.forEach(r => { counts[this.poEffectiveStatus(r)]++ })
+      return { total: list.length, ...counts }
     },
   },
 
