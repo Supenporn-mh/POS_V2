@@ -3341,6 +3341,50 @@ input:focus { outline: none; }
 .po-result-allergy { font-size: 11px; color: #FF9500; margin-top: 6px; } /* Caption */
 /* บุฟเฟต์ — ยอดเงินที่จ่าย ใช้สเกล Display-XL เดียวกับตัวเลขยอดเงินหน้าการเงิน (§3 typography) */
 .buf-display-amount { font-size: 44px; font-weight: 500; color: #007AFF; margin-top: 8px; }
+
+/* บุฟเฟต์ — หน้าแตะบัตร §3.1 layout มาตรฐาน (แบ่งซ้าย-ขวา) — ค่า font/สีปรับให้ตรง scale ของ design system
+   (ต้นฉบับอ้างอิงใช้ 12px/21px/weight 600-700 ซึ่งหลุด 7-scale — ปัดเข้า 13/17px, weight 400/500 ทั้งหมด) */
+.buf-tap-card {
+  background: #fff; border: 1px solid #E5E5EA; border-radius: 16px;
+  padding: 20px; width: 100%; max-width: 640px;
+}
+.buf-tap-head {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 13px; font-weight: 500; color: #3C3C43; margin-bottom: 16px; /* Label */
+}
+.buf-tap-menu-btn { background: none; border: none; color: #8E8E93; font-size: 15px; cursor: pointer; padding: 4px; }
+.buf-tap-body { display: flex; }
+.buf-tap-left {
+  flex: 1; padding-right: 20px; border-right: 1px solid #E5E5EA;
+  display: flex; flex-direction: column;
+}
+.buf-tap-info-row { display: flex; justify-content: space-between; font-size: 14px; color: #3C3C43; margin-bottom: 8px; } /* Body */
+.buf-tap-info-row--amount span:last-child { font-size: 17px; font-weight: 500; color: #1C1C1E; } /* Title */
+.buf-tap-bottom {
+  margin-top: auto; padding-top: 16px;
+  display: flex; flex-direction: column; gap: 8px;
+  font-size: 13px; color: #3C3C43; /* Label */
+}
+.buf-tap-bottom-row { display: flex; align-items: center; gap: 6px; }
+.buf-tap-bottom-date { color: #8E8E93; }
+.buf-tap-right {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 12px; text-align: center; padding-left: 20px;
+}
+.buf-tap-manual-btn { align-self: flex-end; }
+.buf-tap-center {
+  flex: 1; width: 100%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px;
+}
+.buf-tap-amount-line { font-size: 14px; color: #3C3C43; margin: 4px 0 0; } /* Body */
+.buf-tap-amount-line b { font-weight: 500; color: #1C1C1E; }
+.buf-tap-card-icon {
+  width: 78px; height: 78px; border-radius: 16px;
+  background: #1C1C1E; color: #fff; font-size: 32px;
+  display: flex; align-items: center; justify-content: center;
+}
 .po-btn-primary {
   /* NOTE: design system Label scale (13px/500) lists "ปุ่ม" as its example, but that would shrink this
      full-width primary CTA text below comfortable kiosk touch-target legibility — kept larger pending

@@ -84,7 +84,7 @@
     <!-- ใช้ component/token เดียวกับ Pre-Order (light theme เดียวกันทั้งระบบ) แต่ผลลัพธ์/BroadcastChannel แยกกันคนละตัว -->
     <div v-else-if="bufIsCustomerDisplay" class="po-display-root">
       <!-- §2.1/§8b — mirror 3 หน้าของเส้นทางสแกน QR (ระบุตัวตน/เลือกช่องทาง/นับถอยหลัง) -->
-      <template v-if="bufQrDisplayStep === 'identify' || bufQrDisplayStep === 'channel'">
+      <template v-if="bufQrDisplayStep === 'channel'">
         <div class="po-idle-card">
           <div class="po-idle-icon"><i class="fa fa-utensils"></i></div>
           <div class="po-idle-title">แตะบัตรเพื่อชำระเงิน</div>
@@ -124,7 +124,7 @@
           <div class="po-result-icon po-icon-success"><i class="fa fa-check-circle"></i></div>
           <div class="po-result-title">ขอบคุณค่ะ</div>
           <div class="buf-display-amount">฿{{ bufResult.amount }}</div>
-          <div class="po-result-sub">คงเหลือ ฿{{ bufResult.balance }}</div>
+          <div class="po-result-sub" v-if="bufResult.balance !== null && bufResult.balance !== undefined">คงเหลือ ฿{{ bufResult.balance }}</div>
           <div class="po-result-time">{{ bufFormatDate(bufResult.date) }} · {{ bufResult.time }} น.</div>
         </div>
       </template>
@@ -1819,36 +1819,15 @@
         </div>
       </div>
 
-      <!-- ===== BUFFET: QR ขั้น 1 — ระบุตัวตน (ไม่หักเงินจากบัตร) — §2.1 ===== -->
-      <div v-else-if="appScreen === 'buffet-qr-identify'" class="po-main">
-        <div class="po-topbar">
-          <div>
-            <h1 class="po-page-title">สแกน QR — บุฟเฟต์ {{ bufSelectedTierInfo ? bufSelectedTierInfo.label : '' }}</h1>
-            <span class="po-page-sub">แตะบัตรหรือกรอกเลขบัตรเพื่อระบุตัวตน (ไม่หักเงินจากบัตร)</span>
-          </div>
-          <div class="po-topbar-right">
-            <button class="po-back-btn" @click="bufQrBackToPayMethod()"><i class="fa fa-chevron-left"></i> กลับ</button>
-          </div>
-        </div>
-        <div class="po-idle-body">
-          <div class="po-idle-card">
-            <div class="po-idle-icon"><i class="fa fa-id-card-clip"></i></div>
-            <div class="po-idle-title">แตะบัตรหรือพิมพ์เลขบัตร</div>
-            <input class="po-scan-input" v-model="bufQrCardInput" placeholder="แตะบัตร หรือพิมพ์เลขบัตรแล้วกด Enter" autofocus @keydown.enter="bufSubmitQrIdentify()">
-            <div v-if="bufQrIdentifyError" class="po-pin-error" style="text-align:center">{{ bufQrIdentifyError }}</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ===== BUFFET: QR ขั้น 2 — เลือกช่องทางชำระเงิน — §2.1 ===== -->
+      <!-- ===== BUFFET: QR ขั้น 1 — เลือกช่องทางชำระเงิน — §2.1 (ตัดขั้นระบุตัวตนออกแล้ว ตามที่ยืนยัน — QR ไม่รู้ตัวตนผู้จ่าย) ===== -->
       <div v-else-if="appScreen === 'buffet-qr-channel'" class="po-main">
         <div class="po-topbar">
           <div>
-            <h1 class="po-page-title">{{ bufQrCard ? bufQrCard.name : '' }}</h1>
+            <h1 class="po-page-title">สแกน QR — บุฟเฟต์ {{ bufSelectedTierInfo ? bufSelectedTierInfo.label : '' }}</h1>
             <span class="po-page-sub">เลือกช่องทางชำระเงิน · ยอดบุฟเฟต์ ฿{{ bufSelectedTierInfo ? bufSelectedTierInfo.price : 0 }}</span>
           </div>
           <div class="po-topbar-right">
-            <button class="po-back-btn" @click="appScreen = 'buffet-qr-identify'"><i class="fa fa-chevron-left"></i> กลับ</button>
+            <button class="po-back-btn" @click="bufQrBackToPayMethod()"><i class="fa fa-chevron-left"></i> กลับ</button>
           </div>
         </div>
         <div class="po-idle-body">
@@ -1863,12 +1842,12 @@
         </div>
       </div>
 
-      <!-- ===== BUFFET: QR ขั้น 3 — แสดง QR + นับถอยหลัง 180 วิ — §2.1 ===== -->
+      <!-- ===== BUFFET: QR ขั้น 2 — แสดง QR + นับถอยหลัง 180 วิ — §2.1 ===== -->
       <div v-else-if="appScreen === 'buffet-qr-code'" class="po-main">
         <div class="po-topbar">
           <div>
             <h1 class="po-page-title">สแกนเพื่อชำระเงิน</h1>
-            <span class="po-page-sub">บุฟเฟต์ {{ bufSelectedTierInfo ? bufSelectedTierInfo.label : '' }} · {{ bufQrCard ? bufQrCard.name : '' }}</span>
+            <span class="po-page-sub">บุฟเฟต์ {{ bufSelectedTierInfo ? bufSelectedTierInfo.label : '' }}</span>
           </div>
           <div class="po-topbar-right">
             <button class="po-back-btn" @click="bufQrBackToPayMethod()"><i class="fa fa-chevron-left"></i> ยกเลิก</button>
@@ -1910,12 +1889,37 @@
 
         <div class="po-idle-body">
           <template v-if="!bufResult">
-            <div class="po-idle-card">
-              <div class="po-idle-icon"><i class="fa fa-utensils"></i></div>
-              <div class="po-idle-title">แตะบัตรเพื่อชำระบุฟเฟต์</div>
-              <div class="po-idle-meal">ยอดบุฟเฟต์ ฿{{ bufSelectedTierInfo ? bufSelectedTierInfo.price : 0 }}</div>
-              <input class="po-scan-input" v-model="bufCardInput" placeholder="แตะบัตร หรือพิมพ์เลขบัตรแล้วกด Enter" autofocus @keydown.enter="bufSubmitCardInput()">
+            <!-- §3.1 layout มาตรฐาน — แบ่งซ้าย-ขวา (ใช้ template เดียวกันทุกประเภทอาหาร) -->
+            <div class="buf-tap-card">
+              <div class="buf-tap-head">
+                <span>หน้าแตะบัตร — เมนูบุฟเฟต์</span>
+                <button class="buf-tap-menu-btn" @click="bufShowTestTools = !bufShowTestTools"><i class="fa fa-ellipsis"></i></button>
+              </div>
+              <div class="buf-tap-body">
+                <div class="buf-tap-left">
+                  <span class="po-badge po-badge-ready" style="align-self:flex-start">บุฟเฟต์</span>
+                  <div class="buf-tap-info-row"><span>เลขบัตร</span><span>–</span></div>
+                  <div class="buf-tap-info-row"><span>ชื่อนักเรียน</span><span>–</span></div>
+                  <div class="buf-tap-info-row buf-tap-info-row--amount"><span>ยอดก่อนชำระ</span><span>0.00</span></div>
+                  <div class="buf-tap-bottom">
+                    <div class="buf-tap-bottom-row"><i class="fa fa-money-bill-wave"></i> 0.00</div>
+                    <div class="buf-tap-bottom-row"><i class="fa fa-qrcode"></i> 0.00</div>
+                    <div class="buf-tap-bottom-date">{{ bufTapDateLabel }}</div>
+                  </div>
+                </div>
+                <div class="buf-tap-right">
+                  <button class="po-history-btn buf-tap-manual-btn" @click="bufManualEntryOpen = !bufManualEntryOpen"><i class="fa fa-keyboard"></i> พิมพ์เลขบัตร</button>
+                  <div class="buf-tap-center">
+                    <div class="po-idle-title">แตะบัตรเพื่อชำระเงิน</div>
+                    <div class="buf-tap-amount-line">ยอดบุฟเฟต์ <b>฿{{ bufSelectedTierInfo ? bufSelectedTierInfo.price : 0 }}</b></div>
+                    <div class="buf-tap-card-icon"><i class="fa fa-credit-card"></i></div>
+                    <input v-if="bufManualEntryOpen" class="po-scan-input" v-model="bufCardInput" placeholder="พิมพ์เลขบัตรแล้วกด Enter" autofocus @keydown.enter="bufSubmitCardInput()">
+                  </div>
+                </div>
+              </div>
             </div>
+            <!-- input ซ่อนไว้รับการแตะบัตรจริง (hardware NFC พิมพ์เลขบัตร+Enter ผ่าน keyboard-wedge) แม้ยังไม่เปิดโหมดพิมพ์เอง -->
+            <input v-if="!bufManualEntryOpen" v-model="bufCardInput" autofocus @keydown.enter="bufSubmitCardInput()" style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;" aria-hidden="true">
 
             <div class="po-testtools">
               <button class="po-testtools-toggle" @click="bufShowTestTools = !bufShowTestTools">
@@ -1941,10 +1945,10 @@
             <template v-if="bufResult.case === 'success'">
               <div class="po-result-icon po-icon-success"><i class="fa fa-check-circle"></i></div>
               <div class="po-result-title">ชำระเงินสำเร็จ</div>
-              <div class="po-result-name">{{ bufResult.card.name }}</div>
+              <div class="po-result-name">{{ bufResult.card ? bufResult.card.name : bufResult.guestName }}</div>
               <div class="po-result-class">{{ bufResult.tier ? bufResult.tier.label : '' }} · บุฟเฟต์</div>
               <div class="buf-display-amount">฿{{ bufResult.amount }}</div>
-              <div class="po-result-sub">คงเหลือ ฿{{ bufResult.card.balance }}</div>
+              <div class="po-result-sub" v-if="bufResult.card">คงเหลือ ฿{{ bufResult.card.balance }}</div>
               <div class="po-result-time">{{ bufFormatDate(bufResult.tx.date) }} · {{ bufResult.tx.time }} น.</div>
             </template>
 
@@ -2014,6 +2018,7 @@
             <input type="date" class="po-date-input" v-model="bufStaffFrom">
             <span>ถึง</span>
             <input type="date" class="po-date-input" v-model="bufStaffTo">
+            <button class="po-history-btn" @click="addToast('แสดงผลตามช่วงวันที่ที่เลือกแล้ว', 'info')"><i class="fa fa-magnifying-glass"></i> ค้นหา</button>
           </div>
 
           <div class="po-summary-row">
@@ -2043,7 +2048,7 @@
             <div v-if="bufDrillList.length === 0" class="po-empty"><i class="fa fa-inbox"></i><span>ไม่พบรายการ</span></div>
             <div v-for="tx in bufDrillList" :key="tx.id" class="po-history-row" @click="bufOpenVoid(tx)">
               <div class="po-history-row-main">
-                <span class="po-history-student-name">{{ bufCardInfo(tx.cardId) ? bufCardInfo(tx.cardId).name : tx.cardId }}</span>
+                <span class="po-history-student-name">{{ bufCardInfo(tx.cardId) ? bufCardInfo(tx.cardId).name : (tx.guestName || tx.cardId) }}</span>
                 <span class="po-history-meta">{{ bufGradeTierOf(tx.gradeTier) ? bufGradeTierOf(tx.gradeTier).label : '' }} · {{ tx.time }} น. · {{ tx.paymentMethod === 'card' ? 'แตะบัตร' : 'สแกน QR' }}</span>
               </div>
               <span class="po-badge po-badge-confirmed">฿{{ tx.amount }}</span>
@@ -3575,7 +3580,8 @@ function bufTx(fields) {
     id: 'BUFTX' + String(bufTxSeq).padStart(4, '0'),
     voided: false, voidReason: null, voidedBy: null, voidedAt: null,
     demoLabel: null, demoMockNow: null,
-    paymentMethod: 'card', // §5.1/§6 — ตอนนี้มีแค่เส้นทางแตะบัตร (Phase 8b สแกน QR ยังไม่ build) ค่า default เป็น 'card' ทุกจุด
+    paymentMethod: 'card', // §5.1/§6 — ค่า default เป็น 'card'; QR ตั้งเป็น 'qr' ตอนสร้าง tx
+    guestName: null, // QR ไม่รู้ตัวตนผู้จ่าย (ยืนยันแล้ว) ใช้ label generic แทน cardId
     ...fields,
   }
 }
@@ -3892,6 +3898,7 @@ export default {
       bufCurrentTime: '',
       // §2/§3.1 — เลือกประเภทบุฟเฟต์ก่อนแตะบัตร (ราคาผูกไว้ล่วงหน้า ไม่ใช่คำนวณหลังแตะ)
       bufSelectedTier: null,
+      bufManualEntryOpen: false, // §3.1 — ปุ่ม "พิมพ์เลขบัตร" เปิดช่องกรอกเอง (ปกติซ่อนไว้ให้เครื่องอ่านบัตรจริงพิมพ์ผ่าน keyboard-wedge)
       // เพดานติดลบของบัตร (ตัวเลข +) — ตัวอย่าง 200 ตามสเปก ยังไม่ยืนยันค่าจริงจากทีม (§7) แก้จุดเดียวที่นี่เมื่อได้ค่าจริง
       bufNegativeCapLimit: 200,
       bufCardInput: '',
@@ -3901,11 +3908,7 @@ export default {
       bufResultTimer: null,
       bufProcessing: false,
       bufMisreadCount: 0,
-      // §2.1/§8b — เส้นทางสแกน QR (ระบุตัวตนได้ แต่ไม่หักเงินจากบัตร — จ่ายจริงผ่าน QR provider)
-      bufQrCard: null,
-      bufQrCardId: null,
-      bufQrCardInput: '',
-      bufQrIdentifyError: '',
+      // §2.1/§8b — เส้นทางสแกน QR (ไม่รู้ตัวตนผู้จ่าย ยืนยันแล้ว — จ่ายจริงผ่าน QR provider โดยตรง)
       bufQrChannel: null,
       bufQrCountdown: 0,
       bufQrTimer: null,
@@ -4177,6 +4180,11 @@ export default {
     // §2/§3.1 — ประเภทบุฟเฟต์ที่ cashier เลือกไว้ล่วงหน้า (ราคาผูกไว้ก่อนแตะบัตร)
     bufSelectedTierInfo() {
       return this.bufGradeTierOf(this.bufSelectedTier)
+    },
+    // §3.1 — วันที่ dd-mm-พ.ศ. มุมล่างซ้ายของหน้าแตะบัตร
+    bufTapDateLabel() {
+      const [y, m, d] = BUF_TODAY.split('-')
+      return `${d}-${m}-${Number(y) + 543}`
     },
     // §2.1 — "ใช้ list เดียวกับหน้าเติมเงิน" กรอง+เรียงเหลือ 4 ช่องทางตามสเปก (ไม่คิด hex ใหม่ ใช้ของเดิมที่มีอยู่แล้ว)
     bufQrChannels() {
@@ -5189,41 +5197,18 @@ export default {
       this.bufSelectedTier = tierKey
       this.appScreen = 'buffet-pay-method'
     },
+    // §2.1 (แก้ไข — ยืนยันแล้ว: ตัดขั้นระบุตัวตนออก) QR ไม่รู้ตัวตนผู้จ่าย ข้ามไปเลือกช่องทางเลย
     bufChoosePayMethod(method) {
       if (method === 'card') {
         this.openBuffetIdle()
         return
       }
-      this.bufQrCard = null
-      this.bufQrCardId = null
-      this.bufQrCardInput = ''
-      this.bufQrIdentifyError = ''
-      this.appScreen = 'buffet-qr-identify'
-      this.bufInitBroadcast()
-      this.bufBroadcastQrState('identify')
-    },
-    // §2.1 ขั้น 1 — ระบุตัวตนด้วยบัตร (แตะ/พิมพ์เลข) เพื่อบันทึกชื่อ+กลุ่มในประวัติเท่านั้น ไม่หักเงินจากบัตร
-    // (ยืนยันกับทีมแล้ว — คนละแบบกับ "เลือกกลุ่ม" ที่ข้ามได้ เพราะกลุ่ม/ราคาเลือกมาก่อนแล้วจาก §3.3)
-    bufSubmitQrIdentify() {
-      const code = this.bufQrCardInput.trim()
-      if (!code) return
-      this.bufQrIdentifyError = ''
-      const card = this.bufCardInfo(code)
-      if (!card) { this.bufQrIdentifyError = 'ไม่พบข้อมูลบัตรนี้'; return }
-      if (this.buffetSuspendedCards.includes(code)) { this.bufQrIdentifyError = 'บัตรถูกระงับใช้งาน'; return }
-      const nowMin = this.bufNowMinutes(null)
-      const active = this.bufFindActiveRound(nowMin)
-      if (active) {
-        const already = this.buffetTransactions.find(t => !t.voided && t.cardId === code && t.date === BUF_TODAY && t.round === active.key)
-        if (already) { this.bufQrIdentifyError = `มื้อนี้ชำระบุฟเฟต์ไปแล้วเมื่อ ${already.time}`; return }
-      }
-      this.bufQrCard = card
-      this.bufQrCardId = code
-      this.bufQrCardInput = ''
+      this.bufQrChannel = null
       this.appScreen = 'buffet-qr-channel'
+      this.bufInitBroadcast()
       this.bufBroadcastQrState('channel')
     },
-    // §2.1 ขั้น 2-3 — เลือกช่องทาง แล้วแสดง QR + นับถอยหลัง 180 วิ (ยืนยันแล้ว)
+    // §2.1 ขั้น 1-2 — เลือกช่องทาง แล้วแสดง QR + นับถอยหลัง 180 วิ (ยืนยันแล้ว)
     bufSelectQrChannel(channelKey) {
       this.bufQrChannel = channelKey
       this.appScreen = 'buffet-qr-code'
@@ -5241,6 +5226,7 @@ export default {
       }, 1000)
     },
     // ปุ่มทดสอบเท่านั้น (ไม่มี payment gateway จริงผูกอยู่) — จำลองว่าลูกค้าสแกนจ่ายสำเร็จแล้ว
+    // §2.1 — QR ไม่รู้ตัวตนผู้จ่าย (ยืนยันแล้ว) บันทึกเป็น guestName generic แทนชื่อจริง ไม่มี cardId/balance ผูกอยู่
     bufQrSimulateSuccess() {
       clearInterval(this.bufQrTimer)
       const tier = this.bufSelectedTierInfo
@@ -5248,25 +5234,22 @@ export default {
       const nowMin = this.bufNowMinutes(null)
       const active = this.bufFindActiveRound(nowMin)
       const newTx = bufTx({
-        cardId: this.bufQrCardId, date: BUF_TODAY, round: active ? active.key : null,
+        cardId: null, guestName: 'ลูกค้า (สแกน QR)', date: BUF_TODAY, round: active ? active.key : null,
         time: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
         gradeTier: tier ? tier.key : this.bufSelectedTier, amount,
         paymentMethod: 'qr', qrChannel: this.bufQrChannel,
       })
       this.buffetTransactions.push(newTx)
-      const card = this.bufQrCard
       this.openBuffetIdle()
-      this.bufShowResult({ case: 'success', cardId: this.bufQrCardId, card, tier, amount, tx: newTx })
+      this.bufShowResult({ case: 'success', card: null, guestName: 'ลูกค้า (สแกน QR)', tier, amount, tx: newTx })
     },
     // หมดเวลา (§2.1) — ยกเลิกทันที ไม่ auto-retry ต้องกดเริ่มใหม่เองจากหน้าเลือกวิธีชำระเงิน
     bufQrBackToPayMethod() {
       clearInterval(this.bufQrTimer)
-      this.bufQrCard = null
-      this.bufQrCardId = null
       this.bufQrChannel = null
       this.bufQrCancelled = false
       this.appScreen = 'buffet-pay-method'
-      this.bufBroadcastQrState('identify') // จอ 2 กลับไปโชว่ยอดที่ผูกไว้เฉยๆ ระหว่างรอเลือกวิธีชำระใหม่
+      this.bufBroadcastQrState('channel') // จอ 2 กลับไปโชว่ยอดที่ผูกไว้เฉยๆ ระหว่างรอเลือกวิธีชำระใหม่
     },
     openBuffetIdle() {
       this.appScreen = 'buffet-idle'
@@ -5501,7 +5484,7 @@ export default {
     // §4 บุฟเฟต์ — จอ 2 ต้อง mirror เนื้อหาเดียวกับจอ 1 ทุกเคส (ยืนยันกับทีมแล้ว ไม่ใช่ fallback กลาง)
     // ตัดออกเฉพาะ error code ทางเทคนิคระดับฮาร์ดแวร์/backend (เช่น READER_HW_FAULT) ไม่ส่งไปจอ 2
     bufCustomerSafePayload(r) {
-      if (r.case === 'success') return { case: 'success', amount: r.amount, balance: r.card.balance, date: r.tx.date, time: r.tx.time }
+      if (r.case === 'success') return { case: 'success', amount: r.amount, balance: r.card ? r.card.balance : null, date: r.tx.date, time: r.tx.time }
       if (r.case === 'buf-duplicate') return { case: 'buf-duplicate', name: r.card ? r.card.name : '', time: r.time }
       if (r.case === 'buf-insufficient') return { case: 'buf-insufficient', amount: r.amount, balance: r.balance }
       if (r.case === 'hwB' || r.case === 'hwC') return { case: r.case }
