@@ -3432,6 +3432,15 @@ input:focus { outline: none; }
 .po-summary--cancelled .po-summary-num { color: #FF3B30; } /* red — Cancelled */
 .po-staff-list { padding: 12px 28px 24px; display: flex; flex-direction: column; gap: 8px; }
 
+/* Reservation detail (§5) / Buffet void (§6) modal — scoped overrides ของ class กลาง
+   (confirm-title/cancel-reason-label/cancel-reason-textarea/btn-no/btn-yes-red/confirm-actions
+   ใช้ร่วมกับ modal อื่นในระบบ — ใส่ modifier class นี้เฉพาะ 2 modal นี้ ไม่กระทบ modal อื่น) */
+.confirm-title.po-modal-title { font-size: 28px; } /* Display */
+.cancel-reason-label.po-modal-label { font-size: 14px; } /* Body */
+.cancel-reason-textarea.po-modal-textarea { font-size: 14px; } /* Body */
+.btn-no.po-modal-btn, .btn-yes-red.po-modal-btn { font-size: 17px; } /* Title */
+.confirm-actions.po-modal-actions { gap: 12px; }
+
 /* จอ 2 — Customer display (หน้าต่างเบราว์เซอร์ที่ 2) — light theme เดียวกับจอ 1 ทั้งหมด
    (ไม่มี token/ธีมมืดแยกต่างหาก — ใช้ po-idle-card/po-result-card ฯลฯ ซ้ำจากจอ 1 โดยตรง) */
 .po-display-root {

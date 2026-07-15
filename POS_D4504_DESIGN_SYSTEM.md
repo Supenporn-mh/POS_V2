@@ -33,6 +33,7 @@
 | `--amber` | `#FF9500` | เตือน ไม่ใช่ error | หน้าแตะซ้ำ (รับไปแล้ว), เคสจองคนละมื้อ, ยังไม่ชำระเงิน |
 | `--amber-bg` | `#FFF4E5` | tint ของ amber | พื้นหลังกล่องเตือนแพ้อาหาร |
 | `--red` | `#FF3B30` | อันตราย/บล็อก action | badge "Missed" / "Cancelled", บัตรถูกระงับ, เครื่องขัดข้อง, ปุ่มยืนยันยกเลิก |
+| `--red-dark` | `#D62B21` | danger pressed | state hover/กดค้างของปุ่ม danger (เช่น "ยืนยันยกเลิก") — คู่กันกับ `--blue-dark` ของฝั่ง primary |
 | `--red-bg` | `#FFF0EE` | tint ของ red | พื้นหลังการ์ดสรุป "ไม่มารับ" |
 | `--gray` (muted status) | `#8E8E93` | สถานะกลาง/ปิดจบ | badge "Collected" (ถือว่าจบ flow แล้ว ไม่ต้อง action ต่อ) |
 | `--gray-bg` | `#F2F2F7` | tint ของ gray | พื้นหลัง badge Collected |
