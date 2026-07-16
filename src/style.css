@@ -1231,6 +1231,7 @@ input:focus { outline: none; }
   font-size: 36px;
 }
 .confirm-icon-wrap.red { background: #FFF0EE; color: #FF3B30; }
+.confirm-icon-wrap.green { background: #E8FAF0; color: #34C759; }
 .confirm-title { font-size: 22px; font-weight: 500; color: #1C1C1E; letter-spacing: -0.2px; }
 .confirm-sub { font-size: 17px; color: #8E8E93; margin-top: 8px; }
 .confirm-actions { display: flex; gap: 12px; margin-top: 24px; }

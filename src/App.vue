@@ -3050,18 +3050,72 @@
       </div>
     </div>
 
-    <!-- ===== CANCEL ORDER MODAL ===== -->
-    <div v-if="cancelOrderModal" class="modal-overlay" @click.self="cancelOrderModal = false">
+    <!-- ===== CANCEL ORDER MODAL (เมนูการขาย) — layout เดียวกับ Pre-order/Buffet cancel (§5/§6) ===== -->
+    <div v-if="cancelOrderModal && selectedOrder" class="modal-overlay" @click.self="cancelOrderModal = false">
+      <div class="modal-box sm" style="position:relative">
+        <button class="po-result-close" @click="cancelOrderModal = false">×</button>
+        <div class="confirm-modal-body" style="align-items:stretch;text-align:left">
+          <div style="display:flex;align-items:center;gap:10px;width:100%">
+            <div class="po-modal-icon-box"><i class="fa fa-receipt"></i></div>
+            <div style="flex:1;min-width:0">
+              <div class="confirm-title po-modal-title" style="margin:0">ยืนยันยกเลิกออเดอร์</div>
+              <div class="po-modal-id">{{ selectedOrder.receiptNo }}</div>
+            </div>
+          </div>
+          <div style="margin-top:14px;font-size:14px;line-height:1.7;color:#3C3C43;width:100%">
+            <div><b>{{ orderCardInfo(selectedOrder.cardId) ? orderCardInfo(selectedOrder.cardId).name : selectedOrder.customerName }}</b> · {{ orderCardInfo(selectedOrder.cardId) ? orderCardInfo(selectedOrder.cardId).cls : '' }}</div>
+            <div>วันที่ซื้อ {{ selectedOrder.date }} · {{ selectedOrder.time }} น.</div>
+            <div style="margin-top:6px">
+              <div v-for="(it, i) in selectedOrder.items" :key="i">• {{ it.name }} ×{{ it.qty }}</div>
+            </div>
+            <div style="margin-top:6px">ยอดรวม ฿{{ selectedOrder.total.toFixed(2) }}</div>
+          </div>
+
+          <div class="nav-divider" style="margin:14px 0;width:100%"></div>
+
+          <label class="cancel-reason-label po-modal-label" style="margin-top:0">เหตุผลการยกเลิก *</label>
+          <div class="po-reason-chips">
+            <button
+              v-for="r in poCancelReasonOptions" :key="r" type="button"
+              class="po-reason-chip" :class="{ active: cancelOrderReasonSel === r }"
+              @click="cancelOrderReasonSel = r"
+            >{{ r }}</button>
+          </div>
+
+          <label class="cancel-reason-label po-modal-label">รายละเอียดเพิ่มเติม</label>
+          <textarea class="cancel-reason-textarea po-modal-textarea" style="width:100%" v-model="cancelOrderReasonOther" placeholder="รายละเอียดเพิ่มเติม..." rows="2"></textarea>
+
+          <label class="cancel-reason-label po-modal-label">รหัสยืนยัน (PIN) *</label>
+          <input type="password" class="po-pin-input" v-model="cancelOrderPinValue" placeholder="••••" maxlength="6" @input="cancelOrderPinError = ''" @keydown.enter="doCancelOrder()">
+          <div class="po-pin-hint">กรอก PIN ของคุณเพื่อยืนยันการยกเลิก</div>
+          <div v-if="cancelOrderPinError" class="po-pin-error">{{ cancelOrderPinError }}</div>
+
+          <div class="po-cancel-warning">
+            <i class="fa fa-triangle-exclamation"></i>
+            <span>การยกเลิกนี้ไม่สามารถย้อนกลับได้ และจะถูกบันทึกไว้ในระบบ</span>
+          </div>
+
+          <div class="confirm-actions po-modal-actions" style="width:100%;margin-top:14px">
+            <button class="btn-no po-modal-btn" @click="cancelOrderModal = false">ย้อนกลับ</button>
+            <button class="btn-yes-red po-modal-btn" :disabled="!cancelOrderReasonSel || (cancelOrderReasonSel === 'อื่นๆ' && !cancelOrderReasonOther.trim()) || !cancelOrderPinValue.trim()" @click="doCancelOrder()">ยืนยันยกเลิก</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== CANCEL ORDER SUCCESS POPUP ===== -->
+    <div v-if="cancelOrderSuccessModal" class="modal-overlay">
       <div class="modal-box sm">
         <div class="confirm-modal-body">
-          <div class="confirm-icon-wrap red"><i class="fa fa-exclamation-triangle"></i></div>
-          <div class="confirm-title">ยืนยันยกเลิกออเดอร์?</div>
-          <div class="confirm-sub">เลขที่ใบเสร็จ : {{ selectedOrder && selectedOrder.receiptNo }}</div>
-          <label class="cancel-reason-label">เหตุผลการยกเลิก *</label>
-          <textarea class="cancel-reason-textarea" v-model="cancelOrderReason" placeholder="ระบุเหตุผลการยกเลิก..." rows="3"></textarea>
+          <div class="confirm-icon-wrap green"><i class="fa fa-check-circle"></i></div>
+          <div class="confirm-title">ยกเลิกออเดอร์สำเร็จ</div>
+          <template v-if="cancelOrderSuccessData.refunded">
+            <div class="confirm-sub">คืนเงิน ฿{{ cancelOrderSuccessData.amount.toFixed(2) }}</div>
+            <div class="confirm-sub">ยอดเงินคงเหลือของนักเรียน ฿{{ cancelOrderSuccessData.balance.toFixed(2) }}</div>
+          </template>
+          <div v-else class="confirm-sub">ออเดอร์นี้ยังไม่ได้ชำระเงิน จึงไม่มีการคืนเงิน</div>
           <div class="confirm-actions">
-            <button class="btn-no" @click="cancelOrderModal = false">ไม่ยกเลิก</button>
-            <button class="btn-yes-red" :disabled="!cancelOrderReason.trim()" @click="cancelOrderModal = false; openCancelPin('order')">ยืนยันยกเลิก</button>
+            <button class="btn-yes-blue" @click="cancelOrderSuccessModal = false; appScreen = 'cancelled-orders'">ตกลง</button>
           </div>
         </div>
       </div>
@@ -3299,18 +3353,18 @@ const products = [
 ]
 
 const ordersData = [
-  { id: 1, roomNo: '100101-1', phone: '0987894561', receiptNo: '1202602250010', date: '25-02-2026', time: '18:08', total: 564.96, paymentStatus: 'success', foodStatus: 'cooking', customerName: 'สมชาย ใจดี', paymentMethod: 'แม่ณี', subtotal: 480, discount: 0, vat: 48, sc: 39.96, items: [{ name: 'กะเพราไก่ไข่ดาว', qty: 2, price: 320.00, options: ['เพิ่มข้าว', 'เพิ่มเนื้อสัตว์'], note: 'โม่ใส่นัก' }, { name: 'อเมริกาโน่เย็น', qty: 1, price: 80.00, options: ['หวานน้อย 25%', 'เพิ่มช็อตกาแฟ'], note: 'แยกน้ำแข็ง' }, { name: 'น้ำเปล่า', qty: 2, price: 80.00, options: [], note: '' }], note: 'ใส่กล่อง, Delivery Info: Pickup Now, Payment Method: แม่ณี' },
-  { id: 2, roomNo: '100101-2', phone: '0987894561', receiptNo: '1202602250009', date: '25-02-2026', time: '17:08', total: 564.96, paymentStatus: '', foodStatus: 'sending', customerName: 'สมหญิง รักดี', paymentMethod: 'เงินสด', subtotal: 480, discount: 0, vat: 48, sc: 39.96, items: [{ name: 'กะเพราไก่ไข่ดาว', qty: 2, price: 320.00, options: ['เพิ่มข้าว', 'เพิ่มเนื้อสัตว์'], note: 'โม่ใส่นัก' }, { name: 'อเมริกาโน่เย็น', qty: 1, price: 80.00, options: ['หวานน้อย 25%', 'เพิ่มช็อตกาแฟ'], note: 'แยกน้ำแข็ง' }, { name: 'น้ำเปล่า', qty: 2, price: 80.00, options: [], note: '' }], note: 'ใส่กล่อง, Delivery Info: Pickup Now, Payment Method: แม่ณี' },
-  { id: 3, roomNo: '100101-3', phone: '0987894561', receiptNo: '1202602250008', date: '25-02-2026', time: '16:45', total: 257.00, paymentStatus: '', foodStatus: 'cancelled', customerName: 'วิชัย สุขใจ', paymentMethod: 'QR Code', subtotal: 220, discount: 0, vat: 22, sc: 19.80, items: [{ name: 'Café Latte', qty: 2, price: 160.00, options: ['ไม่ใส่น้ำตาล'], note: '' }, { name: 'คุกกี้', qty: 1, price: 45.00, options: [], note: '' }], note: '' },
-  { id: 4, roomNo: '100108', phone: '0987894561', receiptNo: '1202602250007', date: '25-02-2026', time: '16:20', total: 398.00, paymentStatus: 'success', foodStatus: 'cooking', customerName: 'สมชาย ใจดี', paymentMethod: 'EDC', subtotal: 340, discount: 0, vat: 34, sc: 30.60, items: [{ name: 'Matcha Latte', qty: 2, price: 170.00, options: ['เพิ่มน้ำตาล'], note: '' }, { name: 'Croissant', qty: 2, price: 130.00, options: [], note: '' }], note: '' },
-  { id: 5, roomNo: '100102', phone: '0987894561', receiptNo: '1202602250006', date: '25-02-2026', time: '15:55', total: 689.00, paymentStatus: 'success', foodStatus: 'served', customerName: 'นิดา มีสุข', paymentMethod: 'แม่ณี', subtotal: 590, discount: 0, vat: 59, sc: 53.10, items: [{ name: 'Strawberry Matcha', qty: 3, price: 360.00, options: ['หวานน้อย'], note: 'เร่งด่วน' }, { name: 'Cheesecake', qty: 2, price: 220.00, options: [], note: '' }], note: '' },
-  { id: 6, roomNo: '100111', phone: '0987894561', receiptNo: '1202602250005', date: '25-02-2026', time: '15:30', total: 879.00, paymentStatus: '', foodStatus: 'pending', customerName: 'ปิยะ วงศ์ไทย', paymentMethod: 'เงินสด', subtotal: 750, discount: 0, vat: 75, sc: 67.50, items: [{ name: 'Caramel Macchiato', qty: 4, price: 360.00, options: ['เพิ่มช็อต'], note: '' }, { name: 'Banana Bread', qty: 2, price: 110.00, options: [], note: '' }, { name: 'Cookie', qty: 6, price: 270.00, options: [], note: '' }], note: 'แยกถุง' },
-  { id: 7, roomNo: '100112', phone: '0987894561', receiptNo: '1202602250004', date: '25-02-2026', time: '14:50', total: 548.00, paymentStatus: '', foodStatus: 'cancelled', customerName: 'ศิรินภา ดีงาม', paymentMethod: 'QR Code', subtotal: 468, discount: 0, vat: 46.80, sc: 42.12, items: [{ name: 'Thai Tea', qty: 4, price: 260.00, options: ['หวานปกติ'], note: '' }, { name: 'Waffle', qty: 2, price: 170.00, options: [], note: '' }], note: '' },
-  { id: 8, roomNo: '100202', phone: '0987894561', receiptNo: '1202602250003', date: '25-02-2026', time: '14:10', total: 497.00, paymentStatus: '', foodStatus: 'sending', customerName: 'อรุณ สว่าง', paymentMethod: 'EDC', subtotal: 424, discount: 0, vat: 42.40, sc: 38.16, items: [{ name: 'Honey Lemon', qty: 3, price: 210.00, options: [], note: '' }, { name: 'Chocolate Cake', qty: 2, price: 180.00, options: [], note: '' }], note: '' },
-  { id: 9, roomNo: '100109', phone: '0987894561', receiptNo: '1202602250002', date: '25-02-2026', time: '13:30', total: 1879.00, paymentStatus: 'success', foodStatus: 'cooking', customerName: 'ธนพล รุ่งเรือง', paymentMethod: 'แม่ณี', subtotal: 1600, discount: 0, vat: 160, sc: 144, items: [{ name: 'Americano Pandan', qty: 5, price: 500.00, options: ['ไม่ใส่น้ำตาล', 'เพิ่มแพนดาน'], note: '' }, { name: 'กะเพราไก่ไข่ดาว', qty: 4, price: 640.00, options: ['เพิ่มข้าว'], note: 'ไม่เผ็ด' }, { name: 'น้ำเปล่า', qty: 5, price: 200.00, options: [], note: '' }], note: 'จัดส่ง ห้อง 302' },
-  { id: 10, roomNo: '100206', phone: '0987894561', receiptNo: '1202602250001', date: '25-02-2026', time: '12:00', total: 789.00, paymentStatus: '', foodStatus: 'complete', customerName: 'มาลี ศรีดี', paymentMethod: 'เงินสด', subtotal: 674, discount: 0, vat: 67.40, sc: 60.66, items: [{ name: 'Butterfly Pea Latte', qty: 4, price: 320.00, options: ['หวานน้อย 25%'], note: '' }, { name: 'Passion Fruit Soda', qty: 3, price: 225.00, options: [], note: '' }, { name: 'Croissant', qty: 2, price: 130.00, options: [], note: '' }], note: '' },
+  { id: 1, cardId: '1001001', roomNo: '100101-1', phone: '0987894561', receiptNo: '1202602250010', date: '25-02-2026', time: '18:08', total: 564.96, paymentStatus: 'success', foodStatus: 'cooking', customerName: 'สมชาย ใจดี', paymentMethod: 'แม่ณี', subtotal: 480, discount: 0, vat: 48, sc: 39.96, items: [{ name: 'กะเพราไก่ไข่ดาว', qty: 2, price: 320.00, options: ['เพิ่มข้าว', 'เพิ่มเนื้อสัตว์'], note: 'โม่ใส่นัก' }, { name: 'อเมริกาโน่เย็น', qty: 1, price: 80.00, options: ['หวานน้อย 25%', 'เพิ่มช็อตกาแฟ'], note: 'แยกน้ำแข็ง' }, { name: 'น้ำเปล่า', qty: 2, price: 80.00, options: [], note: '' }], note: 'ใส่กล่อง, Delivery Info: Pickup Now, Payment Method: แม่ณี' },
+  { id: 2, cardId: '1001002', roomNo: '100101-2', phone: '0987894561', receiptNo: '1202602250009', date: '25-02-2026', time: '17:08', total: 564.96, paymentStatus: '', foodStatus: 'sending', customerName: 'สมหญิง รักดี', paymentMethod: 'เงินสด', subtotal: 480, discount: 0, vat: 48, sc: 39.96, items: [{ name: 'กะเพราไก่ไข่ดาว', qty: 2, price: 320.00, options: ['เพิ่มข้าว', 'เพิ่มเนื้อสัตว์'], note: 'โม่ใส่นัก' }, { name: 'อเมริกาโน่เย็น', qty: 1, price: 80.00, options: ['หวานน้อย 25%', 'เพิ่มช็อตกาแฟ'], note: 'แยกน้ำแข็ง' }, { name: 'น้ำเปล่า', qty: 2, price: 80.00, options: [], note: '' }], note: 'ใส่กล่อง, Delivery Info: Pickup Now, Payment Method: แม่ณี' },
+  { id: 3, cardId: '1001003', roomNo: '100101-3', phone: '0987894561', receiptNo: '1202602250008', date: '25-02-2026', time: '16:45', total: 257.00, paymentStatus: '', foodStatus: 'cancelled', customerName: 'วิชัย สุขใจ', paymentMethod: 'QR Code', subtotal: 220, discount: 0, vat: 22, sc: 19.80, items: [{ name: 'Café Latte', qty: 2, price: 160.00, options: ['ไม่ใส่น้ำตาล'], note: '' }, { name: 'คุกกี้', qty: 1, price: 45.00, options: [], note: '' }], note: '' },
+  { id: 4, cardId: '1001004', roomNo: '100108', phone: '0987894561', receiptNo: '1202602250007', date: '25-02-2026', time: '16:20', total: 398.00, paymentStatus: 'success', foodStatus: 'cooking', customerName: 'สมชาย ใจดี', paymentMethod: 'EDC', subtotal: 340, discount: 0, vat: 34, sc: 30.60, items: [{ name: 'Matcha Latte', qty: 2, price: 170.00, options: ['เพิ่มน้ำตาล'], note: '' }, { name: 'Croissant', qty: 2, price: 130.00, options: [], note: '' }], note: '' },
+  { id: 5, cardId: '1001005', roomNo: '100102', phone: '0987894561', receiptNo: '1202602250006', date: '25-02-2026', time: '15:55', total: 689.00, paymentStatus: 'success', foodStatus: 'served', customerName: 'นิดา มีสุข', paymentMethod: 'แม่ณี', subtotal: 590, discount: 0, vat: 59, sc: 53.10, items: [{ name: 'Strawberry Matcha', qty: 3, price: 360.00, options: ['หวานน้อย'], note: 'เร่งด่วน' }, { name: 'Cheesecake', qty: 2, price: 220.00, options: [], note: '' }], note: '' },
+  { id: 6, cardId: '1001006', roomNo: '100111', phone: '0987894561', receiptNo: '1202602250005', date: '25-02-2026', time: '15:30', total: 879.00, paymentStatus: '', foodStatus: 'pending', customerName: 'ปิยะ วงศ์ไทย', paymentMethod: 'เงินสด', subtotal: 750, discount: 0, vat: 75, sc: 67.50, items: [{ name: 'Caramel Macchiato', qty: 4, price: 360.00, options: ['เพิ่มช็อต'], note: '' }, { name: 'Banana Bread', qty: 2, price: 110.00, options: [], note: '' }, { name: 'Cookie', qty: 6, price: 270.00, options: [], note: '' }], note: 'แยกถุง' },
+  { id: 7, cardId: '1001007', roomNo: '100112', phone: '0987894561', receiptNo: '1202602250004', date: '25-02-2026', time: '14:50', total: 548.00, paymentStatus: '', foodStatus: 'cancelled', customerName: 'ศิรินภา ดีงาม', paymentMethod: 'QR Code', subtotal: 468, discount: 0, vat: 46.80, sc: 42.12, items: [{ name: 'Thai Tea', qty: 4, price: 260.00, options: ['หวานปกติ'], note: '' }, { name: 'Waffle', qty: 2, price: 170.00, options: [], note: '' }], note: '' },
+  { id: 8, cardId: '1001008', roomNo: '100202', phone: '0987894561', receiptNo: '1202602250003', date: '25-02-2026', time: '14:10', total: 497.00, paymentStatus: '', foodStatus: 'sending', customerName: 'อรุณ สว่าง', paymentMethod: 'EDC', subtotal: 424, discount: 0, vat: 42.40, sc: 38.16, items: [{ name: 'Honey Lemon', qty: 3, price: 210.00, options: [], note: '' }, { name: 'Chocolate Cake', qty: 2, price: 180.00, options: [], note: '' }], note: '' },
+  { id: 9, cardId: '1001001', roomNo: '100109', phone: '0987894561', receiptNo: '1202602250002', date: '25-02-2026', time: '13:30', total: 1879.00, paymentStatus: 'success', foodStatus: 'cooking', customerName: 'ธนพล รุ่งเรือง', paymentMethod: 'แม่ณี', subtotal: 1600, discount: 0, vat: 160, sc: 144, items: [{ name: 'Americano Pandan', qty: 5, price: 500.00, options: ['ไม่ใส่น้ำตาล', 'เพิ่มแพนดาน'], note: '' }, { name: 'กะเพราไก่ไข่ดาว', qty: 4, price: 640.00, options: ['เพิ่มข้าว'], note: 'ไม่เผ็ด' }, { name: 'น้ำเปล่า', qty: 5, price: 200.00, options: [], note: '' }], note: 'จัดส่ง ห้อง 302' },
+  { id: 10, cardId: '1001002', roomNo: '100206', phone: '0987894561', receiptNo: '1202602250001', date: '25-02-2026', time: '12:00', total: 789.00, paymentStatus: '', foodStatus: 'complete', customerName: 'มาลี ศรีดี', paymentMethod: 'เงินสด', subtotal: 674, discount: 0, vat: 67.40, sc: 60.66, items: [{ name: 'Butterfly Pea Latte', qty: 4, price: 320.00, options: ['หวานน้อย 25%'], note: '' }, { name: 'Passion Fruit Soda', qty: 3, price: 225.00, options: [], note: '' }, { name: 'Croissant', qty: 2, price: 130.00, options: [], note: '' }], note: '' },
   {
-    id: 11, roomNo: '100301', phone: '0912-345-678', receiptNo: '1202604240011',
+    id: 11, cardId: '1001003', roomNo: '100301', phone: '0912-345-678', receiptNo: '1202604240011',
     date: '24-04-2026', time: '10:30', paymentStatus: 'success', foodStatus: 'cooking',
     customerName: 'พิมพ์ใจ แสงทอง', paymentMethod: 'แม่ณี',
     subtotal: 625, discount: 175, vat: 0, sc: 0, total: 450.00,
@@ -3338,19 +3392,19 @@ const ordersData = [
     note: 'ลูกค้า VIP — จัดส่งด่วน ห้อง 301',
   },
   // --- Mock history: วันนี้ 05-05-2026 ---
-  { id: 12, roomNo: '201A', phone: '0811111111', receiptNo: '1202605050012', date: '05-05-2026', time: '08:45', total: 340.00, paymentStatus: 'success', foodStatus: 'complete', customerName: 'ธนา พัฒนา', paymentMethod: 'QR Code', subtotal: 290, discount: 0, vat: 29, sc: 26.10, items: [{ name: 'Caramel Macchiato', qty: 2, price: 180.00, options: ['หวานน้อย 25%'], note: '' }, { name: 'น้ำเปล่า', qty: 2, price: 60.00, options: [], note: '' }], note: '' },
-  { id: 13, roomNo: '202B', phone: '0822222222', receiptNo: '1202605050013', date: '05-05-2026', time: '09:10', total: 510.00, paymentStatus: 'success', foodStatus: 'complete', customerName: 'สุดา รักสวย', paymentMethod: 'แม่ณี', subtotal: 435, discount: 0, vat: 43.50, sc: 39.15, items: [{ name: 'Matcha Latte', qty: 3, price: 255.00, options: ['ไม่ใส่น้ำตาล'], note: '' }, { name: 'Strawberry Matcha', qty: 2, price: 240.00, options: ['หวานน้อย'], note: '' }], note: '' },
-  { id: 14, roomNo: '203C', phone: '0833333333', receiptNo: '1202605050014', date: '05-05-2026', time: '09:55', total: 420.00, paymentStatus: 'success', foodStatus: 'complete', customerName: 'มานะ ดีใจ', paymentMethod: 'เงินสด', subtotal: 360, discount: 0, vat: 36, sc: 32.40, items: [{ name: 'Thai Tea', qty: 2, price: 180.00, options: ['หวานปกติ'], note: '' }, { name: 'Honey Lemon', qty: 2, price: 160.00, options: [], note: '' }], note: '' },
-  { id: 15, roomNo: '204D', phone: '0844444444', receiptNo: '1202605050015', date: '05-05-2026', time: '10:30', total: 390.00, paymentStatus: 'success', foodStatus: 'complete', customerName: 'ปณิตา ชัยมงคล', paymentMethod: 'EDC', subtotal: 333, discount: 0, vat: 33.30, sc: 29.97, items: [{ name: 'Butterfly Pea Latte', qty: 2, price: 200.00, options: ['หวานน้อย 25%'], note: '' }, { name: 'Americano Pandan', qty: 1, price: 110.00, options: ['ไม่ใส่น้ำตาล'], note: '' }], note: '' },
-  { id: 16, roomNo: '205E', phone: '0855555555', receiptNo: '1202605050016', date: '05-05-2026', time: '11:15', total: 560.00, paymentStatus: 'success', foodStatus: 'complete', customerName: 'ชัยชนะ วิชิต', paymentMethod: 'แม่ณี', subtotal: 478, discount: 0, vat: 47.80, sc: 43.02, items: [{ name: 'Americano Pandan', qty: 3, price: 330.00, options: ['ไม่ใส่น้ำตาล', 'เพิ่มแพนดาน'], note: '' }, { name: 'Café Latte', qty: 2, price: 180.00, options: ['เพิ่มช็อต'], note: '' }], note: '' },
-  { id: 17, roomNo: '206F', phone: '0866666666', receiptNo: '1202605050017', date: '05-05-2026', time: '12:20', total: 620.00, paymentStatus: 'success', foodStatus: 'complete', customerName: 'วลัยพร สุขสม', paymentMethod: 'QR Code', subtotal: 529, discount: 0, vat: 52.90, sc: 47.61, items: [{ name: 'Strawberry Matcha', qty: 2, price: 240.00, options: ['หวานน้อย'], note: 'เร่งด่วน' }, { name: 'Passion Fruit Soda', qty: 3, price: 285.00, options: [], note: '' }], note: '' },
-  { id: 18, roomNo: '207G', phone: '0877777777', receiptNo: '1202605050018', date: '05-05-2026', time: '13:05', total: 310.00, paymentStatus: 'success', foodStatus: 'complete', customerName: 'ณัฐพล ตรงดี', paymentMethod: 'เงินสด', subtotal: 265, discount: 0, vat: 26.50, sc: 23.85, items: [{ name: 'Café Latte', qty: 2, price: 180.00, options: [], note: '' }, { name: 'น้ำเปล่า', qty: 3, price: 90.00, options: [], note: '' }], note: '' },
-  { id: 19, roomNo: '208H', phone: '0888888888', receiptNo: '1202605050019', date: '05-05-2026', time: '14:00', total: 0, paymentStatus: '', foodStatus: 'cancelled', customerName: 'กาญจนา ยิ้มแย้ม', paymentMethod: 'เงินสด', subtotal: 0, discount: 0, vat: 0, sc: 0, items: [{ name: 'Caramel Macchiato', qty: 1, price: 90.00, options: ['เพิ่มช็อต'], note: '' }, { name: 'Matcha Latte', qty: 2, price: 170.00, options: [], note: '' }], note: 'ยกเลิกโดยลูกค้า' },
+  { id: 12, cardId: '1001004', roomNo: '201A', phone: '0811111111', receiptNo: '1202605050012', date: '05-05-2026', time: '08:45', total: 340.00, paymentStatus: 'success', foodStatus: 'complete', customerName: 'ธนา พัฒนา', paymentMethod: 'QR Code', subtotal: 290, discount: 0, vat: 29, sc: 26.10, items: [{ name: 'Caramel Macchiato', qty: 2, price: 180.00, options: ['หวานน้อย 25%'], note: '' }, { name: 'น้ำเปล่า', qty: 2, price: 60.00, options: [], note: '' }], note: '' },
+  { id: 13, cardId: '1001005', roomNo: '202B', phone: '0822222222', receiptNo: '1202605050013', date: '05-05-2026', time: '09:10', total: 510.00, paymentStatus: 'success', foodStatus: 'complete', customerName: 'สุดา รักสวย', paymentMethod: 'แม่ณี', subtotal: 435, discount: 0, vat: 43.50, sc: 39.15, items: [{ name: 'Matcha Latte', qty: 3, price: 255.00, options: ['ไม่ใส่น้ำตาล'], note: '' }, { name: 'Strawberry Matcha', qty: 2, price: 240.00, options: ['หวานน้อย'], note: '' }], note: '' },
+  { id: 14, cardId: '1001006', roomNo: '203C', phone: '0833333333', receiptNo: '1202605050014', date: '05-05-2026', time: '09:55', total: 420.00, paymentStatus: 'success', foodStatus: 'complete', customerName: 'มานะ ดีใจ', paymentMethod: 'เงินสด', subtotal: 360, discount: 0, vat: 36, sc: 32.40, items: [{ name: 'Thai Tea', qty: 2, price: 180.00, options: ['หวานปกติ'], note: '' }, { name: 'Honey Lemon', qty: 2, price: 160.00, options: [], note: '' }], note: '' },
+  { id: 15, cardId: '1001007', roomNo: '204D', phone: '0844444444', receiptNo: '1202605050015', date: '05-05-2026', time: '10:30', total: 390.00, paymentStatus: 'success', foodStatus: 'complete', customerName: 'ปณิตา ชัยมงคล', paymentMethod: 'EDC', subtotal: 333, discount: 0, vat: 33.30, sc: 29.97, items: [{ name: 'Butterfly Pea Latte', qty: 2, price: 200.00, options: ['หวานน้อย 25%'], note: '' }, { name: 'Americano Pandan', qty: 1, price: 110.00, options: ['ไม่ใส่น้ำตาล'], note: '' }], note: '' },
+  { id: 16, cardId: '1001008', roomNo: '205E', phone: '0855555555', receiptNo: '1202605050016', date: '05-05-2026', time: '11:15', total: 560.00, paymentStatus: 'success', foodStatus: 'complete', customerName: 'ชัยชนะ วิชิต', paymentMethod: 'แม่ณี', subtotal: 478, discount: 0, vat: 47.80, sc: 43.02, items: [{ name: 'Americano Pandan', qty: 3, price: 330.00, options: ['ไม่ใส่น้ำตาล', 'เพิ่มแพนดาน'], note: '' }, { name: 'Café Latte', qty: 2, price: 180.00, options: ['เพิ่มช็อต'], note: '' }], note: '' },
+  { id: 17, cardId: '1001001', roomNo: '206F', phone: '0866666666', receiptNo: '1202605050017', date: '05-05-2026', time: '12:20', total: 620.00, paymentStatus: 'success', foodStatus: 'complete', customerName: 'วลัยพร สุขสม', paymentMethod: 'QR Code', subtotal: 529, discount: 0, vat: 52.90, sc: 47.61, items: [{ name: 'Strawberry Matcha', qty: 2, price: 240.00, options: ['หวานน้อย'], note: 'เร่งด่วน' }, { name: 'Passion Fruit Soda', qty: 3, price: 285.00, options: [], note: '' }], note: '' },
+  { id: 18, cardId: '1001002', roomNo: '207G', phone: '0877777777', receiptNo: '1202605050018', date: '05-05-2026', time: '13:05', total: 310.00, paymentStatus: 'success', foodStatus: 'complete', customerName: 'ณัฐพล ตรงดี', paymentMethod: 'เงินสด', subtotal: 265, discount: 0, vat: 26.50, sc: 23.85, items: [{ name: 'Café Latte', qty: 2, price: 180.00, options: [], note: '' }, { name: 'น้ำเปล่า', qty: 3, price: 90.00, options: [], note: '' }], note: '' },
+  { id: 19, cardId: '1001003', roomNo: '208H', phone: '0888888888', receiptNo: '1202605050019', date: '05-05-2026', time: '14:00', total: 0, paymentStatus: '', foodStatus: 'cancelled', customerName: 'กาญจนา ยิ้มแย้ม', paymentMethod: 'เงินสด', subtotal: 0, discount: 0, vat: 0, sc: 0, items: [{ name: 'Caramel Macchiato', qty: 1, price: 90.00, options: ['เพิ่มช็อต'], note: '' }, { name: 'Matcha Latte', qty: 2, price: 170.00, options: [], note: '' }], note: 'ยกเลิกโดยลูกค้า' },
   // --- Mock history: เมื่อวาน 04-05-2026 ---
-  { id: 20, roomNo: '301A', phone: '0811110001', receiptNo: '1202605040020', date: '04-05-2026', time: '10:00', total: 480.00, paymentStatus: 'success', foodStatus: 'complete', customerName: 'รัชนี ใจงาม', paymentMethod: 'แม่ณี', subtotal: 410, discount: 0, vat: 41, sc: 36.90, items: [{ name: 'Matcha Latte', qty: 2, price: 170.00, options: ['หวานน้อย'], note: '' }, { name: 'Caramel Macchiato', qty: 2, price: 180.00, options: [], note: '' }], note: '' },
-  { id: 21, roomNo: '302B', phone: '0822220002', receiptNo: '1202605040021', date: '04-05-2026', time: '11:30', total: 345.00, paymentStatus: 'success', foodStatus: 'complete', customerName: 'ประเสริฐ ดีมาก', paymentMethod: 'EDC', subtotal: 295, discount: 0, vat: 29.50, sc: 26.55, items: [{ name: 'Thai Tea', qty: 3, price: 270.00, options: ['หวานปกติ'], note: '' }, { name: 'น้ำเปล่า', qty: 1, price: 30.00, options: [], note: '' }], note: '' },
-  { id: 22, roomNo: '303C', phone: '0833330003', receiptNo: '1202605040022', date: '04-05-2026', time: '13:45', total: 580.00, paymentStatus: 'success', foodStatus: 'complete', customerName: 'อำพร สดใส', paymentMethod: 'QR Code', subtotal: 495, discount: 0, vat: 49.50, sc: 44.55, items: [{ name: 'Butterfly Pea Latte', qty: 3, price: 300.00, options: ['หวานน้อย 25%'], note: '' }, { name: 'Americano', qty: 2, price: 160.00, options: ['ร้อน'], note: '' }], note: '' },
-  { id: 23, roomNo: '304D', phone: '0844440004', receiptNo: '1202605040023', date: '04-05-2026', time: '15:00', total: 0, paymentStatus: '', foodStatus: 'cancelled', customerName: 'บุญรอด แข็งแรง', paymentMethod: 'เงินสด', subtotal: 0, discount: 0, vat: 0, sc: 0, items: [{ name: 'Honey Lemon', qty: 2, price: 160.00, options: [], note: '' }], note: 'ยกเลิกก่อนชำระเงิน' },
+  { id: 20, cardId: '1001004', roomNo: '301A', phone: '0811110001', receiptNo: '1202605040020', date: '04-05-2026', time: '10:00', total: 480.00, paymentStatus: 'success', foodStatus: 'complete', customerName: 'รัชนี ใจงาม', paymentMethod: 'แม่ณี', subtotal: 410, discount: 0, vat: 41, sc: 36.90, items: [{ name: 'Matcha Latte', qty: 2, price: 170.00, options: ['หวานน้อย'], note: '' }, { name: 'Caramel Macchiato', qty: 2, price: 180.00, options: [], note: '' }], note: '' },
+  { id: 21, cardId: '1001005', roomNo: '302B', phone: '0822220002', receiptNo: '1202605040021', date: '04-05-2026', time: '11:30', total: 345.00, paymentStatus: 'success', foodStatus: 'complete', customerName: 'ประเสริฐ ดีมาก', paymentMethod: 'EDC', subtotal: 295, discount: 0, vat: 29.50, sc: 26.55, items: [{ name: 'Thai Tea', qty: 3, price: 270.00, options: ['หวานปกติ'], note: '' }, { name: 'น้ำเปล่า', qty: 1, price: 30.00, options: [], note: '' }], note: '' },
+  { id: 22, cardId: '1001006', roomNo: '303C', phone: '0833330003', receiptNo: '1202605040022', date: '04-05-2026', time: '13:45', total: 580.00, paymentStatus: 'success', foodStatus: 'complete', customerName: 'อำพร สดใส', paymentMethod: 'QR Code', subtotal: 495, discount: 0, vat: 49.50, sc: 44.55, items: [{ name: 'Butterfly Pea Latte', qty: 3, price: 300.00, options: ['หวานน้อย 25%'], note: '' }, { name: 'Americano', qty: 2, price: 160.00, options: ['ร้อน'], note: '' }], note: '' },
+  { id: 23, cardId: '1001007', roomNo: '304D', phone: '0844440004', receiptNo: '1202605040023', date: '04-05-2026', time: '15:00', total: 0, paymentStatus: '', foodStatus: 'cancelled', customerName: 'บุญรอด แข็งแรง', paymentMethod: 'เงินสด', subtotal: 0, discount: 0, vat: 0, sc: 0, items: [{ name: 'Honey Lemon', qty: 2, price: 160.00, options: [], note: '' }], note: 'ยกเลิกก่อนชำระเงิน' },
 ]
 
 const kitchensData = [
@@ -3721,7 +3775,12 @@ export default {
       logoutConfirm: false,
       cancelConfirm: false,
       cancelOrderModal: false,
-      cancelOrderReason: '',
+      cancelOrderReasonSel: '',
+      cancelOrderReasonOther: '',
+      cancelOrderPinValue: '',
+      cancelOrderPinError: '',
+      cancelOrderSuccessModal: false,
+      cancelOrderSuccessData: { amount: 0, balance: 0, refunded: false },
       cancelPinModal: false,
       cancelPinValue: '',
       cancelPinError: '',
@@ -4406,18 +4465,38 @@ export default {
       this.appScreen = 'order-detail'
     },
     openCancelOrderModal() {
-      this.cancelOrderReason = ''
+      this.cancelOrderReasonSel = ''
+      this.cancelOrderReasonOther = ''
+      this.cancelOrderPinValue = ''
+      this.cancelOrderPinError = ''
       this.cancelOrderModal = true
     },
     doCancelOrder() {
-      if (!this.cancelOrderReason.trim()) return
-      this.selectedOrder.isCancelled = true
-      this.selectedOrder.cancelReason = this.cancelOrderReason.trim()
-      this.cancelledOrdersList.push(this.selectedOrder)
+      if (!this.selectedOrder) return
+      const note = this.cancelOrderReasonOther.trim()
+      const reason = this.cancelOrderReasonSel === 'อื่นๆ' ? note : (note ? `${this.cancelOrderReasonSel} — ${note}` : this.cancelOrderReasonSel)
+      if (!reason) return
+      const code = this.cancelOrderPinValue.trim()
+      const admin = this.systemUsers.find(u => u.code === code && u.role === 'admin')
+      if (!admin) {
+        this.cancelOrderPinError = 'รหัสไม่ถูกต้อง หรือไม่มีสิทธิ์ยกเลิกออเดอร์'
+        this.cancelOrderPinValue = ''
+        return
+      }
+      const ord = this.selectedOrder
+      ord.isCancelled = true
+      ord.cancelReason = reason
+      ord.cancelledBy = `${admin.name} (${admin.code})`
+      ord.cancelledAt = new Date().toLocaleString('th-TH')
+      this.cancelledOrdersList.push(ord)
       this.cancelOrderModal = false
-      this.cancelOrderReason = ''
-      this.addToast('ยกเลิกออเดอร์แล้ว', 'info')
-      this.appScreen = 'cancelled-orders'
+
+      // คืนเงินเข้าเครดิตบัตรนักเรียนเฉพาะออเดอร์ที่ชำระเงินแล้วจริง (เหมือน bufConfirmVoid)
+      const card = this.buffetCards[ord.cardId]
+      const refunded = ord.paymentStatus === 'success' && !!card
+      if (refunded) card.balance += ord.total
+      this.cancelOrderSuccessData = { amount: ord.total, balance: card ? card.balance : 0, refunded }
+      this.cancelOrderSuccessModal = true
     },
     cycleOrderStatus(ord) {
       const cycle = { pending: 'cooking', cooking: 'sending', sending: 'served', served: 'complete', complete: 'pending', cancelled: 'pending' }
@@ -4697,7 +4776,6 @@ export default {
       this.cancelPinAction = null
       if (action === 'bill') this.doCancelBill()
       else if (action === 'bill-new') this.cancelThenNew()
-      else if (action === 'order') this.doCancelOrder()
       else if (action === 'food') this.fsConfirmCancel()
     },
 
@@ -4952,6 +5030,13 @@ export default {
     },
     poCardInfo(cardId) {
       return this.preOrderCards[cardId] || null
+    },
+    // ผูกออเดอร์เมนูการขายเข้ากับบัตรนักเรียน — รวมชื่อ/ชั้นจาก preOrderCards + ยอดเครดิตจาก buffetCards (คนละก้อนแต่ cardId ตรงกัน)
+    orderCardInfo(cardId) {
+      const card = this.preOrderCards[cardId]
+      if (!card) return null
+      const credit = this.buffetCards[cardId]
+      return { name: card.name, cls: card.cls, balance: credit ? credit.balance : 0 }
     },
     poPeriodOf(mealKey) {
       return this.preOrderMealPeriods.find(p => p.key === mealKey) || null
