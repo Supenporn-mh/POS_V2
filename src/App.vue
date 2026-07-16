@@ -3086,8 +3086,8 @@
           <textarea class="cancel-reason-textarea po-modal-textarea" style="width:100%" v-model="cancelOrderReasonOther" placeholder="เลือกเหตุผลด้านบน หรือพิมพ์รายละเอียดเอง..." rows="2"></textarea>
 
           <label class="cancel-reason-label po-modal-label">รหัสยืนยัน (PIN) *</label>
-          <input type="password" class="po-pin-input" v-model="cancelOrderPinValue" placeholder="รหัสพนักงาน (Admin)" maxlength="6" @input="cancelOrderPinError = ''" @keydown.enter="doCancelOrder()">
-          <div class="po-pin-hint">กรอกรหัสพนักงานระดับ Admin เพื่อยืนยันการยกเลิก</div>
+          <input type="password" class="po-pin-input" v-model="cancelOrderPinValue" placeholder="รหัสพนักงาน (Supervisor)" maxlength="6" @input="cancelOrderPinError = ''" @keydown.enter="doCancelOrder()">
+          <div class="po-pin-hint">กรอกรหัสพนักงานระดับ Supervisor เพื่อยืนยันการยกเลิก</div>
           <div v-if="cancelOrderPinError" class="po-pin-error">{{ cancelOrderPinError }}</div>
 
           <div class="po-cancel-warning">
@@ -3787,6 +3787,7 @@ export default {
       cancelPinAction: null,
       systemUsers: [
         { code: 'ADM001', name: 'ผู้จัดการ', role: 'admin' },
+        { code: 'SUP001', name: 'หัวหน้างาน', role: 'supervisor' },
         { code: 'CSH001', name: 'สมชาย ใจดี', role: 'cashier' },
         { code: 'CSH002', name: 'สมหญิง รักดี', role: 'cashier' },
       ],
@@ -4476,7 +4477,7 @@ export default {
       const reason = this.cancelOrderReasonOther.trim()
       if (!this.cancelOrderReasonSel || !reason) return
       const code = this.cancelOrderPinValue.trim()
-      const admin = this.systemUsers.find(u => u.code === code && u.role === 'admin')
+      const admin = this.systemUsers.find(u => u.code === code && u.role === 'supervisor')
       if (!admin) {
         this.cancelOrderPinError = 'รหัสไม่ถูกต้อง หรือไม่มีสิทธิ์ยกเลิกออเดอร์'
         this.cancelOrderPinValue = ''
