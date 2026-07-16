@@ -3078,16 +3078,16 @@
             <button
               v-for="r in poCancelReasonOptions" :key="r" type="button"
               class="po-reason-chip" :class="{ active: cancelOrderReasonSel === r }"
-              @click="cancelOrderReasonSel = r"
+              @click="cancelOrderReasonSel = r; cancelOrderReasonOther = r === 'อื่นๆ' ? '' : r"
             >{{ r }}</button>
           </div>
 
-          <label class="cancel-reason-label po-modal-label">รายละเอียดเพิ่มเติม</label>
-          <textarea class="cancel-reason-textarea po-modal-textarea" style="width:100%" v-model="cancelOrderReasonOther" placeholder="รายละเอียดเพิ่มเติม..." rows="2"></textarea>
+          <label class="cancel-reason-label po-modal-label">รายละเอียดเพิ่มเติม *</label>
+          <textarea class="cancel-reason-textarea po-modal-textarea" style="width:100%" v-model="cancelOrderReasonOther" placeholder="เลือกเหตุผลด้านบน หรือพิมพ์รายละเอียดเอง..." rows="2"></textarea>
 
           <label class="cancel-reason-label po-modal-label">รหัสยืนยัน (PIN) *</label>
-          <input type="password" class="po-pin-input" v-model="cancelOrderPinValue" placeholder="••••" maxlength="6" @input="cancelOrderPinError = ''" @keydown.enter="doCancelOrder()">
-          <div class="po-pin-hint">กรอก PIN ของคุณเพื่อยืนยันการยกเลิก</div>
+          <input type="password" class="po-pin-input" v-model="cancelOrderPinValue" placeholder="รหัสพนักงาน (Admin)" maxlength="6" @input="cancelOrderPinError = ''" @keydown.enter="doCancelOrder()">
+          <div class="po-pin-hint">กรอกรหัสพนักงานระดับ Admin เพื่อยืนยันการยกเลิก</div>
           <div v-if="cancelOrderPinError" class="po-pin-error">{{ cancelOrderPinError }}</div>
 
           <div class="po-cancel-warning">
@@ -3097,7 +3097,7 @@
 
           <div class="confirm-actions po-modal-actions" style="width:100%;margin-top:14px">
             <button class="btn-no po-modal-btn" @click="cancelOrderModal = false">ย้อนกลับ</button>
-            <button class="btn-yes-red po-modal-btn" :disabled="!cancelOrderReasonSel || (cancelOrderReasonSel === 'อื่นๆ' && !cancelOrderReasonOther.trim()) || !cancelOrderPinValue.trim()" @click="doCancelOrder()">ยืนยันยกเลิก</button>
+            <button class="btn-yes-red po-modal-btn" :disabled="!cancelOrderReasonSel || !cancelOrderReasonOther.trim() || !cancelOrderPinValue.trim()" @click="doCancelOrder()">ยืนยันยกเลิก</button>
           </div>
         </div>
       </div>
@@ -4473,9 +4473,8 @@ export default {
     },
     doCancelOrder() {
       if (!this.selectedOrder) return
-      const note = this.cancelOrderReasonOther.trim()
-      const reason = this.cancelOrderReasonSel === 'อื่นๆ' ? note : (note ? `${this.cancelOrderReasonSel} — ${note}` : this.cancelOrderReasonSel)
-      if (!reason) return
+      const reason = this.cancelOrderReasonOther.trim()
+      if (!this.cancelOrderReasonSel || !reason) return
       const code = this.cancelOrderPinValue.trim()
       const admin = this.systemUsers.find(u => u.code === code && u.role === 'admin')
       if (!admin) {
