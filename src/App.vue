@@ -265,7 +265,7 @@
             <div class="feature-card-icon fi-blue"><i class="fa fa-id-card-clip"></i></div>
             <div><div class="feature-card-name">Pre-Order</div><div class="feature-card-sub">แตะบัตรรับอาหาร</div></div>
           </div>
-          <div class="feature-card" @click="openBuffetTypeSelect()">
+          <div class="feature-card" @click="openBuffetPayMethod()">
             <div class="feature-card-icon fi-orange"><i class="fa fa-utensils"></i></div>
             <div><div class="feature-card-name">บุฟเฟต์</div><div class="feature-card-sub">Walk-in แตะบัตรจ่ายเลย</div></div>
           </div>
@@ -1774,17 +1774,15 @@
         </div>
       </div>
 
-      <!-- ===== BUFFET: TYPE SELECT (จอ 1) — §2/§3.3 จุดเข้าถึง "ภาพรวมบุฟเฟต์" ย้ายมาไว้ที่นี่ (เดิมอยู่หน้าแตะบัตร) ===== -->
+      <!-- ===== BUFFET: TYPE SELECT (จอ 1) — §2/§3.3 เข้าถึงได้จากสาย QR เท่านั้น (สาย card auto-detect ประเภทจากบัตร ไม่ผ่านหน้านี้) ===== -->
       <div v-else-if="appScreen === 'buffet-type-select'" class="po-main">
         <div class="po-topbar">
           <div>
             <h1 class="po-page-title">บุฟเฟต์</h1>
-            <span class="po-page-sub">เลือกประเภทบุฟเฟต์</span>
+            <span class="po-page-sub">เลือกประเภทบุฟเฟต์ (สำหรับสแกน QR)</span>
           </div>
           <div class="po-topbar-right">
-            <button class="po-back-btn" @click="appScreen = 'feature'"><i class="fa fa-chevron-left"></i> กลับ</button>
-            <button class="po-btn-ghost" @click="bufOpenCustomerDisplay()"><i class="fa fa-tv"></i> เปิดจอลูกค้า</button>
-            <button class="po-history-btn" @click="appScreen = 'buffet-staff'"><i class="fa fa-clipboard-list"></i> ภาพรวมบุฟเฟต์</button>
+            <button class="po-back-btn" @click="appScreen = 'buffet-pay-method'"><i class="fa fa-chevron-left"></i> กลับ</button>
           </div>
         </div>
         <div class="po-idle-body">
@@ -1800,15 +1798,17 @@
         </div>
       </div>
 
-      <!-- ===== BUFFET: PAYMENT METHOD SELECT (จอ 1) — §2.1 ===== -->
+      <!-- ===== BUFFET: PAYMENT METHOD SELECT (จอ 1) — §2.1 จุดเข้าทางเดียวของบุฟเฟต์ ===== -->
       <div v-else-if="appScreen === 'buffet-pay-method'" class="po-main">
         <div class="po-topbar">
           <div>
-            <h1 class="po-page-title">บุฟเฟต์ {{ bufSelectedTierInfo ? bufSelectedTierInfo.label : '' }}</h1>
-            <span class="po-page-sub">ยอดบุฟเฟต์ ฿{{ bufSelectedTierInfo ? bufSelectedTierInfo.price : 0 }} · เลือกวิธีชำระเงิน</span>
+            <h1 class="po-page-title">บุฟเฟต์</h1>
+            <span class="po-page-sub">เลือกวิธีชำระเงิน</span>
           </div>
           <div class="po-topbar-right">
-            <button class="po-back-btn" @click="appScreen = 'buffet-type-select'"><i class="fa fa-chevron-left"></i> กลับ</button>
+            <button class="po-back-btn" @click="appScreen = 'feature'"><i class="fa fa-chevron-left"></i> กลับ</button>
+            <button class="po-btn-ghost" @click="bufOpenCustomerDisplay()"><i class="fa fa-tv"></i> เปิดจอลูกค้า</button>
+            <button class="po-history-btn" @click="appScreen = 'buffet-staff'"><i class="fa fa-clipboard-list"></i> ภาพรวมบุฟเฟต์</button>
           </div>
         </div>
         <div class="po-idle-body">
@@ -1827,7 +1827,7 @@
             <span class="po-page-sub">เลือกช่องทางชำระเงิน · ยอดบุฟเฟต์ ฿{{ bufSelectedTierInfo ? bufSelectedTierInfo.price : 0 }}</span>
           </div>
           <div class="po-topbar-right">
-            <button class="po-back-btn" @click="bufQrBackToPayMethod()"><i class="fa fa-chevron-left"></i> กลับ</button>
+            <button class="po-back-btn" @click="bufQrBackToTypeSelect()"><i class="fa fa-chevron-left"></i> กลับ</button>
           </div>
         </div>
         <div class="po-idle-body">
@@ -1850,7 +1850,7 @@
             <span class="po-page-sub">บุฟเฟต์ {{ bufSelectedTierInfo ? bufSelectedTierInfo.label : '' }}</span>
           </div>
           <div class="po-topbar-right">
-            <button class="po-back-btn" @click="bufQrBackToPayMethod()"><i class="fa fa-chevron-left"></i> ยกเลิก</button>
+            <button class="po-back-btn" @click="bufQrBackToTypeSelect()"><i class="fa fa-chevron-left"></i> ยกเลิก</button>
           </div>
         </div>
         <div class="po-idle-body">
@@ -1868,7 +1868,7 @@
             <div class="po-result-card">
               <div class="po-result-icon po-icon-danger"><i class="fa fa-circle-xmark"></i></div>
               <div class="po-result-title">หมดเวลา — ยกเลิกรายการแล้ว</div>
-              <button class="po-btn-primary" @click="bufQrBackToPayMethod()">เริ่มรายการใหม่</button>
+              <button class="po-btn-primary" @click="bufQrBackToTypeSelect()">เริ่มรายการใหม่</button>
             </div>
           </template>
         </div>
@@ -1911,7 +1911,6 @@
                   <button class="po-history-btn buf-tap-manual-btn" @click="bufManualEntryOpen = !bufManualEntryOpen"><i class="fa fa-keyboard"></i> พิมพ์เลขบัตร</button>
                   <div class="buf-tap-center">
                     <div class="po-idle-title">แตะบัตรเพื่อชำระเงิน</div>
-                    <div class="buf-tap-amount-line">ยอดบุฟเฟต์ <b>฿{{ bufSelectedTierInfo ? bufSelectedTierInfo.price : 0 }}</b></div>
                     <div class="buf-tap-card-icon"><i class="fa fa-credit-card"></i></div>
                     <input v-if="bufManualEntryOpen" class="po-scan-input" v-model="bufCardInput" placeholder="พิมพ์เลขบัตรแล้วกด Enter" autofocus @keydown.enter="bufSubmitCardInput()">
                   </div>
@@ -5188,21 +5187,23 @@ export default {
     // ═══════════════════════════════════════════════════════════════════
     // BUFFET (WALK-IN) — table/state/method ทั้งหมดแยกจาก Pre-Order (po*) 100%
     // ═══════════════════════════════════════════════════════════════════
-    // §2/§3.3 — จุดเข้าทางเดียวของบุฟเฟต์ตอนนี้ (ทุก transaction ต้องผ่านหน้านี้ก่อนเสมอ ไม่ว่าจะจ่ายวิธีไหน)
-    openBuffetTypeSelect() {
-      this.appScreen = 'buffet-type-select'
+    // §2/§3.3 — จุดเข้าทางเดียวของบุฟเฟต์ตอนนี้ คือเลือกวิธีชำระก่อนเสมอ แล้วแยกสายจากตรงนั้น
+    openBuffetPayMethod() {
+      this.appScreen = 'buffet-pay-method'
       this.bufSelectedTier = null
     },
-    bufSelectTier(tierKey) {
-      this.bufSelectedTier = tierKey
-      this.appScreen = 'buffet-pay-method'
-    },
-    // §2.1 (แก้ไข — ยืนยันแล้ว: ตัดขั้นระบุตัวตนออก) QR ไม่รู้ตัวตนผู้จ่าย ข้ามไปเลือกช่องทางเลย
+    // สายแตะบัตร: ราคา auto-detect จากเกรดของบัตรที่แตะจริงตอน bufHandleTap ไม่ใช่จากที่เลือกไว้ล่วงหน้า
+    // สาย QR: ยังไม่รู้ตัวตนผู้จ่าย ต้องเลือกประเภทบุฟเฟต์ก่อนเข้าหน้าสแกน
     bufChoosePayMethod(method) {
       if (method === 'card') {
         this.openBuffetIdle()
         return
       }
+      this.appScreen = 'buffet-type-select'
+    },
+    // เลือกประเภท (เข้าถึงได้จากสาย QR เท่านั้น) แล้วต่อไปเลือกช่องทาง QR ทันที
+    bufSelectTier(tierKey) {
+      this.bufSelectedTier = tierKey
       this.bufQrChannel = null
       this.appScreen = 'buffet-qr-channel'
       this.bufInitBroadcast()
@@ -5244,15 +5245,15 @@ export default {
       this.bufShowResult({ case: 'success', card: null, guestName: 'ลูกค้า (สแกน QR)', tier, amount, tx: newTx })
     },
     // หมดเวลา (§2.1) — ยกเลิกทันที ไม่ auto-retry ต้องกดเริ่มใหม่เองจากหน้าเลือกวิธีชำระเงิน
-    bufQrBackToPayMethod() {
+    bufQrBackToTypeSelect() {
       clearInterval(this.bufQrTimer)
       this.bufQrChannel = null
       this.bufQrCancelled = false
-      this.appScreen = 'buffet-pay-method'
-      this.bufBroadcastQrState('channel') // จอ 2 กลับไปโชว่ยอดที่ผูกไว้เฉยๆ ระหว่างรอเลือกวิธีชำระใหม่
+      this.appScreen = 'buffet-type-select'
     },
     openBuffetIdle() {
       this.appScreen = 'buffet-idle'
+      this.bufSelectedTier = null
       this.bufResult = null
       this.bufCardInput = ''
       this.bufShowTestTools = false
@@ -5320,7 +5321,7 @@ export default {
       this.bufHandleTap('demo-debounce')
     },
     // ลำดับตรวจ: ฮาร์ดแวร์/ออฟไลน์ → บัตร → แตะซ้ำในมื้อเดียวกัน (§3.4) → ยอดเงิน (ปล่อยผ่านได้ถึงเพดานติดลบ) → จ่ายสำเร็จ
-    // §2 (แก้ไข) — ราคาผูกจากประเภทที่ cashier เลือกไว้ล่วงหน้า (bufSelectedTier) ก่อนเข้าหน้านี้ ไม่ใช่ auto-detect จากบัตรที่แตะ
+    // §2 (แก้ไข) — ราคา auto-detect จากเกรดของบัตรที่แตะจริง (card.gradeTier) ไม่ใช่ผูกจากประเภทที่เลือกไว้ล่วงหน้าแล้ว
     bufHandleTap(cardId, opts = {}) {
       if (this.bufProcessing) { this.bufShowResult({ case: 'hwD' }); return }
       this.bufProcessing = true
@@ -5342,7 +5343,7 @@ export default {
       if (!card) { this.bufShowResult({ case: 'case5', cardId }); return }
       if (this.buffetSuspendedCards.includes(cardId)) { this.bufShowResult({ case: 'case6', cardId, card }); return }
 
-      const tier = this.bufGradeTierOf(this.bufSelectedTier)
+      const tier = this.bufGradeTierOf(card.gradeTier)
       const nowMin = this.bufNowMinutes(mockNow)
       const active = this.bufFindActiveRound(nowMin)
 
@@ -5362,7 +5363,7 @@ export default {
       const newTx = bufTx({
         cardId, date: BUF_TODAY, round: active ? active.key : null,
         time: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
-        gradeTier: tier ? tier.key : this.bufSelectedTier, amount,
+        gradeTier: tier ? tier.key : card.gradeTier, amount,
       })
       this.buffetTransactions.push(newTx)
       this.bufShowResult({ case: 'success', cardId, card, tier, amount, tx: newTx })
