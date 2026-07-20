@@ -3475,7 +3475,7 @@ input:focus { outline: none; }
 .po-summary--collected .po-summary-num { color: #8E8E93; } /* gray — Collected */
 .po-summary--missed    .po-summary-num { color: #FF3B30; } /* red — Missed */
 .po-summary--cancelled .po-summary-num { color: #FF3B30; } /* red — Cancelled */
-.po-staff-list { padding: 12px 28px 24px; display: flex; flex-direction: column; gap: 8px; }
+.po-staff-list { padding: 10px; display: flex; flex-direction: column; gap: 8px; }
 
 /* Reservation detail (§5) / Buffet void (§6) modal — scoped overrides ของ class กลาง
    (confirm-title/cancel-reason-label/cancel-reason-textarea/btn-no/btn-yes-red/confirm-actions

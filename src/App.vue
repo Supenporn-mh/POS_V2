@@ -4485,6 +4485,7 @@ export default {
       }
       const ord = this.selectedOrder
       ord.isCancelled = true
+      ord.foodStatus = 'cancelled'
       ord.cancelReason = reason
       ord.cancelledBy = `${admin.name} (${admin.code})`
       ord.cancelledAt = new Date().toLocaleString('th-TH')
