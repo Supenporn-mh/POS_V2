@@ -3347,7 +3347,7 @@ input:focus { outline: none; }
    (ต้นฉบับอ้างอิงใช้ 12px/21px/weight 600-700 ซึ่งหลุด 7-scale — ปัดเข้า 13/17px, weight 400/500 ทั้งหมด) */
 .buf-tap-card {
   background: #fff; border: 1px solid #E5E5EA; border-radius: 16px;
-  padding: 32px; width: 100%; max-width: 960px;
+  padding: 32px; width: 100%;
 }
 .buf-tap-head {
   display: flex; justify-content: space-between; align-items: center;
