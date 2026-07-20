@@ -3283,6 +3283,7 @@ input:focus { outline: none; }
   padding: 40px 36px; display: flex; flex-direction: column; align-items: center; gap: 10px;
   width: 100%; max-width: 560px;
 }
+.po-idle-card--fill { flex: 1; max-width: none; justify-content: center; }
 .po-idle-icon, .po-result-avatar {
   width: 72px; height: 72px; border-radius: 50%;
   background: #EBF5FF; color: #007AFF;
@@ -3347,14 +3348,15 @@ input:focus { outline: none; }
    (ต้นฉบับอ้างอิงใช้ 12px/21px/weight 600-700 ซึ่งหลุด 7-scale — ปัดเข้า 13/17px, weight 400/500 ทั้งหมด) */
 .buf-tap-card {
   background: #fff; border: 1px solid #E5E5EA; border-radius: 16px;
-  padding: 32px; width: 100%;
+  padding: 32px; width: 100%; flex: 1;
+  display: flex; flex-direction: column;
 }
 .buf-tap-head {
   display: flex; justify-content: space-between; align-items: center;
   font-size: 13px; font-weight: 500; color: #3C3C43; margin-bottom: 16px; /* Label */
 }
 .buf-tap-menu-btn { background: none; border: none; color: #8E8E93; font-size: 15px; cursor: pointer; padding: 4px; }
-.buf-tap-body { display: flex; }
+.buf-tap-body { display: flex; flex: 1; }
 .buf-tap-left {
   flex: 1; padding-right: 20px; border-right: 1px solid #E5E5EA;
   display: flex; flex-direction: column;
@@ -3476,6 +3478,7 @@ input:focus { outline: none; }
 .po-summary--missed    .po-summary-num { color: #FF3B30; } /* red — Missed */
 .po-summary--cancelled .po-summary-num { color: #FF3B30; } /* red — Cancelled */
 .po-staff-list { padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.po-staff-list--fill { flex: 1; justify-content: center; }
 
 /* Reservation detail (§5) / Buffet void (§6) modal — scoped overrides ของ class กลาง
    (confirm-title/cancel-reason-label/cancel-reason-textarea/btn-no/btn-yes-red/confirm-actions

@@ -1786,7 +1786,7 @@
           </div>
         </div>
         <div class="po-idle-body">
-          <div class="po-staff-list" style="max-width: 480px; width: 100%;">
+          <div class="po-staff-list po-staff-list--fill" style="width: 100%;">
             <div v-for="t in buffetGradeTiers" :key="t.key" class="po-history-row" @click="bufSelectTier(t.key)">
               <div class="po-history-row-main">
                 <span class="po-history-student-name">บุฟเฟต์ {{ t.label }}</span>
@@ -1812,7 +1812,7 @@
           </div>
         </div>
         <div class="po-idle-body">
-          <div class="po-idle-card">
+          <div class="po-idle-card po-idle-card--fill">
             <button class="po-btn-primary" @click="bufChoosePayMethod('card')"><i class="fa fa-id-card-clip"></i> แตะบัตร</button>
             <button class="po-btn-secondary" @click="bufChoosePayMethod('qr')"><i class="fa fa-qrcode"></i> สแกน QR</button>
           </div>
@@ -1831,7 +1831,7 @@
           </div>
         </div>
         <div class="po-idle-body">
-          <div class="po-staff-list" style="max-width: 480px; width: 100%;">
+          <div class="po-staff-list po-staff-list--fill" style="width: 100%;">
             <div v-for="c in bufQrChannels" :key="c.key" class="po-history-row" @click="bufSelectQrChannel(c.key)">
               <div class="po-history-row-main">
                 <span class="po-history-student-name"><i :class="c.icon" :style="{ color: c.color }"></i> {{ c.label }}</span>
