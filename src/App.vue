@@ -266,7 +266,7 @@
             <div class="feature-card-icon fi-blue"><i class="fa fa-id-card-clip"></i></div>
             <div><div class="feature-card-name">Pre-Order</div><div class="feature-card-sub">แตะบัตรรับอาหาร</div></div>
           </div>
-          <div class="feature-card" @click="openBuffetPayMethod()">
+          <div class="feature-card" @click="openBuffetTypeSelect()">
             <div class="feature-card-icon fi-orange"><i class="fa fa-utensils"></i></div>
             <div><div class="feature-card-name">บุฟเฟต์</div><div class="feature-card-sub">Walk-in แตะบัตรจ่ายเลย</div></div>
           </div>
@@ -1775,15 +1775,17 @@
         </div>
       </div>
 
-      <!-- ===== BUFFET: TYPE SELECT (จอ 1) — §2/§3.3 เข้าถึงได้จากสาย QR เท่านั้น (สาย card auto-detect ประเภทจากบัตร ไม่ผ่านหน้านี้) ===== -->
+      <!-- ===== BUFFET: TYPE SELECT (จอ 1) — §2/§3.3 จุดเข้าทางเดียวของบุฟเฟต์ (ทั้งสายแตะบัตรและสาย QR) ===== -->
       <div v-else-if="appScreen === 'buffet-type-select'" class="po-main">
         <div class="po-topbar">
           <div>
             <h1 class="po-page-title">บุฟเฟต์</h1>
-            <span class="po-page-sub">เลือกประเภทบุฟเฟต์ (สำหรับสแกน QR)</span>
+            <span class="po-page-sub">เลือกประเภทบุฟเฟต์</span>
           </div>
           <div class="po-topbar-right">
-            <button class="po-back-btn" @click="appScreen = 'buffet-pay-method'"><i class="fa fa-chevron-left"></i> กลับ</button>
+            <button class="po-back-btn" @click="appScreen = 'feature'"><i class="fa fa-chevron-left"></i> กลับ</button>
+            <button class="po-btn-ghost" @click="bufOpenCustomerDisplay()"><i class="fa fa-tv"></i> เปิดจอลูกค้า</button>
+            <button class="po-history-btn" @click="appScreen = 'buffet-staff'"><i class="fa fa-clipboard-list"></i> ภาพรวมบุฟเฟต์</button>
           </div>
         </div>
         <div class="po-idle-body">
@@ -1799,15 +1801,15 @@
         </div>
       </div>
 
-      <!-- ===== BUFFET: PAYMENT METHOD SELECT (จอ 1) — §2.1 จุดเข้าทางเดียวของบุฟเฟต์ ===== -->
+      <!-- ===== BUFFET: PAYMENT METHOD SELECT (จอ 1) — §2.1 มาหลังเลือกประเภทบุฟเฟต์แล้วเสมอ ===== -->
       <div v-else-if="appScreen === 'buffet-pay-method'" class="po-main">
         <div class="po-topbar">
           <div>
             <h1 class="po-page-title">บุฟเฟต์</h1>
-            <span class="po-page-sub">เลือกวิธีชำระเงิน</span>
+            <span class="po-page-sub">เลือกวิธีชำระเงิน · {{ bufSelectedTierInfo ? ('บุฟเฟต์ ' + bufSelectedTierInfo.label + ' · ฿' + bufSelectedTierInfo.price) : '' }}</span>
           </div>
           <div class="po-topbar-right">
-            <button class="po-back-btn" @click="appScreen = 'feature'"><i class="fa fa-chevron-left"></i> กลับ</button>
+            <button class="po-back-btn" @click="openBuffetTypeSelect()"><i class="fa fa-chevron-left"></i> กลับ</button>
             <button class="po-btn-ghost" @click="bufOpenCustomerDisplay()"><i class="fa fa-tv"></i> เปิดจอลูกค้า</button>
             <button class="po-history-btn" @click="appScreen = 'buffet-staff'"><i class="fa fa-clipboard-list"></i> ภาพรวมบุฟเฟต์</button>
           </div>
@@ -1870,8 +1872,8 @@
       <div v-else-if="appScreen === 'buffet-idle'" class="po-main">
         <div class="po-topbar">
           <div>
-            <h1 class="po-page-title">บุฟเฟต์</h1>
-            <span class="po-page-sub">Walk-in แตะบัตรจ่ายเลย</span>
+            <h1 class="po-page-title">บุฟเฟต์ {{ bufSelectedTierInfo ? bufSelectedTierInfo.label : '' }}</h1>
+            <span class="po-page-sub">Walk-in แตะบัตรจ่ายเลย · ฿{{ bufSelectedTierInfo ? bufSelectedTierInfo.price : 0 }}</span>
           </div>
           <div class="po-topbar-right">
             <button class="po-back-btn" @click="bufOpenIdleBackPin()"><i class="fa fa-chevron-left"></i> ย้อนกลับ (ต้องใส่รหัส)</button>
@@ -1893,7 +1895,7 @@
                   <span class="po-badge po-badge-ready" style="align-self:flex-start">บุฟเฟต์</span>
                   <div class="buf-tap-info-row"><span>เลขบัตร</span><span>–</span></div>
                   <div class="buf-tap-info-row"><span>ชื่อนักเรียน</span><span>–</span></div>
-                  <div class="buf-tap-info-row buf-tap-info-row--amount"><span>ยอดก่อนชำระ</span><span>0.00</span></div>
+                  <div class="buf-tap-info-row buf-tap-info-row--amount"><span>ยอดก่อนชำระ</span><span>{{ bufSelectedTierInfo ? bufSelectedTierInfo.price.toFixed(2) : '0.00' }}</span></div>
                   <div class="buf-tap-bottom">
                     <div class="buf-tap-bottom-row"><i class="fa fa-money-bill-wave"></i> 0.00</div>
                     <div class="buf-tap-bottom-row"><i class="fa fa-qrcode"></i> 0.00</div>
@@ -2950,6 +2952,25 @@
           <div class="confirm-actions">
             <button class="btn-no" @click="bufCloseIdleBackPin()">ยกเลิก</button>
             <button class="btn-yes-blue" :disabled="!bufIdleBackPinValue.trim()" @click="bufConfirmIdleBack()">ยืนยัน</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== BUFFET: เกรดบัตรไม่ตรงกับประเภทที่เลือกไว้ล่วงหน้า (§2) — warn แต่ยอมให้ดำเนินต่อได้ ===== -->
+    <div v-if="bufTapMismatchModal && bufTapMismatchPending" class="modal-overlay" @click.self="bufCancelTapMismatch()">
+      <div class="modal-box sm">
+        <div class="confirm-modal-body">
+          <div class="confirm-icon-wrap red"><i class="fa fa-triangle-exclamation"></i></div>
+          <div class="confirm-title">เกรดบัตรไม่ตรงกับประเภทที่เลือกไว้</div>
+          <div class="confirm-sub">
+            บัตรนี้คือ {{ bufTapMismatchPending.actualTier ? bufTapMismatchPending.actualTier.label : '-' }}
+            แต่เลือกไว้ล่วงหน้าเป็น {{ bufSelectedTierInfo ? bufSelectedTierInfo.label : '-' }} (฿{{ bufSelectedTierInfo ? bufSelectedTierInfo.price : 0 }})
+            — ยืนยันเก็บเงินตามราคาที่เลือกไว้หรือไม่?
+          </div>
+          <div class="confirm-actions">
+            <button class="btn-no" @click="bufCancelTapMismatch()">ยกเลิก</button>
+            <button class="btn-yes-blue" @click="bufConfirmTapMismatch()">ดำเนินการต่อ</button>
           </div>
         </div>
       </div>
@@ -4014,6 +4035,9 @@ export default {
       bufResultTimer: null,
       bufProcessing: false,
       bufMisreadCount: 0,
+      // เกรดบัตรไม่ตรงกับ tier ที่เลือกไว้ล่วงหน้า — warn แต่ยอมให้ staff กดดำเนินต่อได้ (ยืนยันแล้ว)
+      bufTapMismatchModal: false,
+      bufTapMismatchPending: null,
       // §2.1/§8b — เส้นทางสแกน QR (ไม่รู้ตัวตนผู้จ่าย ยืนยันแล้ว — จ่ายจริงผ่าน QR provider โดยตรง)
       bufQrChannel: null,
       bufQrCountdown: 0,
@@ -5327,23 +5351,24 @@ export default {
     // ═══════════════════════════════════════════════════════════════════
     // BUFFET (WALK-IN) — table/state/method ทั้งหมดแยกจาก Pre-Order (po*) 100%
     // ═══════════════════════════════════════════════════════════════════
-    // §2/§3.3 — จุดเข้าทางเดียวของบุฟเฟต์ตอนนี้ คือเลือกวิธีชำระก่อนเสมอ แล้วแยกสายจากตรงนั้น
-    openBuffetPayMethod() {
-      this.appScreen = 'buffet-pay-method'
+    // §2/§3.3 — จุดเข้าทางเดียวของบุฟเฟต์ตอนนี้ คือเลือกประเภท+ราคาก่อนเสมอ (ยืนยันแล้ว) แล้วค่อยเลือกวิธีชำระ
+    openBuffetTypeSelect() {
+      this.appScreen = 'buffet-type-select'
       this.bufSelectedTier = null
     },
-    // สายแตะบัตร: ราคา auto-detect จากเกรดของบัตรที่แตะจริงตอน bufHandleTap ไม่ใช่จากที่เลือกไว้ล่วงหน้า
-    // สาย QR: ยังไม่รู้ตัวตนผู้จ่าย ต้องเลือกประเภทบุฟเฟต์ก่อนเข้าหน้าสแกน
+    // เลือกประเภท+ราคา (จุดเข้าทางเดียวของทั้ง 2 สายแล้ว — ยืนยันแล้ว) แล้วไปเลือกวิธีชำระเงินต่อ
+    bufSelectTier(tierKey) {
+      this.bufSelectedTier = tierKey
+      this.appScreen = 'buffet-pay-method'
+    },
+    // สายแตะบัตร: ราคาผูกกับ tier ที่เลือกไว้ล่วงหน้าแล้ว (ไม่ auto-detect จากบัตรอีกต่อไป — ยืนยันแล้ว)
+    //   เกรดบัตรไม่ตรง tier ที่เลือกไว้ → warn ใน bufHandleTap แต่ยอมให้ staff กดดำเนินต่อได้ (ยืนยันแล้ว)
+    // สาย QR: ยังไม่รู้ตัวตนผู้จ่าย ใช้ tier ที่เลือกไว้เหมือนกัน
     bufChoosePayMethod(method) {
       if (method === 'card') {
         this.openBuffetIdle()
         return
       }
-      this.appScreen = 'buffet-type-select'
-    },
-    // เลือกประเภท (เข้าถึงได้จากสาย QR เท่านั้น) แล้วต่อไปเลือกช่องทาง QR ทันที
-    bufSelectTier(tierKey) {
-      this.bufSelectedTier = tierKey
       this.bufQrChannel = null
       this.appScreen = 'buffet-qr-channel'
       this.bufInitBroadcast()
@@ -5409,25 +5434,27 @@ export default {
     bufNextScreenGoIdle() {
       this.bufBackToIdle()
     },
-    // ปุ่ม "สแกน QR ต่อ" — dismiss ผลลัพธ์ แล้วเข้า QR flow ทันทีสำหรับลูกค้าถัดไป
+    // ปุ่ม "สแกน QR ต่อ" — dismiss ผลลัพธ์ แล้วให้เลือกประเภทบุฟเฟต์ใหม่สำหรับลูกค้าถัดไป
     bufNextScreenScanAgain() {
       this.bufBackToIdle()
-      this.appScreen = 'buffet-type-select'
+      this.openBuffetTypeSelect()
     },
     bufQrBackToTypeSelect() {
       clearInterval(this.bufQrTimer)
       clearTimeout(this.bufQrTimeoutAutoTimer)
       this.bufQrChannel = null
       this.bufQrTimeoutModal = false
-      this.appScreen = 'buffet-type-select'
+      this.openBuffetTypeSelect()
     },
     openBuffetIdle() {
       this.appScreen = 'buffet-idle'
-      this.bufSelectedTier = null
+      // bufSelectedTier ไม่ reset แล้ว — หน้านี้ผูกราคากับ tier ที่เลือกไว้ล่วงหน้า (ยืนยันแล้ว)
       this.bufResult = null
       this.bufCardInput = ''
       this.bufShowTestTools = false
       this.bufOfflineSim = false
+      this.bufTapMismatchModal = false
+      this.bufTapMismatchPending = null
       this.bufInitBroadcast()
       this.bufBroadcastResult() // sync ยอดที่ผูกไว้ไปจอ 2 ทันทีที่เข้าหน้าแตะบัตร ก่อนแตะจริงด้วยซ้ำ
     },
@@ -5491,7 +5518,8 @@ export default {
       this.bufHandleTap('demo-debounce')
     },
     // ลำดับตรวจ: ฮาร์ดแวร์/ออฟไลน์ → บัตร → แตะซ้ำในมื้อเดียวกัน (§3.4) → ยอดเงิน (ปล่อยผ่านได้ถึงเพดานติดลบ) → จ่ายสำเร็จ
-    // §2 (แก้ไข) — ราคา auto-detect จากเกรดของบัตรที่แตะจริง (card.gradeTier) ไม่ใช่ผูกจากประเภทที่เลือกไว้ล่วงหน้าแล้ว
+    // §2 — ราคาผูกกับ tier ที่เลือกไว้ล่วงหน้าแล้ว (ยืนยันแล้ว) ไม่ auto-detect จากเกรดบัตรอีกต่อไป
+    // เกรดบัตรไม่ตรงกับ tier ที่เลือกไว้ → warn ผ่าน bufTapMismatchModal แต่ยอมให้ staff กดดำเนินต่อได้ (ยืนยันแล้ว)
     bufHandleTap(cardId, opts = {}) {
       if (this.bufProcessing) { this.bufShowResult({ case: 'hwD' }); return }
       this.bufProcessing = true
@@ -5513,7 +5541,6 @@ export default {
       if (!card) { this.bufShowResult({ case: 'case5', cardId }); return }
       if (this.buffetSuspendedCards.includes(cardId)) { this.bufShowResult({ case: 'case6', cardId, card }); return }
 
-      const tier = this.bufGradeTierOf(card.gradeTier)
       const nowMin = this.bufNowMinutes(mockNow)
       const active = this.bufFindActiveRound(nowMin)
 
@@ -5522,6 +5549,33 @@ export default {
         if (already) { this.bufShowResult({ case: 'buf-duplicate', cardId, card, time: already.time }); return }
       }
 
+      const selectedTier = this.bufSelectedTierInfo
+      const actualTier = this.bufGradeTierOf(card.gradeTier)
+      if (selectedTier && actualTier && actualTier.key !== selectedTier.key) {
+        this.bufProcessing = false
+        this.bufTapMismatchPending = { cardId, card, active, actualTier }
+        this.bufTapMismatchModal = true
+        return
+      }
+
+      this._bufFinalizeTap(cardId, card, selectedTier, active)
+    },
+    // ปุ่ม "ดำเนินการต่อ" ใน modal เกรดไม่ตรง — เก็บเงินตามราคา tier ที่เลือกไว้ล่วงหน้า (ไม่ใช่ราคาตามเกรดบัตรจริง)
+    bufConfirmTapMismatch() {
+      const p = this.bufTapMismatchPending
+      this.bufTapMismatchModal = false
+      this.bufTapMismatchPending = null
+      if (!p) return
+      this.bufProcessing = true
+      this._bufFinalizeTap(p.cardId, p.card, this.bufSelectedTierInfo, p.active)
+    },
+    // ปุ่ม "ยกเลิก" ใน modal เกรดไม่ตรง — ไม่เก็บเงิน กลับหน้าแตะบัตรเดิม (tier ที่เลือกไว้ยังคงอยู่)
+    bufCancelTapMismatch() {
+      this.bufTapMismatchModal = false
+      this.bufTapMismatchPending = null
+      this.bufProcessing = false
+    },
+    _bufFinalizeTap(cardId, card, tier, active) {
       const amount = tier ? tier.price : 0
       const projected = card.balance - amount
       if (projected < -this.bufNegativeCapLimit) {
