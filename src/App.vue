@@ -1924,7 +1924,6 @@
             <span class="po-page-sub">เลือกประเภทบุฟเฟต์</span>
           </div>
           <div class="po-topbar-right">
-            <button class="po-back-btn" @click="appScreen = 'feature'"><i class="fa fa-chevron-left"></i> กลับ</button>
             <button class="po-btn-ghost" @click="bufOpenCustomerDisplay()"><i class="fa fa-tv"></i> เปิดจอลูกค้า</button>
             <button class="po-history-btn" @click="appScreen = 'buffet-staff'"><i class="fa fa-clipboard-list"></i> ภาพรวมบุฟเฟต์</button>
           </div>
