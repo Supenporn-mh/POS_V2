@@ -86,8 +86,8 @@
       <!-- §2.1/§8b — mirror 3 หน้าของเส้นทางสแกน QR (ระบุตัวตน/เลือกช่องทาง/นับถอยหลัง) -->
       <template v-if="bufQrDisplayStep === 'channel'">
         <div class="po-idle-card">
-          <div class="po-idle-icon"><i class="fa fa-utensils"></i></div>
-          <div class="po-idle-title">แตะบัตรเพื่อชำระเงิน</div>
+          <div class="po-idle-icon"><i class="fa fa-qrcode"></i></div>
+          <div class="po-idle-title">กำลังเลือกช่องทางชำระเงิน</div>
           <div class="po-idle-meal">ยอดบุฟเฟต์ ฿{{ bufDisplayTier ? bufDisplayTier.price : 0 }}</div>
         </div>
       </template>
