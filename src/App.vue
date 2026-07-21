@@ -1978,9 +1978,6 @@
             <h1 class="po-page-title">สแกน QR — บุฟเฟต์ {{ bufSelectedTierInfo ? bufSelectedTierInfo.label : '' }}</h1>
             <span class="po-page-sub">เลือกช่องทางชำระเงิน · ยอดบุฟเฟต์ ฿{{ bufSelectedTierInfo ? bufSelectedTierInfo.price : 0 }}</span>
           </div>
-          <div class="po-topbar-right">
-            <button class="po-back-btn" @click="bufQrBackToTypeSelect()"><i class="fa fa-chevron-left"></i> กลับ</button>
-          </div>
         </div>
         <div class="po-idle-body">
           <div class="buf-channel-grid">
