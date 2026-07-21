@@ -3456,6 +3456,9 @@ input:focus { outline: none; }
   border: 1.5px solid #E5E5EA;
 }
 .po-history-row:hover { border-color: #007AFF; }
+.po-history-row--teacher { background: #EBF5FF; border-color: #007AFF; }
+.po-history-row--teacher .po-history-student-name,
+.po-history-row--teacher .po-history-meta { color: #007AFF; }
 .po-history-row-main { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .po-history-student-name { font-size: 14px; font-weight: 500; color: #1C1C1E; } /* Body */
 .po-history-meta { font-size: 11px; color: #8E8E93; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } /* Caption */

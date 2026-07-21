@@ -134,6 +134,7 @@
           <div class="po-result-icon po-icon-warning"><i class="fa fa-triangle-exclamation"></i></div>
           <div class="po-result-title">มื้อนี้ชำระบุฟเฟต์ไปแล้ว</div>
           <div class="po-result-sub">{{ bufResult.name }} จ่ายไปแล้วเมื่อ {{ bufResult.time }}</div>
+          <div class="po-result-sub">ถ้าจ่ายให้คนอื่น กรุณาใช้วิธีสแกน QR แทน</div>
         </div>
       </template>
       <template v-else-if="bufResult.case === 'buf-insufficient'">
@@ -141,7 +142,7 @@
           <div class="po-result-icon po-icon-warning"><i class="fa fa-circle-exclamation"></i></div>
           <div class="po-result-title">ยอดเงินไม่เพียงพอ</div>
           <div class="po-result-sub">ยอดที่ต้องจ่าย ฿{{ bufResult.amount }} · ยอดคงเหลือ ฿{{ bufResult.balance }}</div>
-          <div class="po-result-sub">กรุณาเติมเงินหรือติดต่อพนักงาน</div>
+          <div class="po-result-sub">กรุณาเติมเงินหรือติดต่อพนักงาน · หรือเปลี่ยนไปใช้วิธีสแกน QR แทน</div>
         </div>
       </template>
       <template v-else-if="bufResult.case === 'case5'">
@@ -1854,23 +1855,14 @@
           </div>
         </div>
         <div class="po-idle-body">
-          <template v-if="!bufQrCancelled">
-            <div class="po-idle-card">
-              <div class="po-idle-icon" style="width:160px;height:160px;border-radius:12px;font-size:64px;background:#F2F2F7;color:#1C1C1E">
-                <i class="fa fa-qrcode"></i>
-              </div>
-              <div class="po-idle-title">฿{{ bufSelectedTierInfo ? bufSelectedTierInfo.price : 0 }}</div>
-              <div class="po-idle-meal">เหลือเวลา {{ Math.floor(bufQrCountdown / 60) }}:{{ String(bufQrCountdown % 60).padStart(2, '0') }} นาที</div>
-              <button class="po-btn-secondary" @click="bufQrSimulateSuccess()"><i class="fa fa-flask"></i> จำลองจ่ายสำเร็จ (เครื่องมือทดสอบ)</button>
+          <div class="po-idle-card">
+            <div class="po-idle-icon" style="width:160px;height:160px;border-radius:12px;font-size:64px;background:#F2F2F7;color:#1C1C1E">
+              <i class="fa fa-qrcode"></i>
             </div>
-          </template>
-          <template v-else>
-            <div class="po-result-card">
-              <div class="po-result-icon po-icon-danger"><i class="fa fa-circle-xmark"></i></div>
-              <div class="po-result-title">หมดเวลา — ยกเลิกรายการแล้ว</div>
-              <button class="po-btn-primary" @click="bufQrBackToTypeSelect()">เริ่มรายการใหม่</button>
-            </div>
-          </template>
+            <div class="po-idle-title">฿{{ bufSelectedTierInfo ? bufSelectedTierInfo.price : 0 }}</div>
+            <div class="po-idle-meal">เหลือเวลา {{ Math.floor(bufQrCountdown / 60) }}:{{ String(bufQrCountdown % 60).padStart(2, '0') }} นาที</div>
+            <button class="po-btn-secondary" @click="bufQrSimulateSuccess()"><i class="fa fa-flask"></i> จำลองจ่ายสำเร็จ (เครื่องมือทดสอบ)</button>
+          </div>
         </div>
       </div>
 
@@ -1882,6 +1874,7 @@
             <span class="po-page-sub">Walk-in แตะบัตรจ่ายเลย</span>
           </div>
           <div class="po-topbar-right">
+            <button class="po-back-btn" @click="bufOpenIdleBackPin()"><i class="fa fa-chevron-left"></i> ย้อนกลับ (ต้องใส่รหัส)</button>
             <div class="po-clock">{{ bufCurrentTime }}</div>
             <button class="po-btn-ghost" @click="bufOpenCustomerDisplay()"><i class="fa fa-tv"></i> เปิดจอลูกค้า</button>
           </div>
@@ -1949,19 +1942,30 @@
               <div class="buf-display-amount">฿{{ bufResult.amount }}</div>
               <div class="po-result-sub" v-if="bufResult.card">คงเหลือ ฿{{ bufResult.card.balance }}</div>
               <div class="po-result-time">{{ bufFormatDate(bufResult.tx.date) }} · {{ bufResult.tx.time }} น.</div>
+
+              <!-- §2.1(7) — เฉพาะสาย QR (ไม่มี card ผูก) ถามเตรียมหน้าจอถัดไป auto 5 วิ -->
+              <template v-if="!bufResult.card && bufNextScreenPrompt">
+                <div class="nav-divider" style="margin:14px 0;width:100%"></div>
+                <div class="po-result-sub">รายการถัดไปเตรียมหน้าจอแบบไหน?</div>
+                <div style="display:flex;flex-direction:column;gap:8px;width:220px;margin-top:8px">
+                  <button class="po-btn-secondary" @click="bufNextScreenScanAgain()">สแกน QR ต่อ</button>
+                  <button class="po-btn-primary" @click="bufNextScreenGoIdle()">ไปหน้าแตะบัตร</button>
+                </div>
+              </template>
             </template>
 
             <template v-else-if="bufResult.case === 'buf-duplicate'">
               <div class="po-result-icon po-icon-warning"><i class="fa fa-triangle-exclamation"></i></div>
               <div class="po-result-title">มื้อนี้ชำระบุฟเฟต์ไปแล้ว</div>
               <div class="po-result-sub">{{ bufResult.card.name }} จ่ายไปแล้วเมื่อ {{ bufResult.time }}</div>
+              <div class="po-result-sub">ถ้าจ่ายให้คนอื่น กรุณาใช้วิธีสแกน QR แทน</div>
             </template>
 
             <template v-else-if="bufResult.case === 'buf-insufficient'">
               <div class="po-result-icon po-icon-warning"><i class="fa fa-circle-exclamation"></i></div>
               <div class="po-result-title">ยอดเงินไม่เพียงพอ</div>
               <div class="po-result-sub">ยอดที่ต้องจ่าย ฿{{ bufResult.amount }} · ยอดคงเหลือ ฿{{ bufResult.balance }}</div>
-              <div class="po-result-sub">กรุณาเติมเงินหรือติดต่อพนักงาน</div>
+              <div class="po-result-sub">กรุณาเติมเงินหรือติดต่อพนักงาน · หรือเปลี่ยนไปใช้วิธีสแกน QR แทน</div>
             </template>
 
             <template v-else-if="bufResult.case === 'case5'">
@@ -2027,7 +2031,7 @@
 
           <div class="po-staff-list">
             <div v-if="bufTierBreakdown.length === 0" class="po-empty"><i class="fa fa-inbox"></i><span>ไม่พบรายการ</span></div>
-            <div v-for="row in bufTierBreakdown" :key="row.tier.key" class="po-history-row" @click="bufOpenDrill(row.tier.key)">
+            <div v-for="row in bufTierBreakdown" :key="row.tier.key" class="po-history-row" :class="{ 'po-history-row--teacher': row.tier.key === 'teacher' }" @click="bufOpenDrill(row.tier.key)">
               <div class="po-history-row-main">
                 <span class="po-history-student-name">{{ row.tier.label }}</span>
                 <span class="po-history-meta">฿{{ row.tier.price }}/คน · {{ row.count }} คน</span>
@@ -2923,6 +2927,34 @@
       </div>
     </div>
 
+    <!-- ===== BUFFET: ปุ่มย้อนกลับหน้าแตะบัตร — ต้องใส่รหัส Supervisor (§3.1) ===== -->
+    <div v-if="bufIdleBackPinModal" class="modal-overlay" @click.self="bufCloseIdleBackPin()">
+      <div class="modal-box sm">
+        <div class="confirm-modal-body">
+          <div class="confirm-icon-wrap red"><i class="fa fa-shield-alt"></i></div>
+          <div class="confirm-title">ยืนยันออกจากหน้านี้</div>
+          <div class="confirm-sub">กรอกรหัสพนักงานเพื่อกลับไปเลือกวิธีชำระเงิน</div>
+          <div style="width:100%;margin:12px 0 4px">
+            <input
+              class="cancel-reason-textarea"
+              style="width:100%;padding:10px 14px;font-size:15px;letter-spacing:4px;text-align:center;border-radius:10px;border:1.5px solid #E5E5EA;outline:none;box-sizing:border-box"
+              type="password"
+              v-model="bufIdleBackPinValue"
+              placeholder="รหัสพนักงาน (Supervisor)"
+              @keydown.enter="bufConfirmIdleBack()"
+              @input="bufIdleBackPinError = ''"
+              autofocus
+            />
+          </div>
+          <div v-if="bufIdleBackPinError" style="color:#FF3B30;font-size:13px;margin-bottom:4px">{{ bufIdleBackPinError }}</div>
+          <div class="confirm-actions">
+            <button class="btn-no" @click="bufCloseIdleBackPin()">ยกเลิก</button>
+            <button class="btn-yes-blue" :disabled="!bufIdleBackPinValue.trim()" @click="bufConfirmIdleBack()">ยืนยัน</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ===== PRE-ORDER: RESERVATION DETAIL MODAL (§5) ===== -->
     <div v-if="poDetailModal && poDetailReservation" class="modal-overlay" @click.self="poCloseDetail()">
       <div class="modal-box sm" style="position:relative">
@@ -3018,8 +3050,8 @@
           <textarea class="cancel-reason-textarea po-modal-textarea" style="width:100%" v-model="bufVoidReasonOther" placeholder="รายละเอียดเพิ่มเติม..." rows="2"></textarea>
 
           <label class="cancel-reason-label po-modal-label">รหัสยืนยัน (PIN) *</label>
-          <input type="password" class="po-pin-input" v-model="bufVoidPinValue" placeholder="••••" maxlength="6" @input="bufVoidPinError = ''" @keydown.enter="bufConfirmVoid()">
-          <div class="po-pin-hint">กรอก PIN ของคุณเพื่อยืนยันการยกเลิก</div>
+          <input type="password" class="po-pin-input" v-model="bufVoidPinValue" placeholder="รหัสพนักงาน (Supervisor)" maxlength="6" @input="bufVoidPinError = ''" @keydown.enter="bufConfirmVoid()">
+          <div class="po-pin-hint">กรอกรหัสพนักงานระดับ Supervisor เพื่อยืนยันการยกเลิก</div>
           <div v-if="bufVoidPinError" class="po-pin-error">{{ bufVoidPinError }}</div>
 
           <div class="po-cancel-warning">
@@ -3030,6 +3062,21 @@
           <div class="confirm-actions po-modal-actions" style="width:100%;margin-top:14px">
             <button class="btn-no po-modal-btn" @click="bufCloseVoid()">ย้อนกลับ</button>
             <button class="btn-yes-red po-modal-btn" :disabled="!bufVoidReasonSel || (bufVoidReasonSel === 'อื่นๆ' && !bufVoidReasonOther.trim()) || !bufVoidPinValue.trim()" @click="bufConfirmVoid()">ยืนยันยกเลิกรายการ</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== BUFFET: QR TIMEOUT MODAL (§2.1) — เด้งเมื่อ countdown หมด, ไม่กดใน 5 วิ auto กลับหน้าแตะบัตร ===== -->
+    <div v-if="bufQrTimeoutModal" class="modal-overlay">
+      <div class="modal-box sm">
+        <div class="confirm-modal-body">
+          <div class="confirm-icon-wrap red"><i class="fa fa-clock"></i></div>
+          <div class="confirm-title">QR หมดเวลาแล้ว</div>
+          <div class="confirm-sub">ไม่กดเลือกใน 5 วิ จะกลับหน้าแตะบัตรอัตโนมัติ</div>
+          <div class="confirm-actions">
+            <button class="btn-no" @click="bufQrTimeoutCancel()">ยกเลิก</button>
+            <button class="btn-yes-blue" @click="bufQrTimeoutContinue()">ทำรายการต่อ</button>
           </div>
         </div>
       </div>
@@ -3971,7 +4018,10 @@ export default {
       bufQrChannel: null,
       bufQrCountdown: 0,
       bufQrTimer: null,
-      bufQrCancelled: false,
+      bufQrTimeoutModal: false,
+      bufQrTimeoutAutoTimer: null,
+      bufNextScreenPrompt: false, // §2.1 หลัง QR สำเร็จ — ถามเตรียมหน้าจอถัดไป (auto 5 วิ)
+      bufNextScreenAutoTimer: null,
       // ภาพรวม staff + drill-down ตามระดับชั้น (§5)
       bufStaffFrom: '',
       bufStaffTo: '',
@@ -3982,9 +4032,13 @@ export default {
       bufVoidTarget: null,
       bufVoidReasonSel: '',
       bufVoidReasonOther: '',
-      bufVoidReasonOptions: ['จ่ายผิดคน', 'จ่ายซ้ำโดยไม่ตั้งใจ', 'นักเรียนไม่ได้เข้าบุฟเฟต์จริง', 'อื่นๆ'],
+      bufVoidReasonOptions: ['จ่ายผิดคน', 'จ่ายซ้ำโดยไม่ตั้งใจ', 'ไม่ได้เข้าบุฟเฟต์จริง', 'อื่นๆ'],
       bufVoidPinValue: '',
       bufVoidPinError: '',
+      // ปุ่มย้อนกลับหน้าแตะบัตร — ต้องใส่รหัส Supervisor (§3.1)
+      bufIdleBackPinModal: false,
+      bufIdleBackPinValue: '',
+      bufIdleBackPinError: '',
       // จอ 2 — customer display (ช่องทาง BroadcastChannel แยกจาก Pre-Order)
       bufCustomerWindow: null,
       bufBroadcastChannel: null,
@@ -5299,7 +5353,8 @@ export default {
     bufSelectQrChannel(channelKey) {
       this.bufQrChannel = channelKey
       this.appScreen = 'buffet-qr-code'
-      this.bufQrCancelled = false
+      this.bufQrTimeoutModal = false
+      clearTimeout(this.bufQrTimeoutAutoTimer)
       this.bufQrCountdown = 180
       clearInterval(this.bufQrTimer)
       this.bufBroadcastQrState('countdown') // จอ 2 รับค่าเริ่ม 180 แล้วนับถอยหลังเองฝั่งตัวเอง
@@ -5307,10 +5362,27 @@ export default {
         this.bufQrCountdown--
         if (this.bufQrCountdown <= 0) {
           clearInterval(this.bufQrTimer)
-          this.bufQrCancelled = true
+          this.bufQrTimeoutModal = true
           this.bufBroadcastQrState('cancelled')
+          // ไม่กดเลือกใน 5 วิ → auto กลับหน้าแตะบัตร (ยืนยันแล้ว)
+          this.bufQrTimeoutAutoTimer = setTimeout(() => {
+            this.bufQrTimeoutModal = false
+            this.openBuffetIdle()
+          }, 5000)
         }
       }, 1000)
+    },
+    // ปุ่ม "ทำรายการต่อ" ใน modal หมดเวลา — ขอ QR ใหม่ด้วยช่องทางเดิม (รีเซ็ต countdown)
+    bufQrTimeoutContinue() {
+      clearTimeout(this.bufQrTimeoutAutoTimer)
+      this.bufQrTimeoutModal = false
+      this.bufSelectQrChannel(this.bufQrChannel)
+    },
+    // ปุ่ม "ยกเลิก" ใน modal หมดเวลา — เลิกทำรายการ กลับไปเลือกประเภทบุฟเฟต์
+    bufQrTimeoutCancel() {
+      clearTimeout(this.bufQrTimeoutAutoTimer)
+      this.bufQrTimeoutModal = false
+      this.bufQrBackToTypeSelect()
     },
     // ปุ่มทดสอบเท่านั้น (ไม่มี payment gateway จริงผูกอยู่) — จำลองว่าลูกค้าสแกนจ่ายสำเร็จแล้ว
     // §2.1 — QR ไม่รู้ตัวตนผู้จ่าย (ยืนยันแล้ว) บันทึกเป็น guestName generic แทนชื่อจริง ไม่มี cardId/balance ผูกอยู่
@@ -5329,12 +5401,24 @@ export default {
       this.buffetTransactions.push(newTx)
       this.openBuffetIdle()
       this.bufShowResult({ case: 'success', card: null, guestName: 'ลูกค้า (สแกน QR)', tier, amount, tx: newTx })
+      // §2.1(7) — QR สำเร็จ ถามเตรียมหน้าจอถัดไป แทน auto-กลับหน้าแตะบัตรใน 3 วิ ปกติ (ยืนยันแล้ว)
+      this.bufNextScreenPrompt = true
+      this.bufNextScreenAutoTimer = setTimeout(() => this.bufNextScreenGoIdle(), 5000)
     },
-    // หมดเวลา (§2.1) — ยกเลิกทันที ไม่ auto-retry ต้องกดเริ่มใหม่เองจากหน้าเลือกวิธีชำระเงิน
+    // ปุ่ม "ไปหน้าแตะบัตร" (primary/default) — dismiss ผลลัพธ์ กลับหน้าแตะบัตรรอลูกค้าถัดไป
+    bufNextScreenGoIdle() {
+      this.bufBackToIdle()
+    },
+    // ปุ่ม "สแกน QR ต่อ" — dismiss ผลลัพธ์ แล้วเข้า QR flow ทันทีสำหรับลูกค้าถัดไป
+    bufNextScreenScanAgain() {
+      this.bufBackToIdle()
+      this.appScreen = 'buffet-type-select'
+    },
     bufQrBackToTypeSelect() {
       clearInterval(this.bufQrTimer)
+      clearTimeout(this.bufQrTimeoutAutoTimer)
       this.bufQrChannel = null
-      this.bufQrCancelled = false
+      this.bufQrTimeoutModal = false
       this.appScreen = 'buffet-type-select'
     },
     openBuffetIdle() {
@@ -5460,16 +5544,42 @@ export default {
       this.bufResult = payload
       this.bufBroadcastResult()
       // 'buf-insufficient', case9-*, hwB, hwC รอ action พนักงาน ไม่ auto กลับ (เหมือนหลักการเดียวกับ Pre-Order)
+      // QR success (card === null) ใช้ bufNextScreenPrompt คุม auto-dismiss เอง (5 วิ) แทนค่า delayMap ปกติ
+      const isQrSuccess = payload.case === 'success' && !payload.card
       const delayMap = { success: 3000, 'buf-duplicate': 3000, case5: 4000, case6: 4000, hwA: 2500, hwD: 2000 }
-      if (delayMap[payload.case]) {
+      if (delayMap[payload.case] && !isQrSuccess) {
         this.bufResultTimer = setTimeout(() => this.bufBackToIdle(), delayMap[payload.case])
       }
     },
     bufBackToIdle() {
       clearTimeout(this.bufResultTimer)
+      clearTimeout(this.bufNextScreenAutoTimer)
+      this.bufNextScreenPrompt = false
       this.bufProcessing = false
       this.bufResult = null
       this.bufBroadcastResult()
+    },
+    // §3.1 — ปุ่มย้อนกลับหน้าแตะบัตร ต้องใส่รหัส Supervisor (ยืนยันแล้ว) ก่อนออกไปหน้าเลือกวิธีชำระเงิน
+    bufOpenIdleBackPin() {
+      this.bufIdleBackPinValue = ''
+      this.bufIdleBackPinError = ''
+      this.bufIdleBackPinModal = true
+    },
+    bufCloseIdleBackPin() {
+      this.bufIdleBackPinModal = false
+      this.bufIdleBackPinValue = ''
+      this.bufIdleBackPinError = ''
+    },
+    bufConfirmIdleBack() {
+      const code = this.bufIdleBackPinValue.trim()
+      const supervisor = this.systemUsers.find(u => u.code === code && u.role === 'supervisor')
+      if (!supervisor) {
+        this.bufIdleBackPinError = 'รหัสไม่ถูกต้อง หรือไม่มีสิทธิ์ย้อนกลับ'
+        this.bufIdleBackPinValue = ''
+        return
+      }
+      this.bufIdleBackPinModal = false
+      this.appScreen = 'buffet-pay-method'
     },
     // ภาพรวม staff + drill-down ตามระดับชั้น (§5)
     bufOpenDrill(tierKey) {
@@ -5508,7 +5618,7 @@ export default {
       const reason = this.bufVoidReasonSel === 'อื่นๆ' ? note : (note ? `${this.bufVoidReasonSel} — ${note}` : this.bufVoidReasonSel)
       if (!reason) return
       const code = this.bufVoidPinValue.trim()
-      const admin = this.systemUsers.find(u => u.code === code && u.role === 'admin')
+      const admin = this.systemUsers.find(u => u.code === code && u.role === 'supervisor')
       if (!admin) {
         this.bufVoidPinError = 'รหัสไม่ถูกต้อง หรือไม่มีสิทธิ์ยกเลิกรายการ'
         this.bufVoidPinValue = ''
