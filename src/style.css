@@ -3479,6 +3479,7 @@ input:focus { outline: none; }
 .po-summary--missed    .po-summary-num { color: #FF3B30; } /* red — Missed */
 .po-summary--cancelled .po-summary-num { color: #FF3B30; } /* red — Cancelled */
 .po-staff-list { padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.buf-type-list { max-height: 320px; overflow-y: auto; } /* เผื่อกรณีมี tier เยอะ — scroll แทนดันหน้ายาว */
 
 /* Reservation detail (§5) / Buffet void (§6) modal — scoped overrides ของ class กลาง
    (confirm-title/cancel-reason-label/cancel-reason-textarea/btn-no/btn-yes-red/confirm-actions

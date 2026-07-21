@@ -1929,13 +1929,17 @@
           </div>
         </div>
         <div class="po-idle-body">
-          <div class="po-staff-list" style="max-width: 480px; width: 100%;">
-            <div v-for="t in buffetGradeTiers" :key="t.key" class="po-history-row" @click="bufSelectTier(t.key)">
-              <div class="po-history-row-main">
-                <span class="po-history-student-name">บุฟเฟต์ {{ t.label }}</span>
-                <span class="po-history-meta">ราคา ฿{{ t.price }} ต่อคน</span>
+          <div style="max-width: 480px; width: 100%; display: flex; flex-direction: column; gap: 10px;">
+            <input class="po-search-input" v-model="bufTypeSearch" placeholder="ค้นหาประเภทบุฟเฟต์...">
+            <div class="po-staff-list buf-type-list" style="width: 100%;">
+              <div v-if="bufFilteredGradeTiers.length === 0" class="po-empty"><i class="fa fa-inbox"></i><span>ไม่พบรายการ</span></div>
+              <div v-for="t in bufFilteredGradeTiers" :key="t.key" class="po-history-row" @click="bufSelectTier(t.key)">
+                <div class="po-history-row-main">
+                  <span class="po-history-student-name">บุฟเฟต์ {{ t.label }}</span>
+                  <span class="po-history-meta">ราคา ฿{{ t.price }} ต่อคน</span>
+                </div>
+                <span class="po-badge po-badge-ready"><i class="fa fa-chevron-right"></i></span>
               </div>
-              <span class="po-badge po-badge-ready"><i class="fa fa-chevron-right"></i></span>
             </div>
           </div>
         </div>
@@ -4021,6 +4025,7 @@ export default {
       bufCurrentTime: '',
       // §2/§3.1 — เลือกประเภทบุฟเฟต์ก่อนแตะบัตร (ราคาผูกไว้ล่วงหน้า ไม่ใช่คำนวณหลังแตะ)
       bufSelectedTier: null,
+      bufTypeSearch: '', // ค้นหาประเภทบุฟเฟต์ — เผื่อกรณีมี tier เยอะ
       // เพดานติดลบของบัตร (ตัวเลข +) — ตัวอย่าง 200 ตามสเปก ยังไม่ยืนยันค่าจริงจากทีม (§7) แก้จุดเดียวที่นี่เมื่อได้ค่าจริง
       bufNegativeCapLimit: 200,
       bufCardInput: '',
@@ -4312,6 +4317,12 @@ export default {
     // §2/§3.1 — ประเภทบุฟเฟต์ที่ cashier เลือกไว้ล่วงหน้า (ราคาผูกไว้ก่อนแตะบัตร)
     bufSelectedTierInfo() {
       return this.bufGradeTierOf(this.bufSelectedTier)
+    },
+    // เผื่อกรณีมี tier เยอะ — กรองรายการหน้าเลือกประเภทบุฟเฟต์ด้วยชื่อ
+    bufFilteredGradeTiers() {
+      const q = this.bufTypeSearch.trim().toLowerCase()
+      if (!q) return this.buffetGradeTiers
+      return this.buffetGradeTiers.filter(t => t.label.toLowerCase().includes(q))
     },
     // §3.1 — วันที่ dd-mm-พ.ศ. มุมล่างซ้ายของหน้าแตะบัตร
     bufTapDateLabel() {
@@ -5350,6 +5361,7 @@ export default {
     openBuffetTypeSelect() {
       this.appScreen = 'buffet-type-select'
       this.bufSelectedTier = null
+      this.bufTypeSearch = ''
     },
     // เลือกประเภท+ราคา (จุดเข้าทางเดียวของทั้ง 2 สายแล้ว — ยืนยันแล้ว) แล้วไปเลือกวิธีชำระเงินต่อ
     bufSelectTier(tierKey) {
