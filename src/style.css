@@ -3485,6 +3485,13 @@ input:focus { outline: none; }
 .buf-type-wrap .po-history-student-name { font-size: 16px; }
 .buf-type-wrap .po-history-meta { font-size: 13px; }
 .buf-type-wrap .po-empty { font-size: 16px; }
+/* ช่วงเวลาของรอบบุฟเฟต์ — โชว์เหนือช่องค้นหาในหน้าเลือกประเภทบุฟเฟต์ */
+.buf-round-banner { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.buf-round-pill {
+  background: #F2F2F7; color: #3C3C43; font-size: 13px; font-weight: 500;
+  padding: 6px 14px; border-radius: 20px;
+}
+.buf-round-pill.active { background: #EBF5FF; color: #007AFF; }
 
 /* หน้าเลือกช่องทางชำระเงิน QR (§2.1) — grid กล่องสี่เหลี่ยม 2x2 พร้อมโลโก้แบรนด์จริง */
 .buf-channel-grid {

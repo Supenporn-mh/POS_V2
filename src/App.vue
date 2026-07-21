@@ -1930,6 +1930,11 @@
         </div>
         <div class="po-idle-body">
           <div class="buf-type-wrap" style="max-width: 480px; width: 100%; display: flex; flex-direction: column; gap: 10px;">
+            <div class="buf-round-banner">
+              <span v-for="r in buffetRounds" :key="r.key" class="buf-round-pill" :class="{ active: bufActiveRoundKey === r.key }">
+                {{ r.tabName }} {{ r.start }}-{{ r.end }} น.
+              </span>
+            </div>
             <input class="po-search-input" v-model="bufTypeSearch" placeholder="ค้นหาประเภทบุฟเฟต์...">
             <div class="po-staff-list buf-type-list" style="width: 100%;">
               <div v-if="bufFilteredGradeTiers.length === 0" class="po-empty"><i class="fa fa-inbox"></i><span>ไม่พบรายการ</span></div>
@@ -4326,6 +4331,13 @@ export default {
       const q = this.bufTypeSearch.trim().toLowerCase()
       if (!q) return this.buffetGradeTiers
       return this.buffetGradeTiers.filter(t => t.label.toLowerCase().includes(q))
+    },
+    // ช่วงเวลาของรอบบุฟเฟต์ที่กำลังเปิดอยู่ตอนนี้ (ใช้ไฮไลต์ในหน้าเลือกประเภทบุฟเฟต์)
+    bufActiveRoundKey() {
+      if (!this.bufCurrentTime) return null
+      const [h, m] = this.bufCurrentTime.split(':').map(Number)
+      const active = this.bufFindActiveRound(h * 60 + m)
+      return active ? active.key : null
     },
     // §3.1 — วันที่ dd-mm-พ.ศ. มุมล่างซ้ายของหน้าแตะบัตร
     bufTapDateLabel() {
