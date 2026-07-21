@@ -1929,7 +1929,7 @@
           </div>
         </div>
         <div class="po-idle-body">
-          <div style="max-width: 480px; width: 100%; display: flex; flex-direction: column; gap: 10px;">
+          <div class="buf-type-wrap" style="max-width: 480px; width: 100%; display: flex; flex-direction: column; gap: 10px;">
             <input class="po-search-input" v-model="bufTypeSearch" placeholder="ค้นหาประเภทบุฟเฟต์...">
             <div class="po-staff-list buf-type-list" style="width: 100%;">
               <div v-if="bufFilteredGradeTiers.length === 0" class="po-empty"><i class="fa fa-inbox"></i><span>ไม่พบรายการ</span></div>

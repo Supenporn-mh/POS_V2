@@ -3480,6 +3480,11 @@ input:focus { outline: none; }
 .po-summary--cancelled .po-summary-num { color: #FF3B30; } /* red — Cancelled */
 .po-staff-list { padding: 10px; display: flex; flex-direction: column; gap: 8px; }
 .buf-type-list { max-height: 320px; overflow-y: auto; } /* เผื่อกรณีมี tier เยอะ — scroll แทนดันหน้ายาว */
+/* ขยายขนาดตัวอักษรหน้าเลือกประเภทบุฟเฟต์ขึ้น 2px จาก scale ปกติ ตามที่ยืนยัน — scope เฉพาะหน้านี้ */
+.buf-type-wrap .po-search-input { font-size: 15px; }
+.buf-type-wrap .po-history-student-name { font-size: 16px; }
+.buf-type-wrap .po-history-meta { font-size: 13px; }
+.buf-type-wrap .po-empty { font-size: 16px; }
 
 /* Reservation detail (§5) / Buffet void (§6) modal — scoped overrides ของ class กลาง
    (confirm-title/cancel-reason-label/cancel-reason-textarea/btn-no/btn-yes-red/confirm-actions
