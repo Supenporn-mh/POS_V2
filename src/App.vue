@@ -98,6 +98,7 @@
           </div>
           <div class="po-idle-title">฿{{ bufDisplayTier ? bufDisplayTier.price : 0 }}</div>
           <div class="po-idle-meal">เหลือเวลา {{ Math.floor(bufQrDisplayCountdown / 60) }}:{{ String(bufQrDisplayCountdown % 60).padStart(2, '0') }} นาที</div>
+          <div class="po-idle-meal">เลขอ้างอิง (Ref): {{ bufQrDisplayRef }}</div>
         </div>
       </template>
       <template v-else-if="bufQrDisplayStep === 'cancelled'">
@@ -2013,6 +2014,7 @@
             </div>
             <div class="po-idle-title">฿{{ bufSelectedTierInfo ? bufSelectedTierInfo.price : 0 }}</div>
             <div class="po-idle-meal">เหลือเวลา {{ Math.floor(bufQrCountdown / 60) }}:{{ String(bufQrCountdown % 60).padStart(2, '0') }} นาที</div>
+            <div class="po-idle-meal">เลขอ้างอิง (Ref): {{ bufQrRefNumber }}</div>
             <button class="po-btn-secondary" @click="bufQrSimulateSuccess()"><i class="fa fa-flask"></i> จำลองจ่ายสำเร็จ (เครื่องมือทดสอบ)</button>
           </div>
         </div>
@@ -4064,6 +4066,7 @@ export default {
       // §2.1/§8b — เส้นทางสแกน QR (ไม่รู้ตัวตนผู้จ่าย ยืนยันแล้ว — จ่ายจริงผ่าน QR provider โดยตรง)
       bufQrChannel: null,
       bufQrCountdown: 0,
+      bufQrRefNumber: '', // เลขอ้างอิง (Ref) จากธนาคาร — จำลองไว้ก่อน ยังไม่มี payment gateway จริงผูกอยู่
       bufQrTimer: null,
       bufQrTimeoutModal: false,
       bufQrTimeoutAutoTimer: null,
@@ -4095,6 +4098,7 @@ export default {
       // จอ 2 — mirror เส้นทาง QR (ระบุตัวตน/เลือกช่องทาง/นับถอยหลัง/หมดเวลา) แบบ real-time
       bufQrDisplayStep: null,
       bufQrDisplayCountdown: 0,
+      bufQrDisplayRef: '',
       bufQrDisplayTimer: null,
     }
   },
@@ -5419,6 +5423,7 @@ export default {
       this.bufQrTimeoutModal = false
       clearTimeout(this.bufQrTimeoutAutoTimer)
       this.bufQrCountdown = 180
+      this.bufQrRefNumber = this.bufGenerateQrRef()
       clearInterval(this.bufQrTimer)
       this.bufBroadcastQrState('countdown') // จอ 2 รับค่าเริ่ม 180 แล้วนับถอยหลังเองฝั่งตัวเอง
       this.bufQrTimer = setInterval(() => {
@@ -5523,6 +5528,10 @@ export default {
     },
     bufFindActiveRound(nowMin) {
       return this.buffetRounds.find(r => nowMin >= this.bufMinutesOf(r.start) && nowMin <= this.bufMinutesOf(r.end)) || null
+    },
+    // เลขอ้างอิง (Ref) จำลองจากธนาคาร — ยังไม่มี payment gateway จริงผูกอยู่ (เครื่องมือทดสอบ)
+    bufGenerateQrRef() {
+      return Array.from({ length: 12 }, () => Math.floor(Math.random() * 10)).join('')
     },
     bufCardInfo(cardId) {
       return this.buffetCards[cardId] || null
@@ -5759,6 +5768,7 @@ export default {
             this.bufResult = null
             this.bufDisplayTier = ev.data.tier || null
             this.bufQrDisplayStep = ev.data.step
+            this.bufQrDisplayRef = ev.data.ref || ''
             clearInterval(this.bufQrDisplayTimer)
             if (ev.data.step === 'countdown') {
               this.bufQrDisplayCountdown = ev.data.countdown
@@ -5796,7 +5806,7 @@ export default {
     bufBroadcastQrState(step) {
       if (!this.bufBroadcastChannel || this.bufIsCustomerDisplay) return
       const tier = this.bufSelectedTierInfo ? { label: this.bufSelectedTierInfo.label, price: this.bufSelectedTierInfo.price } : null
-      this.bufBroadcastChannel.postMessage({ type: 'qr-state', step, tier, countdown: this.bufQrCountdown })
+      this.bufBroadcastChannel.postMessage({ type: 'qr-state', step, tier, countdown: this.bufQrCountdown, ref: this.bufQrRefNumber })
     },
     // §4 บุฟเฟต์ — จอ 2 ต้อง mirror เนื้อหาเดียวกับจอ 1 ทุกเคส (ยืนยันกับทีมแล้ว ไม่ใช่ fallback กลาง)
     // ตัดออกเฉพาะ error code ทางเทคนิคระดับฮาร์ดแวร์/backend (เช่น READER_HW_FAULT) ไม่ส่งไปจอ 2
