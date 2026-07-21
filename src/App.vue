@@ -1978,12 +1978,13 @@
           </div>
         </div>
         <div class="po-idle-body">
-          <div class="po-staff-list" style="max-width: 480px; width: 100%;">
-            <div v-for="c in bufQrChannels" :key="c.key" class="po-history-row" @click="bufSelectQrChannel(c.key)">
-              <div class="po-history-row-main">
-                <span class="po-history-student-name"><i :class="c.icon" :style="{ color: c.color }"></i> {{ c.label }}</span>
+          <div class="buf-channel-grid">
+            <div v-for="c in bufQrChannels" :key="c.key" class="buf-channel-box" @click="bufSelectQrChannel(c.key)">
+              <div class="buf-channel-box-icons">
+                <i :class="c.icon" :style="{ color: c.color }"></i>
+                <i v-if="c.icon2" :class="c.icon2" :style="{ color: c.color2 }"></i>
               </div>
-              <span class="po-badge po-badge-ready"><i class="fa fa-chevron-right"></i></span>
+              <span class="buf-channel-box-label">{{ c.label }}</span>
             </div>
           </div>
         </div>
@@ -3920,11 +3921,13 @@ export default {
       moneyTransactionsData,
       moneyChannels: [
         { key: 'cash',      label: 'เงินสด',          icon: 'fa fa-money-bill-wave', color: '#FF3B30' },
-        { key: 'card',      label: 'เครดิต / เดบิต',  icon: 'fa fa-credit-card',     color: '#5856D6' },
-        { key: 'promptpay', label: 'พร้อมเพย์',        icon: 'fa fa-qrcode',          color: '#007AFF' },
+        // เครดิต/เดบิตครอบคลุมหลายเครือข่าย — โชว์โลโก้ Visa + Mastercard คู่กัน (icon2 ใช้เฉพาะจอที่รองรับ ไม่กระทบจอเดิม)
+        { key: 'card',      label: 'เครดิต / เดบิต',  icon: 'fa-brands fa-cc-visa', color: '#1A1F71', icon2: 'fa-brands fa-cc-mastercard', color2: '#EB001B' },
+        // PromptPay ไม่มีไอคอนแบรนด์ทางการใน Font Awesome Free — คงไอคอน QR แทน (ไม่ใช่โลโก้จริง)
+        { key: 'promptpay', label: 'พร้อมเพย์',        icon: 'fa fa-qrcode',          color: '#0055B8' },
         { key: 'maenee',    label: 'แม่ณี',            icon: 'fa fa-wallet',          color: '#FF9500' },
-        { key: 'wechat',    label: 'Wechat Pay',       icon: 'fa fa-comment',         color: '#34C759' },
-        { key: 'alipay',    label: 'Alipay',           icon: 'fa fa-a',               color: '#007AFF' },
+        { key: 'wechat',    label: 'Wechat Pay',       icon: 'fa-brands fa-weixin',   color: '#07C160' },
+        { key: 'alipay',    label: 'Alipay',           icon: 'fa-brands fa-alipay',   color: '#1677FF' },
       ],
 
       // ─── TAX INVOICE ─────────────────────────────────────────────────────

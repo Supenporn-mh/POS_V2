@@ -3486,6 +3486,21 @@ input:focus { outline: none; }
 .buf-type-wrap .po-history-meta { font-size: 13px; }
 .buf-type-wrap .po-empty { font-size: 16px; }
 
+/* หน้าเลือกช่องทางชำระเงิน QR (§2.1) — grid กล่องสี่เหลี่ยม 2x2 พร้อมโลโก้แบรนด์จริง */
+.buf-channel-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;
+  width: 100%; max-width: 480px;
+}
+.buf-channel-box {
+  background: #fff; border: 1.5px solid #E5E5EA; border-radius: 14px;
+  padding: 24px 16px; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  aspect-ratio: 1 / 1;
+}
+.buf-channel-box:hover { border-color: #007AFF; }
+.buf-channel-box-icons { display: flex; align-items: center; gap: 10px; font-size: 32px; }
+.buf-channel-box-label { font-size: 14px; font-weight: 500; color: #1C1C1E; text-align: center; }
+
 /* Reservation detail (§5) / Buffet void (§6) modal — scoped overrides ของ class กลาง
    (confirm-title/cancel-reason-label/cancel-reason-textarea/btn-no/btn-yes-red/confirm-actions
    ใช้ร่วมกับ modal อื่นในระบบ — ใส่ modifier class นี้เฉพาะ 2 modal นี้ ไม่กระทบ modal อื่น) */
