@@ -3374,7 +3374,6 @@ input:focus { outline: none; }
   display: flex; flex-direction: column; align-items: center;
   gap: 12px; text-align: center; padding-left: 20px;
 }
-.buf-tap-manual-btn { align-self: flex-end; }
 .buf-tap-center {
   flex: 1; width: 100%;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -3502,6 +3501,29 @@ input:focus { outline: none; }
   height: 100vh; display: flex; flex-direction: column;
   background: #F2F2F7; overflow-y: auto;
 }
+/* ขยายขนาดตัวอักษรทั้งหน้าแตะบัตรขึ้น 2px จาก scale ปกติ ตามที่ยืนยัน — scope เฉพาะหน้านี้ ไม่กระทบ class เดียวกันที่ใช้ในหน้าอื่น */
+.buf-lock-root .po-page-title { font-size: 30px; }
+.buf-lock-root .po-page-sub { font-size: 16px; }
+.buf-lock-root .po-back-btn { font-size: 15px; }
+.buf-lock-root .po-clock { font-size: 17px; }
+.buf-lock-root .po-btn-ghost { font-size: 15px; }
+.buf-lock-root .buf-tap-head { font-size: 15px; }
+.buf-lock-root .po-badge { font-size: 15px; }
+.buf-lock-root .buf-tap-info-row { font-size: 16px; }
+.buf-lock-root .buf-tap-info-row--amount span:last-child { font-size: 19px; }
+.buf-lock-root .buf-tap-bottom { font-size: 15px; }
+.buf-lock-root .po-idle-title { font-size: 19px; }
+.buf-lock-root .po-scan-input { font-size: 17px; }
+.buf-lock-root .po-testtools-toggle { font-size: 15px; }
+.buf-lock-root .po-qp-btn { font-size: 15px; }
+.buf-lock-root .po-btn-primary { font-size: 17px; }
+.buf-lock-root .po-btn-secondary { font-size: 16px; }
+.buf-lock-root .po-result-title { font-size: 19px; }
+.buf-lock-root .po-result-name { font-size: 17px; }
+.buf-lock-root .po-result-class { font-size: 15px; }
+.buf-lock-root .po-result-sub, .buf-lock-root .po-result-footnote { font-size: 16px; }
+.buf-lock-root .po-result-time { font-size: 13px; }
+.buf-lock-root .buf-display-amount { font-size: 46px; }
 
 
 

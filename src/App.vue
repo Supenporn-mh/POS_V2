@@ -309,17 +309,14 @@
                 </div>
               </div>
               <div class="buf-tap-right">
-                <button class="po-history-btn buf-tap-manual-btn" @click="bufManualEntryOpen = !bufManualEntryOpen"><i class="fa fa-keyboard"></i> พิมพ์เลขบัตร</button>
                 <div class="buf-tap-center">
                   <div class="po-idle-title">แตะบัตรเพื่อชำระเงิน</div>
                   <div class="buf-tap-card-icon"><i class="fa fa-credit-card"></i></div>
-                  <input v-if="bufManualEntryOpen" class="po-scan-input" v-model="bufCardInput" placeholder="พิมพ์เลขบัตรแล้วกด Enter" autofocus @keydown.enter="bufSubmitCardInput()">
+                  <input class="po-scan-input" v-model="bufCardInput" placeholder="พิมพ์เลขบัตรแล้วกด Enter" autofocus @keydown.enter="bufSubmitCardInput()">
                 </div>
               </div>
             </div>
           </div>
-          <!-- input ซ่อนไว้รับการแตะบัตรจริง (hardware NFC พิมพ์เลขบัตร+Enter ผ่าน keyboard-wedge) แม้ยังไม่เปิดโหมดพิมพ์เอง -->
-          <input v-if="!bufManualEntryOpen" v-model="bufCardInput" autofocus @keydown.enter="bufSubmitCardInput()" style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;" aria-hidden="true">
 
           <div class="po-testtools">
             <button class="po-testtools-toggle" @click="bufShowTestTools = !bufShowTestTools">
@@ -4025,7 +4022,6 @@ export default {
       bufCurrentTime: '',
       // §2/§3.1 — เลือกประเภทบุฟเฟต์ก่อนแตะบัตร (ราคาผูกไว้ล่วงหน้า ไม่ใช่คำนวณหลังแตะ)
       bufSelectedTier: null,
-      bufManualEntryOpen: false, // §3.1 — ปุ่ม "พิมพ์เลขบัตร" เปิดช่องกรอกเอง (ปกติซ่อนไว้ให้เครื่องอ่านบัตรจริงพิมพ์ผ่าน keyboard-wedge)
       // เพดานติดลบของบัตร (ตัวเลข +) — ตัวอย่าง 200 ตามสเปก ยังไม่ยืนยันค่าจริงจากทีม (§7) แก้จุดเดียวที่นี่เมื่อได้ค่าจริง
       bufNegativeCapLimit: 200,
       bufCardInput: '',
