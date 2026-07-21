@@ -274,6 +274,150 @@
       </div>
     </div>
 
+    <!-- ===== BUFFET: IDLE / TAP (จอ 1 walk-in) — §3.1/3.2/3.3/3.4 ===== -->
+    <div v-else-if="appScreen === 'buffet-idle'" class="buf-lock-root">
+      <div class="po-topbar">
+        <button class="po-back-btn" @click="bufOpenIdleBackPin()"><i class="fa fa-chevron-left"></i> ย้อนกลับ (ต้องใส่รหัส)</button>
+        <div>
+          <h1 class="po-page-title">บุฟเฟต์ {{ bufSelectedTierInfo ? bufSelectedTierInfo.label : '' }}</h1>
+          <span class="po-page-sub">Walk-in แตะบัตรจ่ายเลย · ฿{{ bufSelectedTierInfo ? bufSelectedTierInfo.price : 0 }}</span>
+        </div>
+        <div class="po-topbar-right">
+          <div class="po-clock">{{ bufCurrentTime }}</div>
+          <button class="po-btn-ghost" @click="bufOpenCustomerDisplay()"><i class="fa fa-tv"></i> เปิดจอลูกค้า</button>
+        </div>
+      </div>
+
+      <div class="po-idle-body">
+        <template v-if="!bufResult">
+          <!-- §3.1 layout มาตรฐาน — แบ่งซ้าย-ขวา (ใช้ template เดียวกันทุกประเภทอาหาร) -->
+          <div class="buf-tap-card">
+            <div class="buf-tap-head">
+              <span>หน้าแตะบัตร — เมนูบุฟเฟต์</span>
+              <button class="buf-tap-menu-btn" @click="bufShowTestTools = !bufShowTestTools"><i class="fa fa-ellipsis"></i></button>
+            </div>
+            <div class="buf-tap-body">
+              <div class="buf-tap-left">
+                <span class="po-badge po-badge-ready" style="align-self:flex-start">บุฟเฟต์</span>
+                <div class="buf-tap-info-row"><span>เลขบัตร</span><span>–</span></div>
+                <div class="buf-tap-info-row"><span>ชื่อนักเรียน</span><span>–</span></div>
+                <div class="buf-tap-info-row buf-tap-info-row--amount"><span>ยอดก่อนชำระ</span><span>{{ bufSelectedTierInfo ? bufSelectedTierInfo.price.toFixed(2) : '0.00' }}</span></div>
+                <div class="buf-tap-bottom">
+                  <div class="buf-tap-bottom-row"><i class="fa fa-money-bill-wave"></i> 0.00</div>
+                  <div class="buf-tap-bottom-row"><i class="fa fa-qrcode"></i> 0.00</div>
+                  <div class="buf-tap-bottom-date">{{ bufTapDateLabel }}</div>
+                </div>
+              </div>
+              <div class="buf-tap-right">
+                <button class="po-history-btn buf-tap-manual-btn" @click="bufManualEntryOpen = !bufManualEntryOpen"><i class="fa fa-keyboard"></i> พิมพ์เลขบัตร</button>
+                <div class="buf-tap-center">
+                  <div class="po-idle-title">แตะบัตรเพื่อชำระเงิน</div>
+                  <div class="buf-tap-card-icon"><i class="fa fa-credit-card"></i></div>
+                  <input v-if="bufManualEntryOpen" class="po-scan-input" v-model="bufCardInput" placeholder="พิมพ์เลขบัตรแล้วกด Enter" autofocus @keydown.enter="bufSubmitCardInput()">
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- input ซ่อนไว้รับการแตะบัตรจริง (hardware NFC พิมพ์เลขบัตร+Enter ผ่าน keyboard-wedge) แม้ยังไม่เปิดโหมดพิมพ์เอง -->
+          <input v-if="!bufManualEntryOpen" v-model="bufCardInput" autofocus @keydown.enter="bufSubmitCardInput()" style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;" aria-hidden="true">
+
+          <div class="po-testtools">
+            <button class="po-testtools-toggle" @click="bufShowTestTools = !bufShowTestTools">
+              <i class="fa fa-flask"></i> เครื่องมือทดสอบ
+              <i :class="['fa', bufShowTestTools ? 'fa-chevron-up' : 'fa-chevron-down']"></i>
+            </button>
+            <div v-if="bufShowTestTools" class="po-testtools-panel">
+              <button v-for="qp in bufQuickPicks" :key="qp.label" class="po-qp-btn" @click="bufQuickPickTap(qp)">{{ qp.label }}</button>
+              <button class="po-qp-btn po-qp-btn--offline" :class="{ active: bufOfflineSim }" @click="bufToggleOfflineSim()">
+                <i class="fa fa-wifi"></i> จำลองระบบออฟไลน์ ({{ bufOfflineSim ? 'เปิด' : 'ปิด' }})
+              </button>
+              <button class="po-qp-btn" @click="bufSimulateMisread()">แตะบัตรไม่สำเร็จ ({{ bufMisreadCount }}/3)</button>
+              <button class="po-qp-btn" @click="bufSimulateReaderFailure()">เครื่องอ่านบัตรขัดข้อง</button>
+              <button class="po-qp-btn" @click="bufDemoDebounce()">แตะซ้ำระหว่างประมวลผล (debounce)</button>
+            </div>
+          </div>
+        </template>
+
+        <!-- ===== RESULT OVERLAY ===== -->
+        <div v-else class="po-result-card">
+          <button v-if="['buf-insufficient', 'hwB', 'hwC', 'case9-timeout'].includes(bufResult.case)" class="po-result-close" @click="bufBackToIdle()">×</button>
+
+          <template v-if="bufResult.case === 'success'">
+            <div class="po-result-icon po-icon-success"><i class="fa fa-check-circle"></i></div>
+            <div class="po-result-title">ชำระเงินสำเร็จ</div>
+            <div class="po-result-name">{{ bufResult.card ? bufResult.card.name : bufResult.guestName }}</div>
+            <div class="po-result-class">{{ bufResult.tier ? bufResult.tier.label : '' }} · บุฟเฟต์</div>
+            <div class="buf-display-amount">฿{{ bufResult.amount }}</div>
+            <div class="po-result-sub" v-if="bufResult.card">คงเหลือ ฿{{ bufResult.card.balance }}</div>
+            <div class="po-result-time">{{ bufFormatDate(bufResult.tx.date) }} · {{ bufResult.tx.time }} น.</div>
+
+            <!-- §2.1(7) — เฉพาะสาย QR (ไม่มี card ผูก) ถามเตรียมหน้าจอถัดไป auto 5 วิ -->
+            <template v-if="!bufResult.card && bufNextScreenPrompt">
+              <div class="nav-divider" style="margin:14px 0;width:100%"></div>
+              <div class="po-result-sub">รายการถัดไปเตรียมหน้าจอแบบไหน?</div>
+              <div style="display:flex;flex-direction:column;gap:8px;width:220px;margin-top:8px">
+                <button class="po-btn-secondary" @click="bufNextScreenScanAgain()">สแกน QR ต่อ</button>
+                <button class="po-btn-primary" @click="bufNextScreenGoIdle()">ไปหน้าแตะบัตร</button>
+              </div>
+            </template>
+          </template>
+
+          <template v-else-if="bufResult.case === 'buf-duplicate'">
+            <div class="po-result-icon po-icon-warning"><i class="fa fa-triangle-exclamation"></i></div>
+            <div class="po-result-title">มื้อนี้ชำระบุฟเฟต์ไปแล้ว</div>
+            <div class="po-result-sub">{{ bufResult.card.name }} จ่ายไปแล้วเมื่อ {{ bufResult.time }}</div>
+            <div class="po-result-sub">ถ้าจ่ายให้คนอื่น กรุณาใช้วิธีสแกน QR แทน</div>
+          </template>
+
+          <template v-else-if="bufResult.case === 'buf-insufficient'">
+            <div class="po-result-icon po-icon-warning"><i class="fa fa-circle-exclamation"></i></div>
+            <div class="po-result-title">ยอดเงินไม่เพียงพอ</div>
+            <div class="po-result-sub">ยอดที่ต้องจ่าย ฿{{ bufResult.amount }} · ยอดคงเหลือ ฿{{ bufResult.balance }}</div>
+            <div class="po-result-sub">กรุณาเติมเงินหรือติดต่อพนักงาน · หรือเปลี่ยนไปใช้วิธีสแกน QR แทน</div>
+          </template>
+
+          <template v-else-if="bufResult.case === 'case5'">
+            <div class="po-result-icon po-icon-neutral"><i class="fa fa-circle-info"></i></div>
+            <div class="po-result-title">ไม่พบข้อมูลบัตรนี้</div>
+            <div class="po-result-sub">กรุณาติดต่อพนักงาน</div>
+          </template>
+
+          <template v-else-if="bufResult.case === 'case6'">
+            <div class="po-result-icon po-icon-danger"><i class="fa fa-ban"></i></div>
+            <div class="po-result-title">บัตรถูกระงับใช้งาน</div>
+            <div class="po-result-sub">กรุณาติดต่อพนักงาน</div>
+          </template>
+
+          <template v-else-if="bufResult.case === 'case9-loading'">
+            <div class="po-result-icon po-icon-neutral"><i class="fa fa-spinner fa-spin"></i></div>
+            <div class="po-result-title">กำลังตรวจสอบข้อมูล...</div>
+          </template>
+          <template v-else-if="bufResult.case === 'case9-timeout'">
+            <div class="po-result-icon po-icon-neutral"><i class="fa fa-wifi"></i></div>
+            <div class="po-result-title">เชื่อมต่อไม่ได้ ลองใหม่อีกครั้ง</div>
+            <button class="po-btn-secondary" @click="bufToggleOfflineSim(); bufBackToIdle()"><i class="fa fa-rotate-right"></i> ปิดโหมดทดสอบ / ลองใหม่</button>
+          </template>
+
+          <template v-else-if="bufResult.case === 'hwA'">
+            <div class="po-result-icon po-icon-info"><i class="fa fa-arrows-rotate"></i></div>
+            <div class="po-result-title">แตะบัตรอีกครั้ง</div>
+          </template>
+          <template v-else-if="bufResult.case === 'hwB'">
+            <div class="po-result-icon po-icon-warning"><i class="fa fa-id-card"></i></div>
+            <div class="po-result-title">อ่านบัตรไม่ได้ กรุณาติดต่อพนักงาน</div>
+          </template>
+          <template v-else-if="bufResult.case === 'hwC'">
+            <div class="po-result-icon po-icon-danger"><i class="fa fa-screwdriver-wrench"></i></div>
+            <div class="po-result-title">เครื่องอ่านบัตรขัดข้อง กรุณาติดต่อพนักงาน</div>
+          </template>
+          <template v-else-if="bufResult.case === 'hwD'">
+            <div class="po-result-icon po-icon-neutral"><i class="fa fa-spinner fa-spin"></i></div>
+            <div class="po-result-title">กำลังดำเนินการ กรุณารอสักครู่</div>
+          </template>
+        </div>
+      </div>
+    </div>
+
     <!-- ===================== MAIN POS / ORDERS ===================== -->
     <div v-else :class="appScreen === 'pos' ? 'pos-layout' : 'fullscreen-layout'">
       <!-- SIDEBAR -->
@@ -1864,150 +2008,6 @@
             <div class="po-idle-title">฿{{ bufSelectedTierInfo ? bufSelectedTierInfo.price : 0 }}</div>
             <div class="po-idle-meal">เหลือเวลา {{ Math.floor(bufQrCountdown / 60) }}:{{ String(bufQrCountdown % 60).padStart(2, '0') }} นาที</div>
             <button class="po-btn-secondary" @click="bufQrSimulateSuccess()"><i class="fa fa-flask"></i> จำลองจ่ายสำเร็จ (เครื่องมือทดสอบ)</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- ===== BUFFET: IDLE / TAP (จอ 1 walk-in) — §3.1/3.2/3.3/3.4 ===== -->
-      <div v-else-if="appScreen === 'buffet-idle'" class="po-main">
-        <div class="po-topbar">
-          <div>
-            <h1 class="po-page-title">บุฟเฟต์ {{ bufSelectedTierInfo ? bufSelectedTierInfo.label : '' }}</h1>
-            <span class="po-page-sub">Walk-in แตะบัตรจ่ายเลย · ฿{{ bufSelectedTierInfo ? bufSelectedTierInfo.price : 0 }}</span>
-          </div>
-          <div class="po-topbar-right">
-            <button class="po-back-btn" @click="bufOpenIdleBackPin()"><i class="fa fa-chevron-left"></i> ย้อนกลับ (ต้องใส่รหัส)</button>
-            <div class="po-clock">{{ bufCurrentTime }}</div>
-            <button class="po-btn-ghost" @click="bufOpenCustomerDisplay()"><i class="fa fa-tv"></i> เปิดจอลูกค้า</button>
-          </div>
-        </div>
-
-        <div class="po-idle-body">
-          <template v-if="!bufResult">
-            <!-- §3.1 layout มาตรฐาน — แบ่งซ้าย-ขวา (ใช้ template เดียวกันทุกประเภทอาหาร) -->
-            <div class="buf-tap-card">
-              <div class="buf-tap-head">
-                <span>หน้าแตะบัตร — เมนูบุฟเฟต์</span>
-                <button class="buf-tap-menu-btn" @click="bufShowTestTools = !bufShowTestTools"><i class="fa fa-ellipsis"></i></button>
-              </div>
-              <div class="buf-tap-body">
-                <div class="buf-tap-left">
-                  <span class="po-badge po-badge-ready" style="align-self:flex-start">บุฟเฟต์</span>
-                  <div class="buf-tap-info-row"><span>เลขบัตร</span><span>–</span></div>
-                  <div class="buf-tap-info-row"><span>ชื่อนักเรียน</span><span>–</span></div>
-                  <div class="buf-tap-info-row buf-tap-info-row--amount"><span>ยอดก่อนชำระ</span><span>{{ bufSelectedTierInfo ? bufSelectedTierInfo.price.toFixed(2) : '0.00' }}</span></div>
-                  <div class="buf-tap-bottom">
-                    <div class="buf-tap-bottom-row"><i class="fa fa-money-bill-wave"></i> 0.00</div>
-                    <div class="buf-tap-bottom-row"><i class="fa fa-qrcode"></i> 0.00</div>
-                    <div class="buf-tap-bottom-date">{{ bufTapDateLabel }}</div>
-                  </div>
-                </div>
-                <div class="buf-tap-right">
-                  <button class="po-history-btn buf-tap-manual-btn" @click="bufManualEntryOpen = !bufManualEntryOpen"><i class="fa fa-keyboard"></i> พิมพ์เลขบัตร</button>
-                  <div class="buf-tap-center">
-                    <div class="po-idle-title">แตะบัตรเพื่อชำระเงิน</div>
-                    <div class="buf-tap-card-icon"><i class="fa fa-credit-card"></i></div>
-                    <input v-if="bufManualEntryOpen" class="po-scan-input" v-model="bufCardInput" placeholder="พิมพ์เลขบัตรแล้วกด Enter" autofocus @keydown.enter="bufSubmitCardInput()">
-                  </div>
-                </div>
-              </div>
-            </div>
-            <!-- input ซ่อนไว้รับการแตะบัตรจริง (hardware NFC พิมพ์เลขบัตร+Enter ผ่าน keyboard-wedge) แม้ยังไม่เปิดโหมดพิมพ์เอง -->
-            <input v-if="!bufManualEntryOpen" v-model="bufCardInput" autofocus @keydown.enter="bufSubmitCardInput()" style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;" aria-hidden="true">
-
-            <div class="po-testtools">
-              <button class="po-testtools-toggle" @click="bufShowTestTools = !bufShowTestTools">
-                <i class="fa fa-flask"></i> เครื่องมือทดสอบ
-                <i :class="['fa', bufShowTestTools ? 'fa-chevron-up' : 'fa-chevron-down']"></i>
-              </button>
-              <div v-if="bufShowTestTools" class="po-testtools-panel">
-                <button v-for="qp in bufQuickPicks" :key="qp.label" class="po-qp-btn" @click="bufQuickPickTap(qp)">{{ qp.label }}</button>
-                <button class="po-qp-btn po-qp-btn--offline" :class="{ active: bufOfflineSim }" @click="bufToggleOfflineSim()">
-                  <i class="fa fa-wifi"></i> จำลองระบบออฟไลน์ ({{ bufOfflineSim ? 'เปิด' : 'ปิด' }})
-                </button>
-                <button class="po-qp-btn" @click="bufSimulateMisread()">แตะบัตรไม่สำเร็จ ({{ bufMisreadCount }}/3)</button>
-                <button class="po-qp-btn" @click="bufSimulateReaderFailure()">เครื่องอ่านบัตรขัดข้อง</button>
-                <button class="po-qp-btn" @click="bufDemoDebounce()">แตะซ้ำระหว่างประมวลผล (debounce)</button>
-              </div>
-            </div>
-          </template>
-
-          <!-- ===== RESULT OVERLAY ===== -->
-          <div v-else class="po-result-card">
-            <button v-if="['buf-insufficient', 'hwB', 'hwC', 'case9-timeout'].includes(bufResult.case)" class="po-result-close" @click="bufBackToIdle()">×</button>
-
-            <template v-if="bufResult.case === 'success'">
-              <div class="po-result-icon po-icon-success"><i class="fa fa-check-circle"></i></div>
-              <div class="po-result-title">ชำระเงินสำเร็จ</div>
-              <div class="po-result-name">{{ bufResult.card ? bufResult.card.name : bufResult.guestName }}</div>
-              <div class="po-result-class">{{ bufResult.tier ? bufResult.tier.label : '' }} · บุฟเฟต์</div>
-              <div class="buf-display-amount">฿{{ bufResult.amount }}</div>
-              <div class="po-result-sub" v-if="bufResult.card">คงเหลือ ฿{{ bufResult.card.balance }}</div>
-              <div class="po-result-time">{{ bufFormatDate(bufResult.tx.date) }} · {{ bufResult.tx.time }} น.</div>
-
-              <!-- §2.1(7) — เฉพาะสาย QR (ไม่มี card ผูก) ถามเตรียมหน้าจอถัดไป auto 5 วิ -->
-              <template v-if="!bufResult.card && bufNextScreenPrompt">
-                <div class="nav-divider" style="margin:14px 0;width:100%"></div>
-                <div class="po-result-sub">รายการถัดไปเตรียมหน้าจอแบบไหน?</div>
-                <div style="display:flex;flex-direction:column;gap:8px;width:220px;margin-top:8px">
-                  <button class="po-btn-secondary" @click="bufNextScreenScanAgain()">สแกน QR ต่อ</button>
-                  <button class="po-btn-primary" @click="bufNextScreenGoIdle()">ไปหน้าแตะบัตร</button>
-                </div>
-              </template>
-            </template>
-
-            <template v-else-if="bufResult.case === 'buf-duplicate'">
-              <div class="po-result-icon po-icon-warning"><i class="fa fa-triangle-exclamation"></i></div>
-              <div class="po-result-title">มื้อนี้ชำระบุฟเฟต์ไปแล้ว</div>
-              <div class="po-result-sub">{{ bufResult.card.name }} จ่ายไปแล้วเมื่อ {{ bufResult.time }}</div>
-              <div class="po-result-sub">ถ้าจ่ายให้คนอื่น กรุณาใช้วิธีสแกน QR แทน</div>
-            </template>
-
-            <template v-else-if="bufResult.case === 'buf-insufficient'">
-              <div class="po-result-icon po-icon-warning"><i class="fa fa-circle-exclamation"></i></div>
-              <div class="po-result-title">ยอดเงินไม่เพียงพอ</div>
-              <div class="po-result-sub">ยอดที่ต้องจ่าย ฿{{ bufResult.amount }} · ยอดคงเหลือ ฿{{ bufResult.balance }}</div>
-              <div class="po-result-sub">กรุณาเติมเงินหรือติดต่อพนักงาน · หรือเปลี่ยนไปใช้วิธีสแกน QR แทน</div>
-            </template>
-
-            <template v-else-if="bufResult.case === 'case5'">
-              <div class="po-result-icon po-icon-neutral"><i class="fa fa-circle-info"></i></div>
-              <div class="po-result-title">ไม่พบข้อมูลบัตรนี้</div>
-              <div class="po-result-sub">กรุณาติดต่อพนักงาน</div>
-            </template>
-
-            <template v-else-if="bufResult.case === 'case6'">
-              <div class="po-result-icon po-icon-danger"><i class="fa fa-ban"></i></div>
-              <div class="po-result-title">บัตรถูกระงับใช้งาน</div>
-              <div class="po-result-sub">กรุณาติดต่อพนักงาน</div>
-            </template>
-
-            <template v-else-if="bufResult.case === 'case9-loading'">
-              <div class="po-result-icon po-icon-neutral"><i class="fa fa-spinner fa-spin"></i></div>
-              <div class="po-result-title">กำลังตรวจสอบข้อมูล...</div>
-            </template>
-            <template v-else-if="bufResult.case === 'case9-timeout'">
-              <div class="po-result-icon po-icon-neutral"><i class="fa fa-wifi"></i></div>
-              <div class="po-result-title">เชื่อมต่อไม่ได้ ลองใหม่อีกครั้ง</div>
-              <button class="po-btn-secondary" @click="bufToggleOfflineSim(); bufBackToIdle()"><i class="fa fa-rotate-right"></i> ปิดโหมดทดสอบ / ลองใหม่</button>
-            </template>
-
-            <template v-else-if="bufResult.case === 'hwA'">
-              <div class="po-result-icon po-icon-info"><i class="fa fa-arrows-rotate"></i></div>
-              <div class="po-result-title">แตะบัตรอีกครั้ง</div>
-            </template>
-            <template v-else-if="bufResult.case === 'hwB'">
-              <div class="po-result-icon po-icon-warning"><i class="fa fa-id-card"></i></div>
-              <div class="po-result-title">อ่านบัตรไม่ได้ กรุณาติดต่อพนักงาน</div>
-            </template>
-            <template v-else-if="bufResult.case === 'hwC'">
-              <div class="po-result-icon po-icon-danger"><i class="fa fa-screwdriver-wrench"></i></div>
-              <div class="po-result-title">เครื่องอ่านบัตรขัดข้อง กรุณาติดต่อพนักงาน</div>
-            </template>
-            <template v-else-if="bufResult.case === 'hwD'">
-              <div class="po-result-icon po-icon-neutral"><i class="fa fa-spinner fa-spin"></i></div>
-              <div class="po-result-title">กำลังดำเนินการ กรุณารอสักครู่</div>
-            </template>
           </div>
         </div>
       </div>

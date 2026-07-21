@@ -3497,6 +3497,12 @@ input:focus { outline: none; }
   display: flex; align-items: center; justify-content: center; text-align: center;
 }
 
+/* หน้าแตะบัตรบุฟเฟต์ (§3.1) — lock screen เต็มจอ ไม่มีเมนูข้าง ออกได้ทางเดียวคือปุ่มย้อนกลับ (ต้องใส่รหัส) */
+.buf-lock-root {
+  height: 100vh; display: flex; flex-direction: column;
+  background: #F2F2F7; overflow-y: auto;
+}
+
 
 
 
