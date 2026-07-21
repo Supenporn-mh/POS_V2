@@ -490,7 +490,7 @@
         </nav>
         <div class="sidebar-bottom">
           <div class="nav-divider"></div>
-          <div class="nav-item" @click="appScreen = 'feature'" style="margin: 2px 4px;">
+          <div class="nav-item" @click="sidebarGoBack()" style="margin: 2px 4px;">
             <i class="fa fa-chevron-left"></i><span>ย้อนกลับ</span>
           </div>
           <div class="nav-item" @click="settingsOpen = true" style="margin: 2px 4px;">
@@ -1978,6 +1978,9 @@
             <h1 class="po-page-title">สแกน QR — บุฟเฟต์ {{ bufSelectedTierInfo ? bufSelectedTierInfo.label : '' }}</h1>
             <span class="po-page-sub">เลือกช่องทางชำระเงิน · ยอดบุฟเฟต์ ฿{{ bufSelectedTierInfo ? bufSelectedTierInfo.price : 0 }}</span>
           </div>
+          <div class="po-topbar-right">
+            <button class="po-btn-ghost" @click="bufOpenCustomerDisplay()"><i class="fa fa-tv"></i> เปิดจอลูกค้า</button>
+          </div>
         </div>
         <div class="po-idle-body">
           <div class="buf-channel-grid">
@@ -2000,7 +2003,7 @@
             <span class="po-page-sub">บุฟเฟต์ {{ bufSelectedTierInfo ? bufSelectedTierInfo.label : '' }}</span>
           </div>
           <div class="po-topbar-right">
-            <button class="po-back-btn" @click="bufQrBackToTypeSelect()"><i class="fa fa-chevron-left"></i> ยกเลิก</button>
+            <button class="po-btn-ghost" @click="bufOpenCustomerDisplay()"><i class="fa fa-tv"></i> เปิดจอลูกค้า</button>
           </div>
         </div>
         <div class="po-idle-body">
@@ -3106,6 +3109,21 @@
       </div>
     </div>
 
+    <!-- ===== BUFFET: ยืนยันยกเลิกรายการ QR ก่อนกด "ย้อนกลับ" ออกจากหน้าสแกน QR (§2.1) ===== -->
+    <div v-if="bufQrCancelConfirmModal" class="modal-overlay" @click.self="bufQrCancelConfirmModal = false">
+      <div class="modal-box sm">
+        <div class="confirm-modal-body">
+          <div class="confirm-icon-wrap red"><i class="fa fa-triangle-exclamation"></i></div>
+          <div class="confirm-title">ต้องการยกเลิกรายการหรือไม่</div>
+          <div class="confirm-sub">รายการสแกน QR ที่ทำค้างอยู่จะถูกยกเลิก</div>
+          <div class="confirm-actions">
+            <button class="btn-no" @click="bufQrCancelConfirmModal = false">ไม่ใช่</button>
+            <button class="btn-yes-red" @click="bufConfirmQrCancelToFeature()">ยืนยันยกเลิก</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Cancel Order Confirm -->
     <div v-if="cancelConfirm" class="modal-overlay">
       <div class="modal-box sm">
@@ -4051,6 +4069,7 @@ export default {
       bufQrTimeoutAutoTimer: null,
       bufNextScreenPrompt: false, // §2.1 หลัง QR สำเร็จ — ถามเตรียมหน้าจอถัดไป (auto 5 วิ)
       bufNextScreenAutoTimer: null,
+      bufQrCancelConfirmModal: false, // กด sidebar "ย้อนกลับ" ขณะรอจ่าย QR อยู่ — ต้องยืนยันก่อนออก (ยืนยันแล้ว)
       // ภาพรวม staff + drill-down ตามระดับชั้น (§5)
       bufStaffFrom: '',
       bufStaffTo: '',
@@ -5465,6 +5484,22 @@ export default {
       this.bufQrTimeoutModal = false
       this.openBuffetTypeSelect()
     },
+    // ปุ่ม "ย้อนกลับ" ที่ sidebar — ถ้ากำลังรอจ่าย QR อยู่ ต้องถามยืนยันก่อนออก (ยืนยันแล้ว) ไม่งั้นออกทันทีเหมือนเดิม
+    sidebarGoBack() {
+      if (this.appScreen === 'buffet-qr-code') {
+        this.bufQrCancelConfirmModal = true
+        return
+      }
+      this.appScreen = 'feature'
+    },
+    bufConfirmQrCancelToFeature() {
+      clearInterval(this.bufQrTimer)
+      clearTimeout(this.bufQrTimeoutAutoTimer)
+      this.bufQrChannel = null
+      this.bufQrTimeoutModal = false
+      this.bufQrCancelConfirmModal = false
+      this.appScreen = 'feature'
+    },
     openBuffetIdle() {
       this.appScreen = 'buffet-idle'
       // bufSelectedTier ไม่ reset แล้ว — หน้านี้ผูกราคากับ tier ที่เลือกไว้ล่วงหน้า (ยืนยันแล้ว)
@@ -5734,7 +5769,19 @@ export default {
             }
           }
         }
+        // จอ 2 เพิ่งโหลดเสร็จ — ขอให้จอ 1 ส่งสถานะปัจจุบันมาซิงค์ทันที กันกรณีเปิดจอลูกค้าหลังเข้า flow ไปแล้วแล้วจอค้างว่าง
+        this.bufBroadcastChannel.postMessage({ type: 'ready' })
+      } else {
+        this.bufBroadcastChannel.onmessage = (ev) => {
+          if (ev.data && ev.data.type === 'ready') this.bufSyncCustomerDisplay()
+        }
       }
+    },
+    // ส่งสถานะปัจจุบันของจอ 1 ไปให้จอ 2 ตามหน้าที่กำลังอยู่ ณ ตอนนั้น (เรียกตอนจอ 2 เพิ่ง ready)
+    bufSyncCustomerDisplay() {
+      if (this.appScreen === 'buffet-qr-channel') { this.bufBroadcastQrState('channel'); return }
+      if (this.appScreen === 'buffet-qr-code') { this.bufBroadcastQrState(this.bufQrTimeoutModal ? 'cancelled' : 'countdown'); return }
+      this.bufBroadcastResult()
     },
     // §4 บุฟเฟต์ — ก่อนแตะบัตร จอ 2 ต้องโชว์ยอดที่ผูกไว้แล้วเหมือนจอ 1 เป๊ะ ไม่ใช่แค่ตอนจ่ายสำเร็จ
     bufBroadcastResult() {
