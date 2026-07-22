@@ -1932,13 +1932,15 @@
           </div>
         </div>
         <div class="po-idle-body">
-          <div class="buf-type-wrap" style="max-width: 480px; width: 100%; display: flex; flex-direction: column; gap: 10px;">
+          <template v-if="!bufActiveRound">
+            <div class="po-result-icon po-icon-info"><i class="fa fa-clock"></i></div>
+            <div class="po-result-title">ยังไม่ถึงรอบบุฟเฟต์</div>
+            <div v-if="bufNextRound" class="po-result-sub">รอบถัดไป: {{ bufNextRound.tabName }} {{ bufNextRound.start }}-{{ bufNextRound.end }} น.</div>
+          </template>
+          <div v-else class="buf-type-wrap" style="max-width: 480px; width: 100%; display: flex; flex-direction: column; gap: 10px;">
             <div class="buf-round-banner">
-              <span v-if="bufActiveRound" class="buf-round-pill active">
+              <span class="buf-round-pill active">
                 {{ bufActiveRound.tabName }} {{ bufActiveRound.start }}-{{ bufActiveRound.end }} น.
-              </span>
-              <span v-else-if="bufNextRound" class="buf-round-pill">
-                ยังไม่ถึงรอบบุฟเฟต์ · รอบถัดไป {{ bufNextRound.tabName }} {{ bufNextRound.start }}-{{ bufNextRound.end }} น.
               </span>
             </div>
             <input class="po-search-input" v-model="bufTypeSearch" placeholder="ค้นหาประเภทบุฟเฟต์...">
@@ -1964,7 +1966,6 @@
             <span class="po-page-sub">เลือกวิธีชำระเงิน · {{ bufSelectedTierInfo ? ('บุฟเฟต์ ' + bufSelectedTierInfo.label + ' · ฿' + bufSelectedTierInfo.price) : '' }}</span>
           </div>
           <div class="po-topbar-right">
-            <button class="po-back-btn" @click="openBuffetTypeSelect()"><i class="fa fa-chevron-left"></i> กลับ</button>
             <button class="po-btn-ghost" @click="bufOpenCustomerDisplay()"><i class="fa fa-tv"></i> เปิดจอลูกค้า</button>
             <button class="po-history-btn" @click="appScreen = 'buffet-staff'"><i class="fa fa-clipboard-list"></i> ภาพรวมบุฟเฟต์</button>
           </div>
