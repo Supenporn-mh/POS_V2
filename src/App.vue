@@ -1933,9 +1933,12 @@
         </div>
         <div class="po-idle-body">
           <div class="buf-type-wrap" style="max-width: 480px; width: 100%; display: flex; flex-direction: column; gap: 10px;">
-            <div class="buf-round-banner" v-if="bufActiveRound">
-              <span class="buf-round-pill active">
+            <div class="buf-round-banner">
+              <span v-if="bufActiveRound" class="buf-round-pill active">
                 {{ bufActiveRound.tabName }} {{ bufActiveRound.start }}-{{ bufActiveRound.end }} น.
+              </span>
+              <span v-else-if="bufNextRound" class="buf-round-pill">
+                ยังไม่ถึงรอบบุฟเฟต์ · รอบถัดไป {{ bufNextRound.tabName }} {{ bufNextRound.start }}-{{ bufNextRound.end }} น.
               </span>
             </div>
             <input class="po-search-input" v-model="bufTypeSearch" placeholder="ค้นหาประเภทบุฟเฟต์...">
@@ -4366,6 +4369,12 @@ export default {
     // รอบบุฟเฟต์ที่กำลังเปิดอยู่ตอนนี้ — โชว์เป็น banner เดียวเหนือช่องค้นหาในหน้าเลือกประเภทบุฟเฟต์
     bufActiveRound() {
       return this.buffetRounds.find(r => r.key === this.bufActiveRoundKey) || null
+    },
+    // ตอนไม่มีรอบไหน active — หารอบถัดไปของวันนี้มาโชว์แทน (ถ้าเลยรอบสุดท้ายแล้ว วนกลับไปโชว์รอบแรก)
+    bufNextRound() {
+      if (!this.bufCurrentTime) return null
+      const nowMin = this.bufMinutesOf(this.bufCurrentTime)
+      return this.buffetRounds.find(r => this.bufMinutesOf(r.start) > nowMin) || this.buffetRounds[0] || null
     },
     // §3.1 — วันที่ dd-mm-พ.ศ. มุมล่างซ้ายของหน้าแตะบัตร
     bufTapDateLabel() {
