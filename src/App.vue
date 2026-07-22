@@ -2063,13 +2063,14 @@
           <div class="po-filter-bar">
             <button class="po-back-btn" @click="bufCloseDrill()"><i class="fa fa-chevron-left"></i> กลับ</button>
             <div class="po-history-student" style="margin:0">{{ bufGradeTierOf(bufDrillTier) ? bufGradeTierOf(bufDrillTier).label : '' }}</div>
-            <input class="po-search-input" v-model="bufDrillSearch" placeholder="ค้นหาชื่อ">
+            <input class="po-search-input" v-model="bufDrillSearch" placeholder="ค้นหาชื่อ / รหัสประจำตัว / เลขบัตร / เลขที่ออเดอร์">
           </div>
           <div class="po-staff-list">
             <div v-if="bufDrillList.length === 0" class="po-empty"><i class="fa fa-inbox"></i><span>ไม่พบรายการ</span></div>
             <div v-for="tx in bufDrillList" :key="tx.id" class="po-history-row" @click="bufOpenVoid(tx)">
               <div class="po-history-row-main">
                 <span class="po-history-student-name">{{ bufCardInfo(tx.cardId) ? bufCardInfo(tx.cardId).name : (tx.guestName || tx.cardId) }}</span>
+                <span v-if="bufCardInfo(tx.cardId)" class="po-history-meta">รหัสประจำตัว {{ bufCardInfo(tx.cardId).studentId }} · เลขบัตร {{ tx.cardId }}</span>
                 <span class="po-history-meta">{{ bufGradeTierOf(tx.gradeTier) ? bufGradeTierOf(tx.gradeTier).label : '' }} · {{ tx.time }} น. · {{ tx.paymentMethod === 'card' ? 'แตะบัตร' : 'สแกน QR' }}</span>
               </div>
               <span class="po-badge po-badge-confirmed">฿{{ tx.amount }}</span>
@@ -3713,15 +3714,15 @@ const buffetRounds = [
 
 // cardId → นักเรียนฝั่งบุฟเฟต์ (ระดับชั้นอย่างเดียว ไม่มี /ห้อง ตามสเปก + ยอดเครดิตคงเหลือในบัตร)
 const buffetCards = {
-  '1001001': { name: 'ด.ช. ปกรณ์ วงศ์สุข',      gradeTier: 'p-senior', balance: 150 },
-  '1001002': { name: 'ด.ญ. พิมพ์ชนก แสงทอง',    gradeTier: 'p-senior', balance: 80 },
-  '1001003': { name: 'ด.ช. ธนกฤต ศรีสุข',        gradeTier: 'p-junior', balance: 15 },   // ยอดน้อยกว่าราคา แต่ยังไม่ชนเพดาน -200
-  '1001004': { name: 'ด.ญ. ชนิสรา บุญมี',        gradeTier: 'm-junior', balance: 200 },
-  '1001005': { name: 'ด.ช. ภูริณัฐ เจริญสุข',    gradeTier: 'm-senior', balance: 300 },
-  '1001006': { name: 'ด.ญ. ณัฏฐณิชา ทองดี',      gradeTier: 'p-junior', balance: -190 },  // ใกล้เพดาน -200 (เดโม insufficient-blocked)
-  '1001007': { name: 'ด.ช. กิตติภูมิ รุ่งเรือง', gradeTier: 'm-junior', balance: 100 },
-  '1001008': { name: 'ด.ญ. อรวรรณ พันธ์ทอง',    gradeTier: 'p-senior', balance: 50 },
-  '9009009': { name: 'ด.ช. วีรภัทร ขันแข็ง',      gradeTier: 'm-senior', balance: 100 }, // บัตรถูกระงับ
+  '1001001': { name: 'ด.ช. ปกรณ์ วงศ์สุข',      gradeTier: 'p-senior', balance: 150,  studentId: 'STD24001' },
+  '1001002': { name: 'ด.ญ. พิมพ์ชนก แสงทอง',    gradeTier: 'p-senior', balance: 80,   studentId: 'STD24002' },
+  '1001003': { name: 'ด.ช. ธนกฤต ศรีสุข',        gradeTier: 'p-junior', balance: 15,   studentId: 'STD24003' },   // ยอดน้อยกว่าราคา แต่ยังไม่ชนเพดาน -200
+  '1001004': { name: 'ด.ญ. ชนิสรา บุญมี',        gradeTier: 'm-junior', balance: 200,  studentId: 'STD24004' },
+  '1001005': { name: 'ด.ช. ภูริณัฐ เจริญสุข',    gradeTier: 'm-senior', balance: 300,  studentId: 'STD24005' },
+  '1001006': { name: 'ด.ญ. ณัฏฐณิชา ทองดี',      gradeTier: 'p-junior', balance: -190, studentId: 'STD24006' },  // ใกล้เพดาน -200 (เดโม insufficient-blocked)
+  '1001007': { name: 'ด.ช. กิตติภูมิ รุ่งเรือง', gradeTier: 'm-junior', balance: 100,  studentId: 'STD24007' },
+  '1001008': { name: 'ด.ญ. อรวรรณ พันธ์ทอง',    gradeTier: 'p-senior', balance: 50,   studentId: 'STD24008' },
+  '9009009': { name: 'ด.ช. วีรภัทร ขันแข็ง',      gradeTier: 'm-senior', balance: 100,  studentId: 'STD24009' }, // บัตรถูกระงับ
 }
 const buffetSuspendedCards = ['9009009']
 
@@ -4395,7 +4396,8 @@ export default {
         .filter(t => {
           if (!q) return true
           const card = this.bufCardInfo(t.cardId)
-          return ((card && card.name) || '').toLowerCase().includes(q)
+          const hay = [card && card.name, card && card.studentId, t.cardId, t.id].filter(Boolean).join(' ')
+          return hay.toLowerCase().includes(q)
         })
         .sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time))
     },
