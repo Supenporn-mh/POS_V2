@@ -93,12 +93,14 @@
       </template>
       <template v-else-if="bufQrDisplayStep === 'countdown'">
         <div class="po-idle-card">
+          <div class="po-idle-title">สแกน QR เพื่อชำระเงินผ่านแอปธนาคาร</div>
           <div class="po-idle-icon" style="width:160px;height:160px;border-radius:12px;font-size:64px;background:#F2F2F7;color:#1C1C1E">
             <i class="fa fa-qrcode"></i>
           </div>
-          <div class="po-idle-title">฿{{ bufDisplayTier ? bufDisplayTier.price : 0 }}</div>
-          <div class="po-idle-meal">เหลือเวลา {{ Math.floor(bufQrDisplayCountdown / 60) }}:{{ String(bufQrDisplayCountdown % 60).padStart(2, '0') }} นาที</div>
-          <div class="po-idle-meal">เลขอ้างอิง (Ref): {{ bufQrDisplayRef }}</div>
+          <div class="po-idle-meal">เวลาที่เหลือ : {{ bufQrDisplayCountdown }} วินาที</div>
+          <div class="buf-qr-amount-label">จำนวนเงินที่ต้องชำระ</div>
+          <div class="po-idle-title">฿ {{ bufDisplayTier ? bufDisplayTier.price : 0 }}</div>
+          <div class="po-idle-meal">เลขที่อ้างอิง : {{ bufQrDisplayRef }}</div>
         </div>
       </template>
       <template v-else-if="bufQrDisplayStep === 'cancelled'">
@@ -1931,9 +1933,9 @@
         </div>
         <div class="po-idle-body">
           <div class="buf-type-wrap" style="max-width: 480px; width: 100%; display: flex; flex-direction: column; gap: 10px;">
-            <div class="buf-round-banner">
-              <span v-for="r in buffetRounds" :key="r.key" class="buf-round-pill" :class="{ active: bufActiveRoundKey === r.key }">
-                {{ r.tabName }} {{ r.start }}-{{ r.end }} น.
+            <div class="buf-round-banner" v-if="bufActiveRound">
+              <span class="buf-round-pill active">
+                {{ bufActiveRound.tabName }} {{ bufActiveRound.start }}-{{ bufActiveRound.end }} น.
               </span>
             </div>
             <input class="po-search-input" v-model="bufTypeSearch" placeholder="ค้นหาประเภทบุฟเฟต์...">
@@ -2009,12 +2011,14 @@
         </div>
         <div class="po-idle-body">
           <div class="po-idle-card">
+            <div class="po-idle-title">สแกน QR เพื่อชำระเงินผ่านแอปธนาคาร</div>
             <div class="po-idle-icon" style="width:160px;height:160px;border-radius:12px;font-size:64px;background:#F2F2F7;color:#1C1C1E">
               <i class="fa fa-qrcode"></i>
             </div>
-            <div class="po-idle-title">฿{{ bufSelectedTierInfo ? bufSelectedTierInfo.price : 0 }}</div>
-            <div class="po-idle-meal">เหลือเวลา {{ Math.floor(bufQrCountdown / 60) }}:{{ String(bufQrCountdown % 60).padStart(2, '0') }} นาที</div>
-            <div class="po-idle-meal">เลขอ้างอิง (Ref): {{ bufQrRefNumber }}</div>
+            <div class="po-idle-meal">เวลาที่เหลือ : {{ bufQrCountdown }} วินาที</div>
+            <div class="buf-qr-amount-label">จำนวนเงินที่ต้องชำระ</div>
+            <div class="po-idle-title">฿ {{ bufSelectedTierInfo ? bufSelectedTierInfo.price : 0 }}</div>
+            <div class="po-idle-meal">เลขที่อ้างอิง : {{ bufQrRefNumber }}</div>
             <button class="po-btn-secondary" @click="bufQrSimulateSuccess()"><i class="fa fa-flask"></i> จำลองจ่ายสำเร็จ (เครื่องมือทดสอบ)</button>
           </div>
         </div>
@@ -4359,6 +4363,10 @@ export default {
       const active = this.bufFindActiveRound(h * 60 + m)
       return active ? active.key : null
     },
+    // รอบบุฟเฟต์ที่กำลังเปิดอยู่ตอนนี้ — โชว์เป็น banner เดียวเหนือช่องค้นหาในหน้าเลือกประเภทบุฟเฟต์
+    bufActiveRound() {
+      return this.buffetRounds.find(r => r.key === this.bufActiveRoundKey) || null
+    },
     // §3.1 — วันที่ dd-mm-พ.ศ. มุมล่างซ้ายของหน้าแตะบัตร
     bufTapDateLabel() {
       const [y, m, d] = BUF_TODAY.split('-')
@@ -5531,7 +5539,13 @@ export default {
     },
     // เลขอ้างอิง (Ref) จำลองจากธนาคาร — ยังไม่มี payment gateway จริงผูกอยู่ (เครื่องมือทดสอบ)
     bufGenerateQrRef() {
-      return Array.from({ length: 12 }, () => Math.floor(Math.random() * 10)).join('')
+      // รูปแบบเลขอ้างอิงจำลองตามใบเสร็จ QR ธนาคารจริง เช่น SCB20251201114119J61
+      const now = new Date()
+      const pad = (n, len = 2) => String(n).padStart(len, '0')
+      const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`
+      const suffixChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+      const suffix = Array.from({ length: 3 }, () => suffixChars[Math.floor(Math.random() * suffixChars.length)]).join('')
+      return `SCB${stamp}${suffix}`
     },
     bufCardInfo(cardId) {
       return this.buffetCards[cardId] || null
