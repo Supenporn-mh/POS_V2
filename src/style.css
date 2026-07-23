@@ -3409,6 +3409,14 @@ input:focus { outline: none; }
 .po-badge-missed    { background: #FFF0EE; color: #FF3B30; }
 .po-badge-cancelled { background: #FFF0EE; color: #FF3B30; }
 
+/* หน้าภาพรวมบุฟเฟต์ (§5) — ปุ่มยกเลิกต่อแถว (เฉพาะรายการแตะบัตร) / label ไม่ให้ยกเลิกสำหรับรายการ QR */
+.buf-staff-cancel-btn {
+  font-size: 12px; padding: 6px 14px; border-radius: 8px; border: none;
+  background: #FF3B30; color: #fff; cursor: pointer; flex-shrink: 0;
+}
+.buf-staff-cancel-btn:hover { background: #D63028; }
+.buf-staff-cancel-disabled { font-size: 11px; color: #8E8E93; flex-shrink: 0; }
+
 /* Reservation detail modal (§5) — cancel section */
 .po-modal-icon-box {
   width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;

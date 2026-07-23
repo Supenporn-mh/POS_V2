@@ -2028,55 +2028,41 @@
         </div>
       </div>
 
-      <!-- ===== BUFFET: STAFF OVERVIEW + DRILL-DOWN (§5) ===== -->
+      <!-- ===== BUFFET: STAFF OVERVIEW — flat list + pill filter ตามชั้น (§5) ===== -->
       <div v-else-if="appScreen === 'buffet-staff'" class="po-main">
         <div class="po-topbar">
-          <div><h1 class="po-page-title">ภาพรวมบุฟเฟต์</h1><span class="po-page-sub">สำหรับพนักงาน</span></div>
+          <div><h1 class="po-page-title">ภาพรวมบุฟเฟต์</h1><span class="po-page-sub">สำหรับพนักงาน · {{ bufStaffDateLabel }}</span></div>
         </div>
 
-        <template v-if="!bufDrillTier">
-          <div class="po-filter-bar">
-            <input type="date" class="po-date-input" v-model="bufStaffFrom">
-            <span>ถึง</span>
-            <input type="date" class="po-date-input" v-model="bufStaffTo">
-            <button class="po-history-btn" @click="addToast('แสดงผลตามช่วงวันที่ที่เลือกแล้ว', 'info')"><i class="fa fa-magnifying-glass"></i> ค้นหา</button>
-          </div>
+        <div class="po-filter-bar">
+          <input type="date" class="po-date-input" v-model="bufStaffFrom">
+          <span>ถึง</span>
+          <input type="date" class="po-date-input" v-model="bufStaffTo">
+          <input class="po-search-input" v-model="bufStaffSearch" placeholder="ค้นหาชื่อ / รหัสประจำตัว / เลขบัตร / เลขที่ออเดอร์">
+        </div>
 
-          <div class="po-summary-row">
-            <div class="po-summary-tile"><div class="po-summary-num">{{ bufStaffSummary.totalPeople }}</div><div class="po-summary-label">จำนวนคนทั้งหมด</div></div>
-            <div class="po-summary-tile po-summary--confirmed"><div class="po-summary-num">฿{{ bufStaffSummary.totalAmount }}</div><div class="po-summary-label">ยอดรวม</div></div>
-          </div>
+        <div class="po-tab-bar">
+          <button v-for="tab in buffetStaffTierTabs" :key="tab.key" class="po-tab" :class="{ active: bufStaffTierTab === tab.key }" @click="bufStaffTierTab = tab.key">{{ tab.label }}</button>
+        </div>
 
-          <div class="po-staff-list">
-            <div v-if="bufTierBreakdown.length === 0" class="po-empty"><i class="fa fa-inbox"></i><span>ไม่พบรายการ</span></div>
-            <div v-for="row in bufTierBreakdown" :key="row.tier.key" class="po-history-row" :class="{ 'po-history-row--teacher': row.tier.key === 'teacher' }" @click="bufOpenDrill(row.tier.key)">
-              <div class="po-history-row-main">
-                <span class="po-history-student-name">{{ row.tier.label }}</span>
-                <span class="po-history-meta">฿{{ row.tier.price }}/คน · {{ row.count }} คน</span>
-              </div>
-              <span class="po-badge po-badge-ready">฿{{ row.subtotal }}</span>
+        <div class="po-summary-row">
+          <div class="po-summary-tile"><div class="po-summary-num">{{ bufStaffSummary.totalPeople }}</div><div class="po-summary-label">ทั้งหมด</div></div>
+          <div class="po-summary-tile po-summary--confirmed"><div class="po-summary-num">฿{{ bufStaffSummary.totalAmount }}</div><div class="po-summary-label">ยอดรวม</div></div>
+          <div class="po-summary-tile po-summary--ready"><div class="po-summary-num" style="font-size:16px">{{ bufStaffRoundLabel }}</div><div class="po-summary-label">รอบปัจจุบัน</div></div>
+        </div>
+
+        <div class="po-staff-list">
+          <div v-if="bufStaffFilteredList.length === 0" class="po-empty"><i class="fa fa-inbox"></i><span>ไม่พบรายการ</span></div>
+          <div v-for="tx in bufStaffFilteredList" :key="tx.id" class="po-history-row">
+            <div class="po-history-row-main">
+              <span class="po-history-student-name">{{ bufCardInfo(tx.cardId) ? bufCardInfo(tx.cardId).name : (tx.guestName || tx.cardId) }}</span>
+              <span v-if="bufCardInfo(tx.cardId)" class="po-history-meta">รหัสประจำตัว {{ bufCardInfo(tx.cardId).studentId }} · เลขบัตร {{ tx.cardId }}</span>
+              <span class="po-history-meta">{{ bufGradeTierOf(tx.gradeTier) ? bufGradeTierOf(tx.gradeTier).label : '' }} · {{ tx.time }} น. · {{ tx.paymentMethod === 'card' ? 'แตะบัตร' : 'สแกน QR' }}</span>
             </div>
+            <button v-if="tx.paymentMethod === 'card'" class="buf-staff-cancel-btn" @click="bufOpenVoid(tx)">ยกเลิก</button>
+            <span v-else class="buf-staff-cancel-disabled" title="รายการ QR ไม่สามารถยกเลิกผ่านระบบได้">ยกเลิกไม่ได้</span>
           </div>
-        </template>
-
-        <template v-else>
-          <div class="po-filter-bar">
-            <button class="po-back-btn" @click="bufCloseDrill()"><i class="fa fa-chevron-left"></i> กลับ</button>
-            <div class="po-history-student" style="margin:0">{{ bufGradeTierOf(bufDrillTier) ? bufGradeTierOf(bufDrillTier).label : '' }}</div>
-            <input class="po-search-input" v-model="bufDrillSearch" placeholder="ค้นหาชื่อ / รหัสประจำตัว / เลขบัตร / เลขที่ออเดอร์">
-          </div>
-          <div class="po-staff-list">
-            <div v-if="bufDrillList.length === 0" class="po-empty"><i class="fa fa-inbox"></i><span>ไม่พบรายการ</span></div>
-            <div v-for="tx in bufDrillList" :key="tx.id" class="po-history-row" @click="bufOpenVoid(tx)">
-              <div class="po-history-row-main">
-                <span class="po-history-student-name">{{ bufCardInfo(tx.cardId) ? bufCardInfo(tx.cardId).name : (tx.guestName || tx.cardId) }}</span>
-                <span v-if="bufCardInfo(tx.cardId)" class="po-history-meta">รหัสประจำตัว {{ bufCardInfo(tx.cardId).studentId }} · เลขบัตร {{ tx.cardId }}</span>
-                <span class="po-history-meta">{{ bufGradeTierOf(tx.gradeTier) ? bufGradeTierOf(tx.gradeTier).label : '' }} · {{ tx.time }} น. · {{ tx.paymentMethod === 'card' ? 'แตะบัตร' : 'สแกน QR' }}</span>
-              </div>
-              <span class="po-badge po-badge-confirmed">฿{{ tx.amount }}</span>
-            </div>
-          </div>
-        </template>
+        </div>
       </div>
 
       <!-- RIGHT PANEL: Order Summary -->
@@ -3705,6 +3691,15 @@ const buffetGradeTiers = [
   { key: 'teacher',  label: 'คุณครู', price: 40 }, // ราคาจริงยังไม่ยืนยัน (spec §7) — mock placeholder ไปก่อน
 ]
 
+// pill filter ของหน้าภาพรวมบุฟเฟต์ (§5) — รวม ม.ต้น/ม.ปลาย เป็น pill เดียวตาม reference mockup
+const buffetStaffTierTabs = [
+  { key: 'all',      label: 'ทั้งหมด',     tiers: null },
+  { key: 'p-junior', label: 'ป.1-3',       tiers: ['p-junior'] },
+  { key: 'p-senior', label: 'ป.4-6',       tiers: ['p-senior'] },
+  { key: 'm-all',    label: 'ม.ต้น/ปลาย',  tiers: ['m-junior', 'm-senior'] },
+  { key: 'teacher',  label: 'คุณครู',      tiers: ['teacher'] },
+]
+
 // รอบมื้อของบุฟเฟต์ (คนละ config กับ preOrderMealPeriods แม้ค่าจะใกล้เคียงกัน — ใช้ตรวจ "แตะซ้ำในมื้อเดียวกัน")
 const buffetRounds = [
   { key: 'breakfast', tabName: 'รอบเช้า',    mealName: 'มื้อเช้า',    start: '07:00', end: '08:30' },
@@ -4056,6 +4051,7 @@ export default {
       buffetSuspendedCards,
       buffetTransactions,
       buffetQuickPicks,
+      buffetStaffTierTabs,
       bufCurrentTime: '',
       // §2/§3.1 — เลือกประเภทบุฟเฟต์ก่อนแตะบัตร (ราคาผูกไว้ล่วงหน้า ไม่ใช่คำนวณหลังแตะ)
       bufSelectedTier: null,
@@ -4082,11 +4078,11 @@ export default {
       bufNextScreenPrompt: false, // §2.1 หลัง QR สำเร็จ — ถามเตรียมหน้าจอถัดไป (auto 5 วิ)
       bufNextScreenAutoTimer: null,
       bufQrCancelConfirmModal: false, // กด sidebar "ย้อนกลับ" ขณะรอจ่าย QR อยู่ — ต้องยืนยันก่อนออก (ยืนยันแล้ว)
-      // ภาพรวม staff + drill-down ตามระดับชั้น (§5)
+      // ภาพรวม staff แบบ flat list + pill filter ตามระดับชั้น (§5)
       bufStaffFrom: '',
       bufStaffTo: '',
-      bufDrillTier: null,
-      bufDrillSearch: '',
+      bufStaffTierTab: 'all',
+      bufStaffSearch: '',
       // modal ยกเลิกรายการ/void-refund (§6)
       bufVoidModal: false,
       bufVoidTarget: null,
@@ -4341,15 +4337,8 @@ export default {
       })
     },
     bufStaffSummary() {
-      const list = this.bufStaffFilteredTx
+      const list = this.bufStaffFilteredList
       return { totalPeople: list.length, totalAmount: list.reduce((s, t) => s + t.amount, 0) }
-    },
-    bufTierBreakdown() {
-      const list = this.bufStaffFilteredTx
-      return this.buffetGradeTiers.map(tier => {
-        const rows = list.filter(t => t.gradeTier === tier.key)
-        return { tier, count: rows.length, subtotal: rows.reduce((s, t) => s + t.amount, 0) }
-      })
     },
     // §2/§3.1 — ประเภทบุฟเฟต์ที่ cashier เลือกไว้ล่วงหน้า (ราคาผูกไว้ก่อนแตะบัตร)
     bufSelectedTierInfo() {
@@ -4378,6 +4367,16 @@ export default {
       const nowMin = this.bufMinutesOf(this.bufCurrentTime)
       return this.buffetRounds.find(r => this.bufMinutesOf(r.start) > nowMin) || this.buffetRounds[0] || null
     },
+    // การ์ดสรุป "รอบปัจจุบัน" หน้าภาพรวม staff — mirror fallback เดียวกับหน้าเลือกประเภทบุฟเฟต์
+    bufStaffRoundLabel() {
+      if (this.bufActiveRound) return this.bufActiveRound.tabName
+      if (this.bufNextRound) return 'รอบถัดไป: ' + this.bufNextRound.tabName
+      return '-'
+    },
+    // วันที่ปัจจุบันของหน้าภาพรวม staff — format เดียวกับ poFormatDate ("13 ก.ค. 2569")
+    bufStaffDateLabel() {
+      return this.poFormatDate(BUF_TODAY)
+    },
     // §3.1 — วันที่ dd-mm-พ.ศ. มุมล่างซ้ายของหน้าแตะบัตร
     bufTapDateLabel() {
       const [y, m, d] = BUF_TODAY.split('-')
@@ -4388,11 +4387,12 @@ export default {
       const order = ['promptpay', 'card', 'alipay', 'wechat']
       return order.map(k => this.moneyChannels.find(c => c.key === k)).filter(Boolean)
     },
-    bufDrillList() {
-      if (!this.bufDrillTier) return []
-      const q = this.bufDrillSearch.trim().toLowerCase()
+    // หน้าภาพรวม staff แบบ flat list — กรองด้วย tab ตามชั้น (ม.ต้น/ปลาย รวมกันเป็น pill เดียว) + search ชื่อ/รหัสประจำตัว/เลขบัตร/เลขที่ออเดอร์
+    bufStaffFilteredList() {
+      const tab = this.buffetStaffTierTabs.find(t => t.key === this.bufStaffTierTab)
+      const q = this.bufStaffSearch.trim().toLowerCase()
       return this.bufStaffFilteredTx
-        .filter(t => t.gradeTier === this.bufDrillTier)
+        .filter(t => !tab || !tab.tiers || tab.tiers.includes(t.gradeTier))
         .filter(t => {
           if (!q) return true
           const card = this.bufCardInfo(t.cardId)
@@ -5725,14 +5725,6 @@ export default {
       this.appScreen = 'buffet-pay-method'
     },
     // ภาพรวม staff + drill-down ตามระดับชั้น (§5)
-    bufOpenDrill(tierKey) {
-      this.bufDrillTier = tierKey
-      this.bufDrillSearch = ''
-    },
-    bufCloseDrill() {
-      this.bufDrillTier = null
-      this.bufDrillSearch = ''
-    },
     // modal ยกเลิกรายการ/void-refund (§6)
     // §6 — ยกเลิก/คืนเงินได้เฉพาะรายการที่จ่ายด้วยแตะบัตร (เงินอยู่ในระบบโรงเรียนเอง) QR คืนไม่ได้เพราะจ่ายผ่านธนาคาร/ผู้ให้บริการโดยตรง
     bufOpenVoid(tx) {
