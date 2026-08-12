@@ -3129,7 +3129,6 @@
           <div class="confirm-actions po-modal-actions" style="width:100%;margin-top:14px">
             <button class="btn-no po-modal-btn" @click="bufCloseDetail()">ปิด</button>
             <button v-if="bufDetailTarget.paymentMethod === 'card'" class="btn-yes-red po-modal-btn" @click="bufDetailStartVoid()">ยกเลิกรายการ</button>
-            <span v-else class="buf-staff-cancel-disabled" title="รายการ QR ไม่สามารถยกเลิกผ่านระบบได้">ยกเลิกไม่ได้ (รายการ QR)</span>
           </div>
         </div>
       </div>

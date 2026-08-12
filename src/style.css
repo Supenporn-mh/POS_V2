@@ -3410,7 +3410,6 @@ input:focus { outline: none; }
 .po-badge-cancelled { background: #FFF0EE; color: #FF3B30; }
 
 /* หน้าภาพรวมบุฟเฟต์ (§5) — ปุ่มยกเลิกต่อแถว (เฉพาะรายการแตะบัตร) / label ไม่ให้ยกเลิกสำหรับรายการ QR */
-.buf-staff-cancel-disabled { font-size: 11px; color: #8E8E93; flex-shrink: 0; }
 .po-table-wrap {
   margin: 12px 28px 20px; padding: 4px 20px 12px; overflow-x: auto;
   background: #fff; border-radius: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.05);
