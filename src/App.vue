@@ -2039,10 +2039,14 @@
           <span>ถึง</span>
           <input type="date" class="po-date-input" v-model="bufStaffTo">
           <input class="po-search-input" v-model="bufStaffSearch" placeholder="ค้นหาชื่อ / รหัสประจำตัว / เลขบัตร / เลขที่ออเดอร์">
-        </div>
-
-        <div class="po-tab-bar">
-          <button v-for="tab in buffetStaffTierTabs" :key="tab.key" class="po-tab" :class="{ active: bufStaffTierTab === tab.key }" @click="bufStaffTierTab = tab.key">{{ tab.label }}</button>
+          <select class="po-select" v-model="bufStaffRoundFilter">
+            <option value="all">ช่วงเวลาทั้งหมด</option>
+            <option v-for="r in buffetRounds" :key="r.key" :value="r.key">{{ r.start }} - {{ r.end }}</option>
+          </select>
+          <select class="po-select" v-model="bufStaffMealFilter">
+            <option value="all">ประเภทอาหารทั้งหมด</option>
+            <option v-for="r in buffetRounds" :key="r.key" :value="r.key">{{ r.mealName }}</option>
+          </select>
         </div>
 
         <div class="po-summary-row">
@@ -3691,15 +3695,6 @@ const buffetGradeTiers = [
   { key: 'teacher',  label: 'คุณครู', price: 40 }, // ราคาจริงยังไม่ยืนยัน (spec §7) — mock placeholder ไปก่อน
 ]
 
-// pill filter ของหน้าภาพรวมบุฟเฟต์ (§5) — รวม ม.ต้น/ม.ปลาย เป็น pill เดียวตาม reference mockup
-const buffetStaffTierTabs = [
-  { key: 'all',      label: 'ทั้งหมด',     tiers: null },
-  { key: 'p-junior', label: 'ป.1-3',       tiers: ['p-junior'] },
-  { key: 'p-senior', label: 'ป.4-6',       tiers: ['p-senior'] },
-  { key: 'm-all',    label: 'ม.ต้น/ปลาย',  tiers: ['m-junior', 'm-senior'] },
-  { key: 'teacher',  label: 'คุณครู',      tiers: ['teacher'] },
-]
-
 // รอบมื้อของบุฟเฟต์ (คนละ config กับ preOrderMealPeriods แม้ค่าจะใกล้เคียงกัน — ใช้ตรวจ "แตะซ้ำในมื้อเดียวกัน")
 const buffetRounds = [
   { key: 'breakfast', tabName: 'รอบเช้า',    mealName: 'มื้อเช้า',    start: '07:00', end: '08:30' },
@@ -4052,7 +4047,6 @@ export default {
       buffetSuspendedCards,
       buffetTransactions,
       buffetQuickPicks,
-      buffetStaffTierTabs,
       bufCurrentTime: '',
       // §2/§3.1 — เลือกประเภทบุฟเฟต์ก่อนแตะบัตร (ราคาผูกไว้ล่วงหน้า ไม่ใช่คำนวณหลังแตะ)
       bufSelectedTier: null,
@@ -4082,7 +4076,8 @@ export default {
       // ภาพรวม staff แบบ flat list + pill filter ตามระดับชั้น (§5)
       bufStaffFrom: '',
       bufStaffTo: '',
-      bufStaffTierTab: 'all',
+      bufStaffRoundFilter: 'all',
+      bufStaffMealFilter: 'all',
       bufStaffSearch: '',
       // modal ยกเลิกรายการ/void-refund (§6)
       bufVoidModal: false,
@@ -4388,12 +4383,12 @@ export default {
       const order = ['promptpay', 'card', 'alipay', 'wechat']
       return order.map(k => this.moneyChannels.find(c => c.key === k)).filter(Boolean)
     },
-    // หน้าภาพรวม staff แบบ flat list — กรองด้วย tab ตามชั้น (ม.ต้น/ปลาย รวมกันเป็น pill เดียว) + search ชื่อ/รหัสประจำตัว/เลขบัตร/เลขที่ออเดอร์
+    // หน้าภาพรวม staff แบบ flat list — กรองด้วยช่วงเวลา + ประเภทอาหาร (round) + search ชื่อ/รหัสประจำตัว/เลขบัตร/เลขที่ออเดอร์
     bufStaffFilteredList() {
-      const tab = this.buffetStaffTierTabs.find(t => t.key === this.bufStaffTierTab)
       const q = this.bufStaffSearch.trim().toLowerCase()
       return this.bufStaffFilteredTx
-        .filter(t => !tab || !tab.tiers || tab.tiers.includes(t.gradeTier))
+        .filter(t => this.bufStaffRoundFilter === 'all' || t.round === this.bufStaffRoundFilter)
+        .filter(t => this.bufStaffMealFilter === 'all' || t.round === this.bufStaffMealFilter)
         .filter(t => {
           if (!q) return true
           const card = this.bufCardInfo(t.cardId)

@@ -3446,11 +3446,11 @@ input:focus { outline: none; }
 
 /* Staff overview list bits */
 .po-filter-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 16px 28px 0; }
-.po-date-input, .po-search-input {
+.po-date-input, .po-search-input, .po-select {
   border: 1.5px solid #E5E5EA; border-radius: 10px; padding: 8px 12px; font-size: 13px; outline: none; font-family: inherit;
 }
 .po-search-input { flex: 1; min-width: 160px; }
-.po-date-input:focus, .po-search-input:focus { border-color: #007AFF; }
+.po-date-input:focus, .po-search-input:focus, .po-select:focus { border-color: #007AFF; }
 .po-tab-bar { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 28px 0; }
 .po-tab {
   background: #fff; border: 1px solid #E5E5EA; border-radius: 20px;
