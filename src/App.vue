@@ -2055,17 +2055,27 @@
           <div class="po-summary-tile po-summary--ready"><div class="po-summary-num" style="font-size:16px">{{ bufStaffRoundLabel }}</div><div class="po-summary-label">รอบปัจจุบัน</div></div>
         </div>
 
-        <div class="po-staff-list">
-          <div v-if="bufStaffFilteredList.length === 0" class="po-empty"><i class="fa fa-inbox"></i><span>ไม่พบรายการ</span></div>
-          <div v-for="tx in bufStaffFilteredList" :key="tx.id" class="po-history-row">
-            <div class="po-history-row-main">
-              <span class="po-history-student-name">{{ bufCardInfo(tx.cardId) ? bufCardInfo(tx.cardId).name : (tx.guestName || tx.cardId) }}</span>
-              <span v-if="bufCardInfo(tx.cardId)" class="po-history-meta">รหัสประจำตัว {{ bufCardInfo(tx.cardId).studentId }} · เลขบัตร {{ tx.cardId }}</span>
-              <span class="po-history-meta">{{ bufGradeTierOf(tx.gradeTier) ? bufGradeTierOf(tx.gradeTier).label : '' }} · {{ tx.time }} น. · {{ tx.paymentMethod === 'card' ? 'แตะบัตร' : 'สแกน QR' }}</span>
-            </div>
-            <button v-if="tx.paymentMethod === 'card'" class="buf-staff-cancel-btn" @click="bufOpenVoid(tx)">ยกเลิก</button>
-            <span v-else class="buf-staff-cancel-disabled" title="รายการ QR ไม่สามารถยกเลิกผ่านระบบได้">ยกเลิกไม่ได้</span>
-          </div>
+        <div class="po-table-wrap">
+          <table class="po-staff-table">
+            <thead>
+              <tr>
+                <th>ชื่อ-นามสกุล</th><th>รหัสประจำตัว</th><th>เลขบัตร</th>
+                <th>ช่วงเวลา</th><th>ประเภทอาหาร</th><th>ประเภทการจ่ายเงิน</th><th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="bufStaffFilteredList.length === 0"><td colspan="7" class="po-empty"><i class="fa fa-inbox"></i><span>ไม่พบรายการ</span></td></tr>
+              <tr v-for="tx in bufStaffFilteredList" :key="tx.id">
+                <td>{{ bufCardInfo(tx.cardId) ? bufCardInfo(tx.cardId).name : 'ไม่ระบุชื่อ' }}<div v-if="!bufCardInfo(tx.cardId)" class="po-history-meta">เลขที่ออเดอร์ {{ tx.id }}</div></td>
+                <td>{{ bufCardInfo(tx.cardId) ? bufCardInfo(tx.cardId).studentId : '-' }}</td>
+                <td>{{ tx.cardId || '-' }}</td>
+                <td>{{ tx.time }} น.</td>
+                <td>{{ bufRoundOf(tx.round) ? bufRoundOf(tx.round).mealName : '-' }}</td>
+                <td>{{ tx.paymentMethod === 'card' ? 'แตะบัตร' : 'สแกนจ่าย' }}</td>
+                <td><button class="po-btn-secondary" style="padding:6px 12px;font-size:13px" @click="bufOpenDetail(tx)">ดูรายละเอียด</button></td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -3095,6 +3105,36 @@
       </div>
     </div>
 
+    <!-- ===== BUFFET: STAFF OVERVIEW — DETAIL MODAL (ดูรายละเอียดรายการ + ทางเข้าสู่ flow ยกเลิกเดิม) ===== -->
+    <div v-if="bufDetailModal && bufDetailTarget" class="modal-overlay" @click.self="bufCloseDetail()">
+      <div class="modal-box sm" style="position:relative">
+        <button class="po-result-close" @click="bufCloseDetail()">×</button>
+        <div class="confirm-modal-body" style="align-items:stretch;text-align:left">
+          <div style="display:flex;align-items:center;gap:10px;width:100%">
+            <div class="po-modal-icon-box"><i class="fa fa-receipt"></i></div>
+            <div style="flex:1;min-width:0">
+              <div class="confirm-title po-modal-title" style="margin:0">รายละเอียดรายการบุฟเฟต์</div>
+              <div class="po-modal-id">{{ bufDetailTarget.id }}</div>
+            </div>
+          </div>
+          <div style="margin-top:14px;font-size:14px;line-height:1.9;color:#3C3C43;width:100%">
+            <div><b>{{ bufCardInfo(bufDetailTarget.cardId) ? bufCardInfo(bufDetailTarget.cardId).name : 'ไม่ระบุชื่อ' }}</b></div>
+            <div>รหัสประจำตัว {{ bufCardInfo(bufDetailTarget.cardId) ? bufCardInfo(bufDetailTarget.cardId).studentId : '-' }} · เลขบัตร {{ bufDetailTarget.cardId || '-' }}</div>
+            <div>ระดับชั้น {{ bufGradeTierOf(bufDetailTarget.gradeTier) ? bufGradeTierOf(bufDetailTarget.gradeTier).label : '-' }}</div>
+            <div>วันที่ {{ bufFormatDate(bufDetailTarget.date) }} · เวลา {{ bufDetailTarget.time }} น.</div>
+            <div>ประเภทอาหาร {{ bufRoundOf(bufDetailTarget.round) ? bufRoundOf(bufDetailTarget.round).mealName : '-' }}</div>
+            <div>ชำระโดย {{ bufDetailTarget.paymentMethod === 'card' ? 'แตะบัตร' : 'สแกนจ่าย' }}</div>
+            <div style="margin-top:6px">ยอดที่จ่าย ฿{{ bufDetailTarget.amount }}</div>
+          </div>
+          <div class="confirm-actions po-modal-actions" style="width:100%;margin-top:14px">
+            <button class="btn-no po-modal-btn" @click="bufCloseDetail()">ปิด</button>
+            <button v-if="bufDetailTarget.paymentMethod === 'card'" class="btn-yes-red po-modal-btn" @click="bufDetailStartVoid()">ยกเลิกรายการ</button>
+            <span v-else class="buf-staff-cancel-disabled" title="รายการ QR ไม่สามารถยกเลิกผ่านระบบได้">ยกเลิกไม่ได้ (รายการ QR)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ===== BUFFET: QR TIMEOUT MODAL (§2.1) — เด้งเมื่อ countdown หมด, ไม่กดใน 5 วิ auto กลับหน้าแตะบัตร ===== -->
     <div v-if="bufQrTimeoutModal" class="modal-overlay">
       <div class="modal-box sm">
@@ -4087,6 +4127,9 @@ export default {
       bufVoidReasonOptions: ['จ่ายผิดคน', 'จ่ายซ้ำโดยไม่ตั้งใจ', 'ไม่ได้เข้าบุฟเฟต์จริง', 'อื่นๆ'],
       bufVoidPinValue: '',
       bufVoidPinError: '',
+      // โมดัลดูรายละเอียดรายการในหน้าภาพรวม staff — เป็นทางเข้าสู่ flow ยกเลิกเดิม
+      bufDetailModal: false,
+      bufDetailTarget: null,
       // ปุ่มย้อนกลับหน้าแตะบัตร — ต้องใส่รหัส Supervisor (§3.1)
       bufIdleBackPinModal: false,
       bufIdleBackPinValue: '',
@@ -5561,6 +5604,9 @@ export default {
     bufGradeTierOf(key) {
       return this.buffetGradeTiers.find(t => t.key === key) || null
     },
+    bufRoundOf(roundKey) {
+      return this.buffetRounds.find(r => r.key === roundKey) || null
+    },
     bufFormatDate(dateStr) {
       if (!dateStr) return ''
       const d = new Date(dateStr + 'T00:00:00')
@@ -5721,6 +5767,21 @@ export default {
       this.appScreen = 'buffet-pay-method'
     },
     // ภาพรวม staff + drill-down ตามระดับชั้น (§5)
+    // โมดัลดูรายละเอียดรายการในตาราง — ทางเข้าสู่ flow ยกเลิกเดิม (bufOpenVoid) โดยไม่แก้ logic ยกเลิก/คืนเงิน
+    bufOpenDetail(tx) {
+      this.bufDetailTarget = tx
+      this.bufDetailModal = true
+    },
+    bufCloseDetail() {
+      this.bufDetailModal = false
+      this.bufDetailTarget = null
+    },
+    // ปิดโมดัลรายละเอียดแล้วเปิด flow ยกเลิกเดิม — ต้อง capture tx ไว้ก่อนปิด ไม่งั้น bufDetailTarget จะถูกเคลียร์เป็น null ก่อน bufOpenVoid ได้ค่า
+    bufDetailStartVoid() {
+      const tx = this.bufDetailTarget
+      this.bufCloseDetail()
+      this.bufOpenVoid(tx)
+    },
     // modal ยกเลิกรายการ/void-refund (§6)
     // §6 — ยกเลิก/คืนเงินได้เฉพาะรายการที่จ่ายด้วยแตะบัตร (เงินอยู่ในระบบโรงเรียนเอง) QR คืนไม่ได้เพราะจ่ายผ่านธนาคาร/ผู้ให้บริการโดยตรง
     bufOpenVoid(tx) {
