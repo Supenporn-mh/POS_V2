@@ -3411,11 +3411,15 @@ input:focus { outline: none; }
 
 /* หน้าภาพรวมบุฟเฟต์ (§5) — ปุ่มยกเลิกต่อแถว (เฉพาะรายการแตะบัตร) / label ไม่ให้ยกเลิกสำหรับรายการ QR */
 .buf-staff-cancel-disabled { font-size: 11px; color: #8E8E93; flex-shrink: 0; }
-.po-table-wrap { padding: 12px 28px 20px; overflow-x: auto; }
+.po-table-wrap {
+  margin: 12px 28px 20px; padding: 4px 20px 12px; overflow-x: auto;
+  background: #fff; border-radius: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.05);
+}
 .po-staff-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .po-staff-table th { text-align: left; padding: 10px 12px; color: #8E8E93; font-weight: 500; border-bottom: 1px solid #E5E5EA; }
 .po-staff-table td { padding: 10px 12px; border-bottom: 1px solid #F2F2F7; vertical-align: top; }
 .po-staff-table tbody tr:hover { background: #F9F9F9; }
+.po-staff-table .po-btn-secondary { background: #EAF2FF; color: #007AFF; margin-top: 0; width: auto; }
 
 /* Reservation detail modal (§5) — cancel section */
 .po-modal-icon-box {
