@@ -3417,6 +3417,7 @@ input:focus { outline: none; }
 .po-staff-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .po-staff-table th { text-align: left; padding: 10px 12px; color: #8E8E93; font-weight: 500; border-bottom: 1px solid #E5E5EA; }
 .po-staff-table td { padding: 10px 12px; border-bottom: 1px solid #F2F2F7; vertical-align: top; }
+.po-staff-table tbody tr:last-child td { border-bottom: 2px solid #E5E5EA; }
 .po-staff-table tbody tr:hover { background: #F9F9F9; }
 .po-staff-table .po-btn-secondary { background: #EAF2FF; color: #007AFF; margin-top: 0; width: auto; }
 
