@@ -2065,7 +2065,7 @@
             <tbody>
               <tr v-if="bufStaffPagedList.length === 0"><td colspan="7" class="po-empty"><i class="fa fa-inbox"></i><span>ไม่พบรายการ</span></td></tr>
               <tr v-for="tx in bufStaffPagedList" :key="tx.id">
-                <td>{{ bufCardInfo(tx.cardId) ? bufCardInfo(tx.cardId).name : 'ไม่ระบุชื่อ' }}<div v-if="!bufCardInfo(tx.cardId)" class="po-history-meta">เลขที่ออเดอร์ {{ tx.id }}</div></td>
+                <td>{{ bufCardInfo(tx.cardId) ? bufCardInfo(tx.cardId).name : 'ไม่ระบุชื่อ' }}<div class="po-history-meta">เลขที่ออเดอร์ {{ tx.id }}</div></td>
                 <td>{{ bufCardInfo(tx.cardId) ? bufCardInfo(tx.cardId).studentId : '-' }}</td>
                 <td>{{ tx.cardId || '-' }}</td>
                 <td>{{ tx.time }} น.</td>
