@@ -3778,6 +3778,9 @@ const buffetTransactions = [
   bufTx({ cardId: '1001008', date: BUF_TODAY, round: 'breakfast', time: '07:25', gradeTier: 'p-senior', amount: 25 }),
   bufTx({ cardId: '1001002', date: BUF_YESTERDAY, round: 'lunch', time: '11:40', gradeTier: 'p-senior', amount: 25,
     voided: true, voidReason: 'จ่ายผิดคน', voidedBy: 'ผู้จัดการ (ADM001)', voidedAt: BUF_YESTERDAY + ' 15:00' }),
+  // ตัวอย่างรายการสแกนจ่าย (QR) — ไม่รู้ตัวตนผู้จ่าย ไม่มี cardId ผูกอยู่ (ยืนยันแล้ว §2.1)
+  bufTx({ cardId: null, guestName: 'ลูกค้า (สแกน QR)', date: BUF_TODAY, round: 'dinner', time: '16:20',
+    gradeTier: 'm-senior', amount: 35, paymentMethod: 'qr', qrChannel: 'promptpay' }),
 ]
 
 // รายการ quick-pick demo — ไม่บันทึกเป็น transaction จริงจนกว่าจะแตะ (ต่างจาก Pre-Order ที่ demo ผูกกับ reservation ที่มีอยู่แล้ว)
