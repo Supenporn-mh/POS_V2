@@ -2064,8 +2064,8 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-if="bufStaffFilteredList.length === 0"><td colspan="7" class="po-empty"><i class="fa fa-inbox"></i><span>ไม่พบรายการ</span></td></tr>
-              <tr v-for="tx in bufStaffFilteredList" :key="tx.id">
+              <tr v-if="bufStaffPagedList.length === 0"><td colspan="7" class="po-empty"><i class="fa fa-inbox"></i><span>ไม่พบรายการ</span></td></tr>
+              <tr v-for="tx in bufStaffPagedList" :key="tx.id">
                 <td>{{ bufCardInfo(tx.cardId) ? bufCardInfo(tx.cardId).name : 'ไม่ระบุชื่อ' }}<div v-if="!bufCardInfo(tx.cardId)" class="po-history-meta">เลขที่ออเดอร์ {{ tx.id }}</div></td>
                 <td>{{ bufCardInfo(tx.cardId) ? bufCardInfo(tx.cardId).studentId : '-' }}</td>
                 <td>{{ tx.cardId || '-' }}</td>
@@ -2076,6 +2076,11 @@
               </tr>
             </tbody>
           </table>
+          <div class="po-pagination">
+            <button class="po-page-btn" :disabled="bufStaffPage <= 1" @click="bufStaffPage--">‹ ก่อนหน้า</button>
+            <span class="po-page-info">หน้า {{ bufStaffPage }} จาก {{ bufStaffTotalPages }}</span>
+            <button class="po-page-btn" :disabled="bufStaffPage >= bufStaffTotalPages" @click="bufStaffPage++">ถัดไป ›</button>
+          </div>
         </div>
       </div>
 
@@ -4121,6 +4126,8 @@ export default {
       bufStaffRoundFilter: 'all',
       bufStaffMealFilter: 'all',
       bufStaffSearch: '',
+      bufStaffPage: 1,
+      bufStaffPageSize: 10,
       // modal ยกเลิกรายการ/void-refund (§6)
       bufVoidModal: false,
       bufVoidTarget: null,
@@ -4441,6 +4448,15 @@ export default {
           return hay.toLowerCase().includes(q)
         })
         .sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time))
+    },
+    // page indicator ท้ายตารางภาพรวม staff — ตัด bufStaffFilteredList (ยังใช้ยอดรวมเต็มเสมอ ไม่ตัดตามหน้า) เป็นหน้าๆ
+    bufStaffTotalPages() {
+      return Math.max(1, Math.ceil(this.bufStaffFilteredList.length / this.bufStaffPageSize))
+    },
+    bufStaffPagedList() {
+      const page = Math.min(this.bufStaffPage, this.bufStaffTotalPages)
+      const start = (page - 1) * this.bufStaffPageSize
+      return this.bufStaffFilteredList.slice(start, start + this.bufStaffPageSize)
     },
   },
 
@@ -5925,7 +5941,13 @@ export default {
           this.clock = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
         }, 60000)
       }
-    }
+    },
+    // เปลี่ยน filter ใดๆ ของภาพรวม staff ให้กลับไปหน้า 1 เสมอ — ไม่งั้นอาจค้างอยู่หน้าที่ไม่มีข้อมูลแล้ว
+    bufStaffFrom() { this.bufStaffPage = 1 },
+    bufStaffTo() { this.bufStaffPage = 1 },
+    bufStaffSearch() { this.bufStaffPage = 1 },
+    bufStaffRoundFilter() { this.bufStaffPage = 1 },
+    bufStaffMealFilter() { this.bufStaffPage = 1 },
   },
 
   mounted() {

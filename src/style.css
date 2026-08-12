@@ -3417,7 +3417,14 @@ input:focus { outline: none; }
 .po-staff-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .po-staff-table th { text-align: left; padding: 10px 12px; color: #8E8E93; font-weight: 500; border-bottom: 1px solid #E5E5EA; }
 .po-staff-table td { padding: 10px 12px; border-bottom: 1px solid #F2F2F7; vertical-align: top; }
-.po-staff-table tbody tr:last-child td { border-bottom: 2px solid #E5E5EA; }
+.po-staff-table tbody tr:last-child td { border-bottom: none; }
+.po-pagination { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 14px 0 4px; }
+.po-page-btn {
+  border: 1px solid #E5E5EA; border-radius: 8px; background: #fff; color: #3C3C43;
+  font-size: 13px; font-weight: 500; padding: 6px 14px; cursor: pointer;
+}
+.po-page-btn:disabled { color: #C7C7CC; cursor: default; }
+.po-page-info { font-size: 13px; color: #8E8E93; }
 .po-staff-table tbody tr:hover { background: #F9F9F9; }
 .po-staff-table .po-btn-secondary { background: #EAF2FF; color: #007AFF; margin-top: 0; width: auto; }
 
