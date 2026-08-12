@@ -2052,7 +2052,6 @@
         <div class="po-summary-row">
           <div class="po-summary-tile"><div class="po-summary-num">{{ bufStaffSummary.totalPeople }}</div><div class="po-summary-label">ทั้งหมด</div></div>
           <div class="po-summary-tile po-summary--confirmed"><div class="po-summary-num">฿{{ bufStaffSummary.totalAmount }}</div><div class="po-summary-label">ยอดรวม</div></div>
-          <div class="po-summary-tile po-summary--ready"><div class="po-summary-num" style="font-size:16px">{{ bufStaffRoundLabel }}</div><div class="po-summary-label">รอบปัจจุบัน</div></div>
         </div>
 
         <div class="po-table-wrap">
@@ -4414,12 +4413,6 @@ export default {
       if (!this.bufCurrentTime) return null
       const nowMin = this.bufMinutesOf(this.bufCurrentTime)
       return this.buffetRounds.find(r => this.bufMinutesOf(r.start) > nowMin) || this.buffetRounds[0] || null
-    },
-    // การ์ดสรุป "รอบปัจจุบัน" หน้าภาพรวม staff — mirror fallback เดียวกับหน้าเลือกประเภทบุฟเฟต์
-    bufStaffRoundLabel() {
-      if (this.bufActiveRound) return this.bufActiveRound.tabName
-      if (this.bufNextRound) return 'รอบถัดไป: ' + this.bufNextRound.tabName
-      return '-'
     },
     // วันที่ปัจจุบันของหน้าภาพรวม staff — format เดียวกับ poFormatDate ("13 ก.ค. 2569")
     bufStaffDateLabel() {
