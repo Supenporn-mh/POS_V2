@@ -3639,7 +3639,7 @@ const moneyTransactionsData = [
 const preOrderMealPeriods = [
   { key: 'breakfast', tabName: 'รอบเช้า',    mealName: 'มื้อเช้า',    start: '07:00', end: '08:30' },
   { key: 'lunch',     tabName: 'รอบกลางวัน', mealName: 'มื้อกลางวัน', start: '11:00', end: '13:00' },
-  { key: 'dinner',    tabName: 'รอบเย็น',    mealName: 'มื้อเย็น',    start: '16:00', end: '17:30' },
+  { key: 'dinner',    tabName: 'รอบเย็น',    mealName: 'มื้อเย็น',    start: '15:00', end: '17:30' },
 ]
 
 function poDateStr(offsetDays) {
@@ -3742,7 +3742,7 @@ const buffetGradeTiers = [
 const buffetRounds = [
   { key: 'breakfast', tabName: 'รอบเช้า',    mealName: 'มื้อเช้า',    start: '07:00', end: '08:30' },
   { key: 'lunch',     tabName: 'รอบกลางวัน', mealName: 'มื้อกลางวัน', start: '11:00', end: '13:00' },
-  { key: 'dinner',    tabName: 'รอบเย็น',    mealName: 'มื้อเย็น',    start: '16:00', end: '17:30' },
+  { key: 'dinner',    tabName: 'รอบเย็น',    mealName: 'มื้อเย็น',    start: '15:00', end: '17:30' },
   { key: 'evening2',  tabName: 'รอบค่ำ',      mealName: 'มื้อค่ำ',     start: '18:00', end: '20:00' },
 ]
 
